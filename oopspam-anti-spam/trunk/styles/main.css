@@ -1,0 +1,207 @@
+.ninja-forms {
+   background-color: white;
+}
+.ninja-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: red;
+}
+
+.bricks-forms {
+   background-color: white;
+}
+.bricks-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #ffd64f;
+}
+
+.umember {
+   background-color: white;
+}
+.umember h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #7856ff;
+}
+.kb-form {
+   background-color: white;
+}
+.kb-form h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #002e5f;
+}
+
+.breakdance-forms {
+   background-color: white;
+}
+.breakdance-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #facc15;
+}
+
+.bb-forms {
+   background-color: white;
+}
+.bb-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: brown;
+}
+
+.wpdiscuz {
+   background-color: white;
+}
+.wpdiscuz h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #39b740;
+}
+
+.mpoet {
+   background-color: white;
+}
+.mpoet h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #ff5301;
+}
+
+.forminator {
+   background-color: white;
+}
+.forminator h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #e8e0c9;
+}
+
+.pionet-form {
+   background-color: white;
+}
+.pionet-form h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #002e5f;
+}
+
+.ws-form {
+   background-color: white;
+}
+.ws-form h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #002e5f;
+}
+
+.ts-form {
+   background-color: white;
+}
+.ts-form h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #ed793e;
+}
+
+.gravity-forms {
+   background-color: white;
+}
+.gravity-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #f15a2b;
+}
+
+.elementor-forms {
+   background-color: white;
+}
+
+.elementor-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #92003b;
+}
+
+.wpforms {
+   background-color: white;
+}
+
+.wpforms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #b85a1b;
+}
+
+.mpress {
+   background-color: white;
+}
+
+.mpress h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #04a2c6;
+}
+
+.pmp {
+   background-color: white;
+}
+
+.pmp h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #668c3c;
+}
+
+.fable {
+   background-color: white;
+}
+
+.fable h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #505b6a;
+}
+
+.fluent-forms {
+   background-color: white;
+}
+.fluent-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #0989ff;
+}
+
+.cf7 {
+   background-color: white;
+}
+.cf7 h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #f15a2b;
+}
+
+.give {
+   background-color: white;
+}
+
+.give h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #66bb6a;
+}
+
+.woo {
+   background-color: white;
+}
+
+.woo h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #8056b3;
+}
+
+.wpregister {
+   background-color: white;
+}
+
+.wpregister h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #0073aa;
+}
+
+#range_text {
+   font-size: medium;
+   font-weight: bold;
+}
+
+.form-setting {
+   box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+}
+
+.form-setting h2 {
+   padding: 1em;
+}
+
+.form-setting .form-table {
+   margin: 1em;
+}

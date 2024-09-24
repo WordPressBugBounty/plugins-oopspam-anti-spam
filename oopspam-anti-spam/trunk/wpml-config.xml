@@ -1,0 +1,18 @@
+<wpml-config>
+  <admin-texts>
+    <key name="oopspamantispam_settings">
+      <key name="oopspam_nj_spam_message"/>
+      <key name="oopspam_el_spam_message"/>
+      <key name="oopspam_br_spam_message"/>
+      <key name="oopspam_gf_spam_message"/>
+      <key name="oopspam_ff_spam_message"/>
+      <key name="oopspam_wpf_spam_message"/>
+      <key name="oopspam_fable_spam_message"/>
+      <key name="oopspam_give_spam_message"/>
+      <key name="oopspam_woo_spam_message"/>
+      <key name="oopspam_wpregister_spam_message"/>
+      <key name="oopspam_ts_spam_message"/>
+      <key name="oopspam_pionet_spam_message"/>
+    </key>
+  </admin-texts>
+</wpml-config>
