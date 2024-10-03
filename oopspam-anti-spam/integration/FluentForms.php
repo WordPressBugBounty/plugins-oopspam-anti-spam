@@ -6,6 +6,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
 {
    
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $fields = json_decode($form->form_fields, true);
     $email = "";
     $message = "";
@@ -95,7 +96,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         }
 
         $userIP = "";
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = $insertData["ip"];
         }
 

@@ -10,6 +10,7 @@ function oopspam_spam_check($errors, $form)
     $settings = $form->get_settings();
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_br_activated'])) {
 
@@ -76,7 +77,7 @@ function oopspam_spam_check($errors, $form)
         $raw_entry = json_encode($fields);
         $userIP = "";
 
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
 

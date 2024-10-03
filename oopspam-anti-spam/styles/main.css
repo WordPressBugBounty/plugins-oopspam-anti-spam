@@ -1,3 +1,52 @@
+.oopspam-toggle {
+   appearance: none !important;
+   position: relative !important;
+   display: inline-block !important;
+   box-sizing: content-box !important;
+   width: 4.5em !important;
+   height: 2em !important;
+   padding: 0.2em !important;
+   cursor: pointer !important;
+   border-radius: 1.5em !important;
+   overflow: hidden !important;
+   background-color: #707070 !important;
+   transition: background ease 0.3s !important;
+   font-size: 12px;
+ }
+ 
+ .oopspam-toggle:before {
+   margin: unset !important;
+   content: "on off" !important;
+   display: block !important;
+   position: absolute !important;
+   z-index: 2 !important;
+   width: 2em !important;
+   height: 2em !important;
+   font-family: system-ui !important;
+   font-size: 1em !important;
+   line-height: 2em !important;
+   font-weight: 500 !important;
+   text-transform: uppercase !important;
+   text-indent: -2em !important;
+   word-spacing: 2.55em !important;
+   text-shadow: -1px -1px rgba(0,0,0,0.15) !important;
+   white-space: nowrap !important;
+   background: #fff !important;
+   color: #fff !important;
+   border-radius: 1.5em !important;
+   transition: transform cubic-bezier(0.3, 1.5, 0.7, 1) 0.3s !important;
+ }
+ 
+ .oopspam-toggle:checked {
+   background-color: #0e9d26 !important;
+ }
+ 
+ .oopspam-toggle:checked:before {
+   transform: translateX(2.5em) !important;
+ }
+
+
+
 .ninja-forms {
    background-color: white;
 }

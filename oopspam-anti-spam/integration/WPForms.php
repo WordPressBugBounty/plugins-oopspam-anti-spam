@@ -6,6 +6,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
 {
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $message = "";
     $email = "";
 
@@ -85,7 +86,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
         }
 
         $userIP = "";
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = wpforms_get_ip();
         }
         $escapedMsg = sanitize_textarea_field($message);

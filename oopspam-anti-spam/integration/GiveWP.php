@@ -9,6 +9,7 @@ function oopspamantispam_givewp_pre_submission($data)
     $post_data = give_clean($_POST);
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_give_activated'])) {
 
@@ -41,7 +42,7 @@ function oopspamantispam_givewp_pre_submission($data)
             $raw_entry = json_encode($post_data);
         }
 
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = give_get_ip();
         }
 

@@ -9,6 +9,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
 {
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $message = "";
     $email = "";
 
@@ -30,7 +31,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_kb_activated'])) {
 
         $userIP = "";
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
         $escapedMsg = sanitize_textarea_field($message);

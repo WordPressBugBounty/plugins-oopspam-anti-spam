@@ -11,6 +11,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
     }
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_fable_activated'])) {
 
@@ -70,7 +71,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
             return $errors;
         }
 
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = FrmAppHelper::get_ip_address();
         }
 

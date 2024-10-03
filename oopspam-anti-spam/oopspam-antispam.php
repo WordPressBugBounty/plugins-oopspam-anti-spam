@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.13
+ * Version: 1.2.14
  * Author: OOPSpam
  * URI: https://www.oopspam.com/
  * License: GPL2
@@ -89,6 +89,36 @@ require_once dirname(__FILE__) . '/db/oopspam-spamentries.php';
 register_activation_hook(__FILE__, 'oopspam_plugin_activate');
 register_activation_hook(__FILE__, 'oopspam_db_install');
 register_deactivation_hook(__FILE__, 'oopspam_plugin_deactivation');
+
+// Migrate the privacy settings. Added: v. 1.2.14
+register_activation_hook(__FILE__, 'oopspamantispam_check_run_migration');
+add_action('plugins_loaded', 'oopspamantispam_check_run_migration');
+
+function oopspamantispam_migrate_privacy_settings() {
+    $old_options = get_option('oopspamantispam_settings');
+    $privacy_options = get_option('oopspamantispam_privacy_settings', array());
+
+    $privacy_fields = array('oopspam_is_check_for_ip', 'oopspam_is_check_for_email', 'oopspam_anonym_content');
+
+    foreach ($privacy_fields as $field) {
+        if (isset($old_options[$field])) {
+            $privacy_options[$field] = $old_options[$field];
+            unset($old_options[$field]);
+        }
+    }
+
+    update_option('oopspamantispam_privacy_settings', $privacy_options);
+    update_option('oopspamantispam_settings', $old_options);
+
+    // Set a flag in the database to indicate that migration has been performed
+    update_option('oopspamantispam_privacy_migration_completed', true);
+}
+
+function oopspamantispam_check_run_migration() {
+    if (get_option('oopspamantispam_privacy_migration_completed') !== true) {
+        oopspamantispam_migrate_privacy_settings();
+    }
+}
 
 // Add two weeks & monthly intervals
 function oopspam_schedule_intervals($schedules)
@@ -456,6 +486,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     }
     
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     // Check if the message contains any URLs
     $blockURLs = (isset($options['oopspam_is_urls_allowed']) ? $options['oopspam_is_urls_allowed'] : false);
@@ -485,7 +516,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 
 
     // Attempt to anonymize messages
-    if (isset($options['oopspam_anonym_content']) && $options['oopspam_anonym_content'] && !empty($commentText)) {
+    if (isset($privacyOptions['oopspam_anonym_content']) && $privacyOptions['oopspam_anonym_content'] && !empty($commentText)) {
         $email_regex = '/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i';
         $address_regex = '/\d+\s[A-z]+\s[A-z]+/';
         $phoneNumber_regex = '/(?:\+|\d+)(?:\-|\s|\d)/';
@@ -498,7 +529,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     }
 
     // Don't send Email if not allowed by user
-    if (isset($options['oopspam_is_check_for_email']) && $options['oopspam_is_check_for_email']) {
+    if (isset($privacyOptions['oopspam_is_check_for_email']) && $privacyOptions['oopspam_is_check_for_email']) {
         $email = "";
     }
 
@@ -699,11 +730,12 @@ function oopspamantispam_check_comment($approved, $commentdata)
     $isItSpam = false;
     $reason = "";
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $currentSpamFolder = oopspamantispam_get_folder_for_spam();
 
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
 
-    if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
         $senderIp = oopspamantispam_get_ip_address();
     }
 
@@ -774,11 +806,12 @@ function oopspamantispam_check_pingback($approved, $commentdata)
         $email = "";
         $isItSpam = false;
         $options = get_option('oopspamantispam_settings');
+        $privacyOptions = get_option('oopspamantispam_privacy_settings');
         $currentSpamFolder = oopspamantispam_get_folder_for_spam();
 
         $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
 
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $senderIp = $commentdata['comment_author_IP'];
         }
 
@@ -830,12 +863,13 @@ function check_search_for_spam($query)
     if (!is_admin() && $query->is_main_query() && $query->is_search()) {
 
         $options = get_option('oopspamantispam_settings');
+        $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
         if (isset($options['oopspam_is_search_protection_on']) && $options['oopspam_is_search_protection_on'] == true)
 
         // WP Site Search is enabled only if IP check is allowed
         {
-            if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+            if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
 
                 // Get the user's IP address
                 $userIP = oopspamantispam_get_ip();

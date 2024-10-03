@@ -36,6 +36,7 @@ function marked_as_spam($entry_id, $property_value, $previous_value) {
 function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
 {
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     $extractedData = extractData($form, $entry);
     $message = $extractedData['message'];
@@ -102,7 +103,7 @@ function extractData($form, $entry) {
     }
 
     // Capture the IP
-    if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
         $userIP = rgar($entry, 'ip');
     }
 

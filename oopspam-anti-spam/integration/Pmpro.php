@@ -15,6 +15,7 @@ function oopspamantispam_pmp_submission( $continue )
     }
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_pmp_activated'])) {
 
@@ -41,7 +42,7 @@ function oopspamantispam_pmp_submission( $continue )
         
 
         // Capture user's IP if allowed
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
 

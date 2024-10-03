@@ -6,6 +6,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
 {
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     // get password types and later remove them from $raw_entry so that it's not stored locally
     $password_fields = $record->get_field([
@@ -110,7 +111,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
         
         $userIP = "";
 
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = \ElementorPro\Core\Utils::get_client_ip();
         }
 

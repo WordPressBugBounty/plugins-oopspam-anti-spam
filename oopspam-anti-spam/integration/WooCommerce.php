@@ -60,9 +60,27 @@ class WooSpamProtection
         $options = get_option('oopspamantispam_settings');
 
         // Check with honeypot field
-        if (!empty($_POST['wc_website_input'])) {
+        if (isset($_POST['wc_website_input']) && !empty($_POST['wc_website_input'])) {
+            
+            $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
+
+            if ($isHoneypotDisabled) {
+                return $validation_error;
+            }
+
             $error_to_show = $options['oopspam_woo_spam_message'];
             $validation_error = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
+
+            $frmEntry = [
+                "Score" => 6,
+                "Message" => sanitize_text_field($_POST['wc_website_input']),
+                "IP" => "",
+                "Email" => $email,
+                "RawEntry" => json_encode($_POST),
+                "FormId" => "WooCommerce",
+            ];
+            oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
+
             return $validation_error;
         }
 
@@ -89,6 +107,17 @@ class WooSpamProtection
             if(!ctype_upper($cleanFName) && !empty($cleanFName)) {
                 $firstPartOfFName = explode(" ", $cleanFName, 2)[0];
                 if(strlen(preg_replace('![^A-Z]+!', '', $firstPartOfFName)) > 2){
+                    
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => "",
+                        "IP" => "",
+                        "Email" => $email,
+                        "RawEntry" => json_encode($_POST),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Failed form data validation");
+
                     $error_to_show = $options['oopspam_woo_spam_message'];
                     $errors->add('oopspam_error', $error_to_show);
                     return $errors;
@@ -98,6 +127,23 @@ class WooSpamProtection
 
         // First, check with honeypot field
         if (isset($_POST['wc_website_input']) && !empty($_POST['wc_website_input'])) {
+            
+            $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
+
+            if ($isHoneypotDisabled) {
+                return $errors;
+            }
+
+            $frmEntry = [
+                "Score" => 6,
+                "Message" => sanitize_text_field($_POST['wc_website_input']),
+                "IP" => "",
+                "Email" => $email,
+                "RawEntry" => json_encode($_POST),
+                "FormId" => "WooCommerce",
+            ];
+            oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
+
             $error_to_show = $options['oopspam_woo_spam_message'];
             $errors->add('oopspam_error', $error_to_show);
             return $errors;
@@ -132,18 +178,36 @@ class WooSpamProtection
         $options = get_option('oopspamantispam_settings');
         $email = "";
 
-        // First, check with honeypot field
-        if (!empty($_POST['wc_login_website_input'])) {
-            $error_to_show = $options['oopspam_woo_spam_message'];
-            $errors = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
-            return $errors;
-        }
-
-        // Second, If passed, then check with OOPSpam
         if (isset($_POST["username"]) && is_email($_POST["username"])) {
             $email = $_POST["username"];
         }
 
+        // First, check with honeypot field
+        if (!empty($_POST['wc_login_website_input'])) {
+
+            $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
+
+            if ($isHoneypotDisabled) {
+                return $errors;
+            }
+
+            $error_to_show = $options['oopspam_woo_spam_message'];
+            $errors = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
+            // Log the submission
+            $frmEntry = [
+                "Score" => 6,
+                "Message" => sanitize_text_field($_POST['wc_login_website_input']),
+                "IP" => "",
+                "Email" => $email,
+                "RawEntry" => json_encode($_POST),
+                "FormId" => "WooCommerce",
+            ];
+            oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
+            return $errors;
+        }
+
+        
+        // Second, If passed, then check with OOPSpam
         $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email));
 
         if ($showError) {
@@ -160,11 +224,12 @@ class WooSpamProtection
     {
 
         $options = get_option('oopspamantispam_settings');
+        $privacyOptions = get_option('oopspamantispam_privacy_settings');
         $userIP = "";
 
         if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_woo_activated'])) {
 
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
 

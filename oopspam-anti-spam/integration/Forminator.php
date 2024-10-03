@@ -5,6 +5,7 @@ add_action('forminator_custom_form_submit_before_set_fields', 'oopspam_forminato
 function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) {
 
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_forminator_activated'])) {
         
@@ -23,7 +24,7 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         }
 
         // Capture IP
-        if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
         

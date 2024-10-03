@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.6
-Stable tag: 1.2.13
+Stable tag: 1.2.14
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,7 +99,13 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.14 =
+* NEW: Added `oopspam_woo_disable_honeypot` hook to disable honeypot in WooCommerce
+* IMPROVEMENT: Reorganized privacy settings under the Privacy tab for better clarity
+* IMPROVEMENT: General UX enhancements for a smoother experience
+* FIX: Resolved issue where WooCommerce blockings were not logged
 = 1.2.13 =
+* NEW: View spam detection reasons in the Form Spam Entries table
 * NEW: Report entries flagged as spam in Gravity Forms to OOPSpam
 * NEW: Report entries flagged as not spam in Gravity Forms to OOPSpam
 * IMPROVEMENT: Admin comments bypass spam checks

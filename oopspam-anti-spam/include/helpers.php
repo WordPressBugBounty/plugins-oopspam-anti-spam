@@ -168,9 +168,11 @@ function oopspamantispam_get_IP_from_headers($var)
 
 function oopspamantispam_get_ip() {
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
+    
     $ipaddress = '';
 
-    if (!isset($options['oopspam_is_check_for_ip']) || $options['oopspam_is_check_for_ip'] !== true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] !== true) {
         $headers = [
             'HTTP_CF_CONNECTING_IP', // Cloudflare
             'REMOTE_ADDR',

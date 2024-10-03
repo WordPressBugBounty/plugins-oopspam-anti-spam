@@ -152,7 +152,7 @@ jQuery(document).ready(function($) {
     if(rangeInput) {
         rangeInput.addEventListener("input", function() {
         if (rangeInput.value !== "3" && showAlert) {
-            alert("It's highly recommended that the Sensitivity level be set to 3");
+            alert("It's highly recommended to use the 'Moderate' sensitivity level, which provides a great balance between catching spam and allowing legitimate messages through.");
             showAlert = false;
         }
         });

@@ -172,6 +172,8 @@ function oopspamantispam_settings_init()
 
     // Register settings
     register_setting('oopspamantispam-manual-moderation', 'manual_moderation_settings');
+    register_setting('oopspamantispam-privacy-settings-group', 'oopspamantispam_privacy_settings');
+
 
     add_settings_section('manual_moderation_section', 'OOPSpam - Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
     add_settings_field('mm_blocked_emails', __('Blocked emails'), 'manual_moderation_blockedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
@@ -179,6 +181,36 @@ function oopspamantispam_settings_init()
     add_settings_field('mm_blocked_keywords', __('Blocked keywords'), 'manual_moderation_keywords_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_allowed_emails', __('Allowed emails'), 'manual_moderation_allowedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_allowed_ips', __('Allowed IPs'), 'manual_moderation_allowedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+
+
+    add_settings_section(
+        'oopspam_privacy_settings_section',
+        __('Privacy Settings', 'oopspam'),
+        false,
+        'oopspamantispam-privacy-settings-group'
+    );
+
+    add_settings_field(
+        'oopspam_is_check_for_ip',
+        __('Do not analyze IP addresses', 'oopspam'),
+        'oopspam_is_check_for_ip_render',
+        'oopspamantispam-privacy-settings-group',
+        'oopspam_privacy_settings_section'
+    );
+    add_settings_field(
+        'oopspam_is_check_for_email',
+        __('Do not analyze Email addresses', 'oopspam'),
+        'oopspam_is_check_for_email_render',
+        'oopspamantispam-privacy-settings-group',
+        'oopspam_privacy_settings_section'
+    );
+    add_settings_field(
+        'oopspam_anonym_content',
+        __('Remove sensitive information from messages', 'oopspam'),
+        'oopspam_anonym_content_render',
+        'oopspamantispam-privacy-settings-group',
+        'oopspam_privacy_settings_section'
+    );
 
     register_setting('oopspamantispam-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-settings-group', 'oopspam_countryallowlist');
@@ -217,7 +249,7 @@ function oopspamantispam_settings_init()
     );
 
     add_settings_field('oopspam_api_key_usage',
-        __('Current API usage', 'oopspam'),
+        __('Current usage', 'oopspam'),
         'oopspam_api_key_usage_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
@@ -301,19 +333,26 @@ function oopspamantispam_settings_init()
     'oopspam_settings_section'
     );
 
-    add_settings_field('oopspam_is_check_for_ip',
-        __('Do not analyze IP addresses', 'oopspam'),
-        'oopspam_is_check_for_ip_render',
-        'oopspamantispam-settings-group',
-        'oopspam_settings_section'
-    );
+    // add_settings_field('oopspam_is_check_for_ip',
+    //     __('Do not analyze IP addresses', 'oopspam'),
+    //     'oopspam_is_check_for_ip_render',
+    //     'oopspamantispam-settings-group',
+    //     'oopspam_settings_section'
+    // );
 
-    add_settings_field('oopspam_is_check_for_email',
-        __('Do not analyze Email addresses', 'oopspam'),
-        'oopspam_is_check_for_email_render',
-        'oopspamantispam-settings-group',
-        'oopspam_settings_section'
-    );
+    // add_settings_field('oopspam_is_check_for_email',
+    //     __('Do not analyze Email addresses', 'oopspam'),
+    //     'oopspam_is_check_for_email_render',
+    //     'oopspamantispam-settings-group',
+    //     'oopspam_settings_section'
+    // );
+
+    // add_settings_field('oopspam_anonym_content',
+    //     __('Remove sensitive information from messages', 'oopspam'),
+    //     'oopspam_anonym_content_render',
+    //     'oopspamantispam-settings-group',
+    //     'oopspam_settings_section'
+    // );
 
     add_settings_field('oopspam_is_search_protection_on',
         __('Protect against internal search spam', 'oopspam'),
@@ -322,27 +361,26 @@ function oopspamantispam_settings_init()
         'oopspam_settings_section'
     );
 
-     add_settings_field('oopspam_anonym_content',
-        __('Remove sensitive information from messages', 'oopspam'),
-        'oopspam_anonym_content_render',
-        'oopspamantispam-settings-group',
-        'oopspam_settings_section'
-    );
+    $privacy_options = get_option('oopspamantispam_privacy_settings');
+    $isItAllowedToCheckIPs = isset($privacy_options['oopspam_is_check_for_ip']) ? $privacy_options['oopspam_is_check_for_ip'] : false;
 
-    add_settings_field('oopspam_countryallowlist',
-        __('Allow messages only from these countries:', 'oopspam'),
-        'oopspam_countryallowlist_render',
-        'oopspamantispam-settings-group',
-        'oopspam_settings_section'
-    );
+    if(!$isItAllowedToCheckIPs) {
+        add_settings_field('oopspam_countryallowlist',
+            __('Allow messages only from these countries:', 'oopspam'),
+            'oopspam_countryallowlist_render',
+            'oopspamantispam-settings-group',
+            'oopspam_settings_section'
+        );
 
-    add_settings_field('oopspam_countryblocklist',
+        add_settings_field('oopspam_countryblocklist',
         __('Block messages from these countries:', 'oopspam'),
         'oopspam_countryblocklist_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
-    );
+        );
+    }
 
+    
     add_settings_field('oopspam_languageallowlist',
         __('Allow messages only in these languages:', 'oopspam'),
         'oopspam_languageallowlist_render',
@@ -1031,32 +1069,132 @@ function oopspam_api_key_render()
         <div class="api_key_section">
             <label for="oopspam_api_key">
                 <input id="oopspam_api_key" type="password" name="oopspamantispam_settings[oopspam_api_key]" class="regular-text" value="<?php if (isset($options['oopspam_api_key'])) {
-        echo esc_html($options['oopspam_api_key']);
-    }
-    ?>" />
+                    echo esc_html($options['oopspam_api_key']);
+                }
+                ?>" />
+                <button class="button button-secondary" type="button" id="toggleApiKey" style="margin-left: 5px;">Show</button>
             </label>
         </div>
-        <?php
+        <script>
+            document.getElementById('toggleApiKey').addEventListener('click', function () {
+                var apiKeyField = document.getElementById('oopspam_api_key');
+                if (apiKeyField.type === 'password') {
+                    apiKeyField.type = 'text';
+                    this.textContent = 'Hide';
+                } else {
+                    apiKeyField.type = 'password';
+                    this.textContent = 'Show';
+                }
+            });
+        </script>
+    <?php
 }
+
 
 function oopspam_spam_score_threshold_render()
 {
     $options = get_option('oopspamantispam_settings');
     $currentThreshold = (isset($options['oopspam_spam_score_threshold'])) ? (int) $options['oopspam_spam_score_threshold'] : 3;
+    // Mapping of threshold levels to words
+    $thresholdDescriptions = [
+        1 => 'Extremely strict',
+        2 => 'Very strict',
+        3 => 'Moderate (recommended)',
+        4 => 'Slightly lenient',
+        5 => 'Lenient',
+        6 => 'Very lenient'
+    ];
+    // Get the corresponding description for the current threshold
+    $currentDescription = isset($thresholdDescriptions[$currentThreshold]) ? $thresholdDescriptions[$currentThreshold] : $thresholdDescriptions[3];
     ?>
-        <div class="spam_score_threshold_section">
-            <label for="oopspam_spam_score_threshold">
-                <p>
-                    <input type="range" id="oopspam_spam_score_threshold" oninput="range_text.value = oopspam_spam_score_threshold.value" min="0" max="6" name="oopspamantispam_settings[oopspam_spam_score_threshold]"  class="regular-text" value="<?php echo $currentThreshold ?>" />
-                    <output id="range_text"><?php echo $currentThreshold ?></output>
-                </p>
-                <p class="description">
-                <?php echo __('You can control the spam detection sensitivity level with this setting. We recommend setting this value to 3. Lower it for more aggressive filtering.', 'oopspam'); ?>
-                </p>
+    <div class="spam_score_threshold_section">
+        <label for="oopspam_spam_score_threshold">
+            <p style="display: flex;
+  justify-content: flex-start;
+  align-items: center;">
+                <input type="range" id="oopspam_spam_score_threshold" 
+                    oninput="updateRangeText(this); updateRangeColor(this);" 
+                    min="1" max="6" 
+                    name="oopspamantispam_settings[oopspam_spam_score_threshold]" 
+                    class="regular-text range-input" value="<?php echo $currentThreshold ?>" />
+                <output style="padding-left: 10px;" id="range_text"><?php echo $currentDescription; ?></output>
+            </p>
+            <p class="description">
+                <?php echo __('You can control the spam detection sensitivity level with this setting. We recommend setting this value to "Moderate (recommended)". Lower it for more aggressive filtering.', 'oopspam'); ?>
+            </p>
         </label>
     </div>
-        <?php
+    <style>
+        .range-input {
+            background: linear-gradient(to right, rgba(255, 0, 0, 0.58) 0%, rgb(56, 239, 93) 100%);
+            -webkit-appearance: none;
+            height: 20px;
+            border-radius: 10px;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-input::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        // Mapping for live update of range text description
+        const thresholdDescriptions = {
+            1: 'Extremely strict',
+            2: 'Very strict',
+            3: 'Moderate (recommended)',
+            4: 'Slightly lenient',
+            5: 'Lenient',
+            6: 'Very lenient'
+        };
+
+        function updateRangeText(rangeInput) {
+            var rangeTextOutput = document.getElementById('range_text');
+            rangeTextOutput.value = thresholdDescriptions[rangeInput.value];
+        }
+
+        function updateRangeColor(rangeInput) {
+            var rangeElement = document.getElementById('oopspam_spam_score_threshold');
+            switch (parseInt(rangeInput.value)) {
+                case 1:
+                    rangeElement.style.background = 'linear-gradient(to right, red 0%, red 100%)';
+                    break;
+                case 2:
+                    rangeElement.style.background = 'linear-gradient(to right, red 0%, rgba(255, 0, 0, 0.58) 100%)';
+                    break;
+                case 3:
+                    rangeElement.style.background = 'linear-gradient(to right, rgba(255, 0, 0, 0.58) 0%, rgb(56, 239, 93) 100%)';
+                    break;
+                case 4:
+                    rangeElement.style.background = 'linear-gradient(to right, rgba(0, 128, 0, 0.54) 0%, rgba(0, 128, 0, 0.76) 100%)';
+                    break;
+                case 5:
+                     rangeElement.style.background = 'linear-gradient(to right, rgba(0, 128, 0, 0.76) 0%, rgb(0, 128, 0) 100%)';
+                    break;
+                case 6:
+                    rangeElement.style.background = 'linear-gradient(to right, green 0%, green 100%)';
+                    break;
+            }
+        }
+    </script>
+    <?php
 }
+
+
+
 
 function oopspam_clear_spam_entries_render()
 {
@@ -1111,7 +1249,7 @@ function oopspam_is_check_for_length_render()
     ?>
             <div>
                 <label for="short_text_support">
-                <input type="checkbox" id="short_text_support" name="oopspamantispam_settings[oopspam_is_check_for_length]"  <?php checked(!isset($options['oopspam_is_check_for_length']), false, true);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="short_text_support" name="oopspamantispam_settings[oopspam_is_check_for_length]"  <?php checked(!isset($options['oopspam_is_check_for_length']), false, true);?>/>
                 <p class="description"><?php echo __('<strong>Important: </strong> Messages that are less than 20 characters in length, including blank messages, will be considered spam. Uncheck this setting if you have an optional (not required) message field in your forms.', 'oopspam'); ?></p>
 
                 </label>
@@ -1125,7 +1263,7 @@ function oopspam_block_temp_email_render()
     ?>
             <div>
                 <label for="block_temp_email">
-                <input type="checkbox" id="block_temp_email" name="oopspamantispam_settings[oopspam_block_temp_email]"  <?php checked(!isset($options['oopspam_block_temp_email']), false, true);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="block_temp_email" name="oopspamantispam_settings[oopspam_block_temp_email]"  <?php checked(!isset($options['oopspam_block_temp_email']), false, true);?>/>
                 </label>
             </div>
         <?php
@@ -1137,7 +1275,7 @@ function oopspam_is_loggable_render()
     ?>
             <div>
                 <label for="loggable">
-                <input type="checkbox" id="loggable" name="oopspamantispam_settings[oopspam_is_loggable]"  <?php checked(!isset($options['oopspam_is_loggable']), false, true);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="loggable" name="oopspamantispam_settings[oopspam_is_loggable]"  <?php checked(!isset($options['oopspam_is_loggable']), false, true);?>/>
                 <p class="description"><?php echo __('Allows you to view logs in the OOPSpam Dashboard', 'oopspam'); ?></p>
 
                 </label>
@@ -1151,7 +1289,7 @@ function oopspam_is_urls_allowed_render()
     ?>
             <div>
                 <label for="block_urls">
-                <input type="checkbox" id="block_urls" name="oopspamantispam_settings[oopspam_is_urls_allowed]"  <?php checked(!isset($options['oopspam_is_urls_allowed']), false, true);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="block_urls" name="oopspamantispam_settings[oopspam_is_urls_allowed]"  <?php checked(!isset($options['oopspam_is_urls_allowed']), false, true);?>/>
                 </label>
             </div>
         <?php
@@ -1196,17 +1334,18 @@ function oopspam_api_key_usage_render()
             
             <span id="api_usage" name="oopspamantispam_settings[oopspam_api_key_usage]"><strong> <?php isset($options['oopspam_api_key_usage']) ? print htmlentities($options['oopspam_api_key_usage']) : print "0/0";?> </strong> </span>
             <p class="description"><?php echo __('Remaining / Limit', 'oopspam'); ?></p>
+            <p class="description"><?php echo __('Usage numbers are updated automatically with each new submission, so they may not reflect plan changes until the next submission is made.', 'oopspam'); ?></p>
         </div>
     <?php
 }
 
 function oopspam_is_check_for_ip_render()
 {
-    $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     ?>
             <div>
                 <label for="ip_check_support">
-                <input type="checkbox" id="ip_check_support" name="oopspamantispam_settings[oopspam_is_check_for_ip]"  <?php checked(!isset($options['oopspam_is_check_for_ip']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="ip_check_support" name="oopspamantispam_privacy_settings[oopspam_is_check_for_ip]"  <?php checked(!isset($privacyOptions['oopspam_is_check_for_ip']), false);?>/>
                 <p class="description"><?php echo __('Turning on this setting may weaken the spam protection', 'oopspam'); ?></p>
 
                 </label>
@@ -1216,11 +1355,11 @@ function oopspam_is_check_for_ip_render()
 
 function oopspam_anonym_content_render()
 {
-    $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     ?>
             <div>
                 <label for="anonym_content_support">
-                <input type="checkbox" id="anonym_content_support" name="oopspamantispam_settings[oopspam_anonym_content]"  <?php checked(!isset($options['oopspam_anonym_content']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="anonym_content_support" name="oopspamantispam_privacy_settings[oopspam_anonym_content]"  <?php checked(!isset($privacyOptions['oopspam_anonym_content']), false);?>/>
                 <p class="description"><?php echo __('Before sending a message to OOPSpam for spam detection, try to remove Emails, Addresses, Phone Numbers.
 It should be noted, however, that there is no guarantee that these data points will be accurately removed. Turning on this setting may weaken the spam protection', 'oopspam'); ?></p>
 
@@ -1230,11 +1369,11 @@ It should be noted, however, that there is no guarantee that these data points w
 }
 
 function oopspam_is_check_for_email_render() {
-    $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
     ?>
             <div>
                 <label for="email_check_support">
-                <input type="checkbox" id="email_check_support" name="oopspamantispam_settings[oopspam_is_check_for_email]"  <?php checked(!isset($options['oopspam_is_check_for_email']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="email_check_support" name="oopspamantispam_privacy_settings[oopspam_is_check_for_email]"  <?php checked(!isset($privacyOptions['oopspam_is_check_for_email']), false);?>/>
                 <p class="description"><?php echo __('Turning on this setting may weaken the spam protection', 'oopspam'); ?></p>
 
                 </label>
@@ -1247,7 +1386,7 @@ function oopspam_is_search_protection_on_render() {
     ?>
             <div>
                 <label for="search_check_support">
-                <input type="checkbox" id="search_check_support" name="oopspamantispam_settings[oopspam_is_search_protection_on]"  <?php checked(!isset($options['oopspam_is_search_protection_on']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="search_check_support" name="oopspamantispam_settings[oopspam_is_search_protection_on]"  <?php checked(!isset($options['oopspam_is_search_protection_on']), false);?>/>
                 </label>
             </div>
         <?php
@@ -1379,7 +1518,7 @@ function oopspam_is_forminator_activated_render()
     ?>
                 <div>
                     <label for="forminator_support">
-                    <input type="checkbox" id="forminator_support" name="oopspamantispam_settings[oopspam_is_forminator_activated]" value="1" <?php if (isset($options['oopspam_is_forminator_activated']) && 1 == $options['oopspam_is_forminator_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="forminator_support" name="oopspamantispam_settings[oopspam_is_forminator_activated]" value="1" <?php if (isset($options['oopspam_is_forminator_activated']) && 1 == $options['oopspam_is_forminator_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1414,7 +1553,7 @@ function oopspam_is_mpoet_activated_render()
     ?>
                 <div>
                     <label for="mpoet_support">
-                    <input type="checkbox" id="mpoet_support" name="oopspamantispam_settings[oopspam_is_mpoet_activated]" value="1" <?php if (isset($options['oopspam_is_mpoet_activated']) && 1 == $options['oopspam_is_mpoet_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="mpoet_support" name="oopspamantispam_settings[oopspam_is_mpoet_activated]" value="1" <?php if (isset($options['oopspam_is_mpoet_activated']) && 1 == $options['oopspam_is_mpoet_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1449,7 +1588,7 @@ function oopspam_is_wpdis_activated_render()
     ?>
                 <div>
                     <label for="wpdis_support">
-                    <input type="checkbox" id="wpdis_support" name="oopspamantispam_settings[oopspam_is_wpdis_activated]" value="1" <?php if (isset($options['oopspam_is_wpdis_activated']) && 1 == $options['oopspam_is_wpdis_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="wpdis_support" name="oopspamantispam_settings[oopspam_is_wpdis_activated]" value="1" <?php if (isset($options['oopspam_is_wpdis_activated']) && 1 == $options['oopspam_is_wpdis_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1484,7 +1623,7 @@ function oopspam_is_kb_activated_render()
     ?>
                 <div>
                     <label for="kb_support">
-                    <input type="checkbox" id="kb_support" name="oopspamantispam_settings[oopspam_is_kb_activated]" value="1" <?php if (isset($options['oopspam_is_kb_activated']) && 1 == $options['oopspam_is_kb_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="kb_support" name="oopspamantispam_settings[oopspam_is_kb_activated]" value="1" <?php if (isset($options['oopspam_is_kb_activated']) && 1 == $options['oopspam_is_kb_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1519,7 +1658,7 @@ function oopspam_is_nj_activated_render()
     ?>
                 <div>
                     <label for="nf_support">
-                    <input type="checkbox" id="nf_support" name="oopspamantispam_settings[oopspam_is_nj_activated]" value="1" <?php if (isset($options['oopspam_is_nj_activated']) && 1 == $options['oopspam_is_nj_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="nf_support" name="oopspamantispam_settings[oopspam_is_nj_activated]" value="1" <?php if (isset($options['oopspam_is_nj_activated']) && 1 == $options['oopspam_is_nj_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1587,7 +1726,7 @@ function oopspam_is_pionet_activated_render()
     ?>
                 <div>
                     <label for="pionet_support">
-                    <input type="checkbox" id="pionet_support" name="oopspamantispam_settings[oopspam_is_pionet_activated]" value="1" <?php if (isset($options['oopspam_is_pionet_activated']) && 1 == $options['oopspam_is_pionet_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="pionet_support" name="oopspamantispam_settings[oopspam_is_pionet_activated]" value="1" <?php if (isset($options['oopspam_is_pionet_activated']) && 1 == $options['oopspam_is_pionet_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1653,7 +1792,7 @@ function oopspam_is_ts_activated_render()
     ?>
                 <div>
                     <label for="ts_support">
-                    <input type="checkbox" id="ts_support" name="oopspamantispam_settings[oopspam_is_ts_activated]" value="1" <?php if (isset($options['oopspam_is_ts_activated']) && 1 == $options['oopspam_is_ts_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="ts_support" name="oopspamantispam_settings[oopspam_is_ts_activated]" value="1" <?php if (isset($options['oopspam_is_ts_activated']) && 1 == $options['oopspam_is_ts_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1688,7 +1827,7 @@ function oopspam_is_fable_activated_render()
     ?>
                 <div>
                     <label for="fable_support">
-                    <input type="checkbox" id="fable_support" name="oopspamantispam_settings[oopspam_is_fable_activated]" value="1" <?php if (isset($options['oopspam_is_fable_activated']) && 1 == $options['oopspam_is_fable_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="fable_support" name="oopspamantispam_settings[oopspam_is_fable_activated]" value="1" <?php if (isset($options['oopspam_is_fable_activated']) && 1 == $options['oopspam_is_fable_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1755,7 +1894,7 @@ function oopspam_is_gf_activated_render()
     ?>
                 <div>
                     <label for="gf_support">
-                    <input type="checkbox" id="gf_support" name="oopspamantispam_settings[oopspam_is_gf_activated]" value="1" <?php if (isset($options['oopspam_is_gf_activated']) && 1 == $options['oopspam_is_gf_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="gf_support" name="oopspamantispam_settings[oopspam_is_gf_activated]" value="1" <?php if (isset($options['oopspam_is_gf_activated']) && 1 == $options['oopspam_is_gf_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1844,7 +1983,7 @@ function oopspam_is_el_activated_render()
     ?>
                 <div>
                     <label for="el_support">
-                    <input type="checkbox" id="el_support" name="oopspamantispam_settings[oopspam_is_el_activated]" value="1" <?php if (isset($options['oopspam_is_el_activated']) && 1 == $options['oopspam_is_el_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="el_support" name="oopspamantispam_settings[oopspam_is_el_activated]" value="1" <?php if (isset($options['oopspam_is_el_activated']) && 1 == $options['oopspam_is_el_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -1934,7 +2073,7 @@ function oopspam_is_br_activated_render()
     ?>
               <div>
                   <label for="br_support">
-                  <input type="checkbox" id="br_support" name="oopspamantispam_settings[oopspam_is_br_activated]" value="1" <?php if (isset($options['oopspam_is_br_activated']) && 1 == $options['oopspam_is_br_activated']) {
+                  <input class="oopspam-toggle" type="checkbox" id="br_support" name="oopspamantispam_settings[oopspam_is_br_activated]" value="1" <?php if (isset($options['oopspam_is_br_activated']) && 1 == $options['oopspam_is_br_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2001,7 +2140,7 @@ function oopspam_is_ws_activated_render()
     ?>
            <div>
                <label for="ws_support">
-               <input type="checkbox" id="ws_support" name="oopspamantispam_settings[oopspam_is_ws_activated]" value="1" <?php if (isset($options['oopspam_is_ws_activated']) && 1 == $options['oopspam_is_ws_activated']) {
+               <input class="oopspam-toggle" type="checkbox" id="ws_support" name="oopspamantispam_settings[oopspam_is_ws_activated]" value="1" <?php if (isset($options['oopspam_is_ws_activated']) && 1 == $options['oopspam_is_ws_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2090,7 +2229,7 @@ function oopspam_is_wpf_activated_render()
     ?>
               <div>
                   <label for="wpf_support">
-                  <input type="checkbox" id="wpf_support" name="oopspamantispam_settings[oopspam_is_wpf_activated]" value="1" <?php if (isset($options['oopspam_is_wpf_activated']) && 1 == $options['oopspam_is_wpf_activated']) {
+                  <input class="oopspam-toggle" type="checkbox" id="wpf_support" name="oopspamantispam_settings[oopspam_is_wpf_activated]" value="1" <?php if (isset($options['oopspam_is_wpf_activated']) && 1 == $options['oopspam_is_wpf_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2180,7 +2319,7 @@ function oopspam_is_ff_activated_render()
     ?>
                 <div>
                     <label for="ff_support">
-                    <input type="checkbox" id="ff_support" name="oopspamantispam_settings[oopspam_is_ff_activated]" value="1" <?php if (isset($options['oopspam_is_ff_activated']) && 1 == $options['oopspam_is_ff_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="ff_support" name="oopspamantispam_settings[oopspam_is_ff_activated]" value="1" <?php if (isset($options['oopspam_is_ff_activated']) && 1 == $options['oopspam_is_ff_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2324,7 +2463,7 @@ function oopspam_is_bb_activated_render()
     ?>
                 <div>
                     <label for="bb_support">
-                    <input type="checkbox" id="bb_support" name="oopspamantispam_settings[oopspam_is_bb_activated]" value="1" <?php if (isset($options['oopspam_is_bb_activated']) && 1 == $options['oopspam_is_bb_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="bb_support" name="oopspamantispam_settings[oopspam_is_bb_activated]" value="1" <?php if (isset($options['oopspam_is_bb_activated']) && 1 == $options['oopspam_is_bb_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2343,7 +2482,7 @@ function oopspam_is_cf7_activated_render()
     ?>
                 <div>
                     <label for="cf7_support">
-                    <input type="checkbox" id="cf7_support" name="oopspamantispam_settings[oopspam_is_cf7_activated]" value="1" <?php if (isset($options['oopspam_is_cf7_activated']) && 1 == $options['oopspam_is_cf7_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="cf7_support" name="oopspamantispam_settings[oopspam_is_cf7_activated]" value="1" <?php if (isset($options['oopspam_is_cf7_activated']) && 1 == $options['oopspam_is_cf7_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2396,7 +2535,7 @@ function oopspam_is_give_activated_render()
     ?>
                 <div>
                     <label for="give_support">
-                    <input type="checkbox" id="give_support" name="oopspamantispam_settings[oopspam_is_give_activated]" value="1" <?php if (isset($options['oopspam_is_give_activated']) && 1 == $options['oopspam_is_give_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="give_support" name="oopspamantispam_settings[oopspam_is_give_activated]" value="1" <?php if (isset($options['oopspam_is_give_activated']) && 1 == $options['oopspam_is_give_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2431,7 +2570,7 @@ function oopspam_is_woo_activated_render()
     ?>
                 <div>
                     <label for="woo_support">
-                    <input type="checkbox" id="woo_support" name="oopspamantispam_settings[oopspam_is_woo_activated]" value="1" <?php if (isset($options['oopspam_is_woo_activated']) && 1 == $options['oopspam_is_woo_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="woo_support" name="oopspamantispam_settings[oopspam_is_woo_activated]" value="1" <?php if (isset($options['oopspam_is_woo_activated']) && 1 == $options['oopspam_is_woo_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2466,7 +2605,7 @@ function oopspam_is_wpregister_activated_render()
     ?>
                 <div>
                     <label for="wpregister_support">
-                    <input type="checkbox" id="wpregister_support" name="oopspamantispam_settings[oopspam_is_wpregister_activated]" value="1" <?php if (isset($options['oopspam_is_wpregister_activated']) && 1 == $options['oopspam_is_wpregister_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="wpregister_support" name="oopspamantispam_settings[oopspam_is_wpregister_activated]" value="1" <?php if (isset($options['oopspam_is_wpregister_activated']) && 1 == $options['oopspam_is_wpregister_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2501,7 +2640,7 @@ function oopspam_is_umember_activated_render()
     ?>
                 <div>
                     <label for="umember_support">
-                    <input type="checkbox" id="umember_support" name="oopspamantispam_settings[oopspam_is_umember_activated]" value="1" <?php if (isset($options['oopspam_is_umember_activated']) && 1 == $options['oopspam_is_umember_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="umember_support" name="oopspamantispam_settings[oopspam_is_umember_activated]" value="1" <?php if (isset($options['oopspam_is_umember_activated']) && 1 == $options['oopspam_is_umember_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2536,7 +2675,7 @@ function oopspam_is_pmp_activated_render()
     ?>
                 <div>
                     <label for="pmp_support">
-                    <input type="checkbox" id="pmp_support" name="oopspamantispam_settings[oopspam_is_pmp_activated]" value="1" <?php if (isset($options['oopspam_is_pmp_activated']) && 1 == $options['oopspam_is_pmp_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="pmp_support" name="oopspamantispam_settings[oopspam_is_pmp_activated]" value="1" <?php if (isset($options['oopspam_is_pmp_activated']) && 1 == $options['oopspam_is_pmp_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2572,7 +2711,7 @@ function oopspam_is_mpress_activated_render()
     ?>
                 <div>
                     <label for="mpress_support">
-                    <input type="checkbox" id="mpress_support" name="oopspamantispam_settings[oopspam_is_mpress_activated]" value="1" <?php if (isset($options['oopspam_is_mpress_activated']) && 1 == $options['oopspam_is_mpress_activated']) {
+                    <input class="oopspam-toggle" type="checkbox" id="mpress_support" name="oopspamantispam_settings[oopspam_is_mpress_activated]" value="1" <?php if (isset($options['oopspam_is_mpress_activated']) && 1 == $options['oopspam_is_mpress_activated']) {
         echo 'checked="checked"';
     }
     ?>/>
@@ -2645,146 +2784,147 @@ if( isset( $_GET[ 'tab' ] ) ) {
 
 	$active_tab = $_GET[ 'tab' ];
 
-} // end if
+}
 
 ?>
 
 <h2 class="nav-tab-wrapper">
-
-<a href="?page=wp_oopspam_settings_page&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>">General</a>
-
-<a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo $active_tab == 'manual_moderation' ? 'nav-tab-active' : ''; ?>">Manual moderation</a>
-
-</h2>
+        <a href="?page=wp_oopspam_settings_page&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>">General</a>
+        <a href="?page=wp_oopspam_settings_page&tab=privacy" class="nav-tab <?php echo $active_tab == 'privacy' ? 'nav-tab-active' : ''; ?>">Privacy</a>
+        <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo $active_tab == 'manual_moderation' ? 'nav-tab-active' : ''; ?>">Manual moderation</a>
+    </h2>
 
 
         <form action='options.php' method='post'>
             
         <?php
-                if ($active_tab == 'manual_moderation') {
-settings_fields('oopspamantispam-manual-moderation');
-    do_settings_sections('oopspamantispam-manual-moderation');
-                 } else {
+               if ($active_tab == 'manual_moderation') {
+                settings_fields('oopspamantispam-manual-moderation');
+                do_settings_sections('oopspamantispam-manual-moderation');
+            } elseif ($active_tab == 'privacy') {
+                settings_fields('oopspamantispam-privacy-settings-group');
+                do_settings_sections('oopspamantispam-privacy-settings-group');
+            } else {
            
-settings_fields('oopspamantispam-settings-group');
-    do_settings_sections('oopspamantispam-settings-group');
-    ?>
-            <div class="ninja-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-nj-settings-group');
-    ?>
-            </div>
-            <div class="elementor-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-el-settings-group');
-    ?>
-            </div>
-            <div class="bricks-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-br-settings-group');
-    ?>
-            </div>
-            <div class="gravity-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-gf-settings-group');
-    ?>
-            </div>
-            <div class="fluent-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-ff-settings-group');
-    ?>
-            </div>
-            <div class="breakdance-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-bd-settings-group');
-    ?>
-            </div>
-            <div class="cf7 form-setting">
-            <?php
-do_settings_sections('oopspamantispam-cf7-settings-group');
-    ?>
-            </div>
-            <div class="wpforms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-wpf-settings-group');
-    ?>
-            </div>
-            <div class="fable form-setting">
-            <?php
-do_settings_sections('oopspamantispam-fable-settings-group');
-    ?>
-            </div>
-            <div class="give form-setting">
-            <?php
-do_settings_sections('oopspamantispam-give-settings-group');
-    ?>
-            </div>
-            <div class="woo form-setting">
-            <?php
-do_settings_sections('oopspamantispam-woo-settings-group');
-    ?>
-            </div>
-            <div class="wpregister form-setting">
-            <?php
-do_settings_sections('oopspamantispam-wpregister-settings-group');
-    ?>
-            </div>
-            <div class="ws-form form-setting">
-            <?php
-do_settings_sections('oopspamantispam-ws-settings-group');
-    ?>
-            </div>
-            <div class="ts-form form-setting">
-            <?php
-do_settings_sections('oopspamantispam-ts-settings-group');
-    ?>
-            </div>
-            <div class="pionet-form form-setting">
-            <?php
-do_settings_sections('oopspamantispam-pionet-settings-group');
-    ?>
-            </div>
-            <div class="kb-form form-setting">
-            <?php
-do_settings_sections('oopspamantispam-kb-settings-group');
-    ?>
-            </div>
-            <div class="wpdiscuz form-setting">
-            <?php
-do_settings_sections('oopspamantispam-wpdis-settings-group');
-    ?>
-            </div>
-            <div class="mpoet form-setting">
-            <?php
-do_settings_sections('oopspamantispam-mpoet-settings-group');
-    ?>
-            </div>
-            <div class="bb-forms form-setting">
-            <?php
-do_settings_sections('oopspamantispam-bb-settings-group');
-    ?>
-            </div>
-            <div class="forminator form-setting">
-            <?php
-do_settings_sections('oopspamantispam-forminator-settings-group');
-    ?>
-            </div>
-            <div class="umember form-setting">
-            <?php
-do_settings_sections('oopspamantispam-umember-settings-group');
-    ?>
-    </div>
-    <div class="pmp form-setting">
-            <?php
-do_settings_sections('oopspamantispam-pmp-settings-group');
-    ?>
-    </div>
-    <div class="mpress form-setting">
-            <?php
-do_settings_sections('oopspamantispam-mpress-settings-group');
-    ?>
-    </div>
-    <?php
+                settings_fields('oopspamantispam-settings-group');
+                    do_settings_sections('oopspamantispam-settings-group');
+                    ?>
+                            <div class="ninja-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-nj-settings-group');
+                    ?>
+                            </div>
+                            <div class="elementor-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-el-settings-group');
+                    ?>
+                            </div>
+                            <div class="bricks-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-br-settings-group');
+                    ?>
+                            </div>
+                            <div class="gravity-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-gf-settings-group');
+                    ?>
+                            </div>
+                            <div class="fluent-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-ff-settings-group');
+                    ?>
+                            </div>
+                            <div class="breakdance-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-bd-settings-group');
+                    ?>
+                            </div>
+                            <div class="cf7 form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-cf7-settings-group');
+                    ?>
+                            </div>
+                            <div class="wpforms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-wpf-settings-group');
+                    ?>
+                            </div>
+                            <div class="fable form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-fable-settings-group');
+                    ?>
+                            </div>
+                            <div class="give form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-give-settings-group');
+                    ?>
+                            </div>
+                            <div class="woo form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-woo-settings-group');
+                    ?>
+                            </div>
+                            <div class="wpregister form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-wpregister-settings-group');
+                    ?>
+                            </div>
+                            <div class="ws-form form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-ws-settings-group');
+                    ?>
+                            </div>
+                            <div class="ts-form form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-ts-settings-group');
+                    ?>
+                            </div>
+                            <div class="pionet-form form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-pionet-settings-group');
+                    ?>
+                            </div>
+                            <div class="kb-form form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-kb-settings-group');
+                    ?>
+                            </div>
+                            <div class="wpdiscuz form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-wpdis-settings-group');
+                    ?>
+                            </div>
+                            <div class="mpoet form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-mpoet-settings-group');
+                    ?>
+                            </div>
+                            <div class="bb-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-bb-settings-group');
+                    ?>
+                            </div>
+                            <div class="forminator form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-forminator-settings-group');
+                    ?>
+                            </div>
+                            <div class="umember form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-umember-settings-group');
+                    ?>
+                    </div>
+                    <div class="pmp form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-pmp-settings-group');
+                    ?>
+                    </div>
+                    <div class="mpress form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-mpress-settings-group');
+                    ?>
+                    </div>
+                    <?php
         }
         ?>
         <?php submit_button(); ?>
