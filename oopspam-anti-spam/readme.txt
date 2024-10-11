@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.6
-Stable tag: 1.2.14
+Stable tag: 1.2.15
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -52,7 +52,7 @@ The plugin filters both **comments**, **site search**, and **contact form submis
 - Elementor Forms
 - Ninja Forms
 - Gravity Forms
-- Kadence Form Block
+- Kadence Form Block and Form (Adv) Block
 - Fluent Forms
 - Breakdance Forms
 - WS Form
@@ -99,6 +99,9 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.15 =
+* NEW: Added support for Kadence Form (Advanced) Block
+* NEW: Automatically send flagged spam comments to OOPSpam for reporting
 = 1.2.14 =
 * NEW: Added `oopspam_woo_disable_honeypot` hook to disable honeypot in WooCommerce
 * IMPROVEMENT: Reorganized privacy settings under the Privacy tab for better clarity

@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.14
+ * Version: 1.2.15
  * Author: OOPSpam
  * URI: https://www.oopspam.com/
  * License: GPL2
@@ -856,6 +856,20 @@ add_filter( 'pre_comment_approved', 'oopspamantispam_check_pingback', 10, 2 );
 add_action('admin_init', 'oopspam_admin_init');
 
 add_action('pre_get_posts', 'check_search_for_spam');
+
+// When a comment flagged as spam, let OOPSpam know too
+add_action('transition_comment_status', 'oopspam_comment_spam_transition', 10, 3);
+function oopspam_comment_spam_transition($new_status, $old_status, $comment) {
+    if ($new_status === 'spam' && $old_status !== 'spam') {
+         
+         $commentText = $comment->comment_content; 
+         $commentIP = $comment->comment_author_IP;
+         $email = $comment->comment_author_email;  
+         $isSpam = true;  
+        
+         oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpam);
+    }
+}
 
 function check_search_for_spam($query)
 {
