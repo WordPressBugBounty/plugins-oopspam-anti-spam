@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.6
-Stable tag: 1.2.15
+Stable tag: 1.2.16
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,15 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.16 =
+* NEW: Rate Limiting submission per IP and email per hour
+* NEW: [Forminator] Specify content field by Form ID and Field ID pair
+* NEW: [Forminator] Combine multiple field values for the `The main content field` setting
+* IMPROVEMENT: [GiveWP] Reject donation with invalid payment gateway
+* IMPROVEMENT: Improved honeypot implementation in WooCommerce
+* IMPROVEMENT: Use internal WooCommerce function for IP detection
+* IMPROVEMENT: Admin Email notifications uses better formatting and more data
+* IMPROVEMENT: Added Sucuri proxy header in the IP detection
 = 1.2.15 =
 * NEW: Added support for Kadence Form (Advanced) Block
 * NEW: Automatically send flagged spam comments to OOPSpam for reporting

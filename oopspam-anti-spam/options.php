@@ -22,42 +22,89 @@ function oopspamantispam_admin_menu()
 
 }
 
-add_action('updated_option', 'oopspam_schedule_corn_job', 10, 3);
-function oopspam_schedule_corn_job($option, $old_value, $new_value)
+add_action('updated_option', 'oopspam_schedule_cron_job', 10, 3);
+function oopspam_schedule_cron_job($option, $old_value, $new_value)
 {
-
-    if (strpos($option, "oopspam") !== false) {
-        $options = get_option('oopspamantispam_settings');
-        if (isset($new_value["oopspam_clear_spam_entries"]) && isset($old_value["oopspam_clear_spam_entries"])) {
-
-            if (isset($new_value["oopspam_clear_spam_entries"]) && !isset($old_value["oopspam_clear_spam_entries"]) ||
-                $new_value["oopspam_clear_spam_entries"] != $old_value["oopspam_clear_spam_entries"]) {
-
-                $options = get_option('oopspamantispam_settings');
-                $options["oopspam_clear_spam_entries"] = $new_value["oopspam_clear_spam_entries"];
-
-                // Clear the schedule and re-add
-                wp_clear_scheduled_hook('oopspam_cleanup_spam_entries_cron');
-                wp_schedule_event($new_value["oopspam_clear_spam_entries"] === "monthly" ? strtotime('+1 month') : strtotime('+2 weeks'),
-                    $new_value["oopspam_clear_spam_entries"] === "monthly" ? 'oopspam-monthly' : 'oopspam-biweekly',
-                    'oopspam_cleanup_spam_entries_cron');
-            }
-            if (isset($new_value["oopspam_clear_ham_entries"]) && !isset($old_value["oopspam_clear_ham_entries"]) ||
-                $new_value["oopspam_clear_ham_entries"] != $old_value["oopspam_clear_ham_entries"]) {
-
-                $options["oopspam_clear_ham_entries"] = $new_value["oopspam_clear_ham_entries"];
-
-                // Clear the schedule and re-add
-                wp_clear_scheduled_hook('oopspam_cleanup_ham_entries_cron');
-                wp_schedule_event($new_value["oopspam_clear_ham_entries"] === "monthly" ? strtotime('+1 month') : strtotime('+2 weeks'),
-                    $new_value["oopspam_clear_ham_entries"] === "monthly" ? 'oopspam-monthly' : 'oopspam-biweekly',
-                    'oopspam_cleanup_ham_entries_cron');
-
-            }
-        }
+    if (strpos($option, "oopspam") === false) {
+        return;
     }
 
+    $options = get_option('oopspamantispam_settings');
+    
+    if (isset($new_value["oopspam_clear_spam_entries"]) && 
+        (!isset($old_value["oopspam_clear_spam_entries"]) || 
+        $new_value["oopspam_clear_spam_entries"] != $old_value["oopspam_clear_spam_entries"])) {
+        
+        $options["oopspam_clear_spam_entries"] = $new_value["oopspam_clear_spam_entries"];
+        schedule_cron_job('oopspam_cleanup_spam_entries_cron', $new_value["oopspam_clear_spam_entries"]);
+    }
+    
+    if (isset($new_value["oopspam_clear_ham_entries"]) && 
+        (!isset($old_value["oopspam_clear_ham_entries"]) || 
+        $new_value["oopspam_clear_ham_entries"] != $old_value["oopspam_clear_ham_entries"])) {
+
+        $options["oopspam_clear_ham_entries"] = $new_value["oopspam_clear_ham_entries"];
+        schedule_cron_job('oopspam_cleanup_ham_entries_cron', $new_value["oopspam_clear_ham_entries"]);
+    }
 }
+
+add_action('updated_option', 'oopspam_ratelimit_schedule_cron_job', 10, 3);
+
+function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
+{
+    if ($option !== 'oopspamantispam_ratelimit_settings') {
+        return;
+    }
+
+    $new_duration = $new_value['oopspamantispam_ratelimit_cleanup_duration'] ?? null;
+    $old_duration = $old_value['oopspamantispam_ratelimit_cleanup_duration'] ?? null;
+
+
+    if (isRateLimitingEnabled() && !wp_next_scheduled("oopspam_cleanup_ratelimit_entries_cron")) {
+        if (class_exists('RateLimiter')) {
+            try {
+                $rateLimiter = new RateLimiter();
+                $rateLimiter->schedule_cleanup($new_duration);
+            } catch (Exception $e) {
+                error_log("Error scheduling cleanup job: " . $e->getMessage());
+            }
+        } else {
+            error_log("RateLimiter class not found");
+        }
+    }
+    // Case 2: Duration changed while rate limit is enabled - reschedule cleanup job
+    elseif ($new_duration !== $old_duration && isRateLimitingEnabled()) {
+        if (class_exists('RateLimiter')) {
+            try {
+                $rateLimiter = new RateLimiter();
+                $rateLimiter->reschedule_cleanup($old_duration, $new_duration);
+            } catch (Exception $e) {
+                error_log("Error rescheduling cleanup job: " . $e->getMessage());
+            }
+        } else {
+            error_log("RateLimiter class not found");
+        }
+    }
+    // Case 3: Rate limit fields are cleared - unschedule any existing cleanup job
+    elseif (!isRateLimitingEnabled()) {
+        $timestamp = wp_next_scheduled('oopspam_cleanup_ratelimit_entries_cron');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'oopspam_cleanup_ratelimit_entries_cron');
+            $rateLimiter = new RateLimiter();
+            $rateLimiter->oopspam_truncate_ratelimit();
+        }
+    }
+}
+
+
+function schedule_cron_job($hook, $frequency)
+{
+    wp_clear_scheduled_hook($hook);
+    $interval = $frequency === "monthly" ? '+1 month' : '+2 weeks';
+    $schedule = $frequency === "monthly" ? 'oopspam-monthly' : 'oopspam-biweekly';
+    wp_schedule_event(strtotime($interval), $schedule, $hook);
+}
+
 
 
 function manual_moderation_blockedemails_render() {
@@ -165,7 +212,43 @@ function manual_moderation_allowedips_render() {
     <?php
 }
 
+function render_section_info() {
+    echo '<p>Configure rate limits to control the number of allowed submissions per IP and email, effectively preventing spam.</p>
+<p><strong>Note</strong>: To reset all limits, toggle the ‘Enable rate limiting’ setting off, save, then toggle it back on.</p>';
+}
 
+function render_number_field($args) {
+    $option_name = $args['label_for'];
+    $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+    
+    // Define default values for the rate limit settings
+    $default_values = [
+        'oopspamantispam_ratelimit_ip_limit' => 3,
+        'oopspamantispam_ratelimit_email_limit' => 3,
+        'oopspamantispam_ratelimit_block_duration' => 24,
+        'oopspamantispam_ratelimit_cleanup_duration' => 48
+    ];
+    
+    // Determine the value to display in the input field
+    $value = isset($rtOptions[$option_name]) ? $rtOptions[$option_name] : '';
+    ?>
+    <div>
+        <input required type="number" min="1" step="1" 
+               id="<?php echo esc_attr($option_name); ?>" 
+               name="oopspamantispam_ratelimit_settings[<?php echo esc_attr($option_name); ?>]" 
+               value="<?php echo esc_attr($value); ?>" 
+               placeholder="Example: <?php echo esc_attr($default_values[$option_name]); ?>"
+               class="regular-text">
+    </div>
+    <?php
+}
+
+
+
+function sanitize_positive_int($value) {
+    $value = absint($value);
+    return max(1, $value); // Ensure value is at least 1
+}
 
 function oopspamantispam_settings_init()
 {
@@ -173,9 +256,10 @@ function oopspamantispam_settings_init()
     // Register settings
     register_setting('oopspamantispam-manual-moderation', 'manual_moderation_settings');
     register_setting('oopspamantispam-privacy-settings-group', 'oopspamantispam_privacy_settings');
+    register_setting('oopspamantispam-ratelimit-settings-group', 'oopspamantispam_ratelimit_settings');
 
 
-    add_settings_section('manual_moderation_section', 'OOPSpam - Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
+    add_settings_section('manual_moderation_section', 'Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
     add_settings_field('mm_blocked_emails', __('Blocked emails'), 'manual_moderation_blockedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_blocked_ips', __('Blocked IPs'), 'manual_moderation_blockedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_blocked_keywords', __('Blocked keywords'), 'manual_moderation_keywords_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
@@ -240,6 +324,61 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-bb-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-umember-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-mpress-settings-group', 'oopspamantispam_settings');
+
+    // Add settings section
+    add_settings_section(
+        'oopspamantispam_ratelimit_section',
+        'Rate Limiting Settings',
+        'render_section_info',
+        'oopspamantispam-ratelimit-settings-group'
+    );
+
+    // Add settings fields
+    add_settings_field(
+        'oopspam_is_rt_enabled',
+        __('Enable rate limiting', 'oopspam'),
+        'oopspam_is_rt_enabled_render',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section'
+    );
+    
+    add_settings_field(
+        'oopspamantispam_ratelimit_ip_limit',
+        'Max Submissions per IP per Hour',
+        'render_number_field',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section',
+        ['label_for' => 'oopspamantispam_ratelimit_ip_limit']
+    );
+    
+    add_settings_field(
+        'oopspamantispam_ratelimit_email_limit',
+        'Max Submissions per Email per Hour',
+        'render_number_field',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section',
+        ['label_for' => 'oopspamantispam_ratelimit_email_limit']
+    );
+    
+    add_settings_field(
+        'oopspamantispam_ratelimit_block_duration',
+        'Block Duration (in hours)',
+        'render_number_field',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section',
+        ['label_for' => 'oopspamantispam_ratelimit_block_duration']
+    );
+    
+    add_settings_field(
+        'oopspamantispam_ratelimit_cleanup_duration',
+        'Data Clean Up Frequency (in hours)',
+        'render_number_field',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section',
+        ['label_for' => 'oopspamantispam_ratelimit_cleanup_duration']
+    );
+    
+    // End Register Rate Limit settings
 
 
     add_settings_section('oopspam_settings_section',
@@ -333,27 +472,6 @@ function oopspamantispam_settings_init()
     'oopspam_settings_section'
     );
 
-    // add_settings_field('oopspam_is_check_for_ip',
-    //     __('Do not analyze IP addresses', 'oopspam'),
-    //     'oopspam_is_check_for_ip_render',
-    //     'oopspamantispam-settings-group',
-    //     'oopspam_settings_section'
-    // );
-
-    // add_settings_field('oopspam_is_check_for_email',
-    //     __('Do not analyze Email addresses', 'oopspam'),
-    //     'oopspam_is_check_for_email_render',
-    //     'oopspamantispam-settings-group',
-    //     'oopspam_settings_section'
-    // );
-
-    // add_settings_field('oopspam_anonym_content',
-    //     __('Remove sensitive information from messages', 'oopspam'),
-    //     'oopspam_anonym_content_render',
-    //     'oopspamantispam-settings-group',
-    //     'oopspam_settings_section'
-    // );
-
     add_settings_field('oopspam_is_search_protection_on',
         __('Protect against internal search spam', 'oopspam'),
         'oopspam_is_search_protection_on_render',
@@ -408,6 +526,13 @@ function oopspamantispam_settings_init()
         add_settings_field('oopspam_forminator_spam_message',
             __('Forminator Spam Message', 'oopspam'),
             'oopspam_forminator_spam_message_render',
+            'oopspamantispam-forminator-settings-group',
+            'oopspam_forminator_settings_section'
+        );
+
+        add_settings_field('oopspam_forminator_content_field',
+            __('The main content field ID (optional)', 'oopspam'),
+            'oopspam_forminator_content_field_render',
             'oopspamantispam-forminator-settings-group',
             'oopspam_forminator_settings_section'
         );
@@ -1120,7 +1245,7 @@ function oopspam_spam_score_threshold_render()
                 <output style="padding-left: 10px;" id="range_text"><?php echo $currentDescription; ?></output>
             </p>
             <p class="description">
-                <?php echo __('You can control the spam detection sensitivity level with this setting. We recommend setting this value to "Moderate (recommended)". Lower it for more aggressive filtering.', 'oopspam'); ?>
+                <?php echo __('Adjust the spam detection sensitivity with this setting. For optimal results, we recommend selecting "Moderate (recommended).', 'oopspam'); ?>
             </p>
         </label>
     </div>
@@ -1269,6 +1394,24 @@ function oopspam_block_temp_email_render()
         <?php
 }
 
+function oopspam_is_rt_enabled_render()
+{
+    $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+    ?>
+            <div>
+                <label for="rt_enabled">
+                <input 
+                    class="oopspam-toggle" 
+                    type="checkbox" 
+                    id="rt_enabled" 
+                    name="oopspamantispam_ratelimit_settings[oopspam_is_rt_enabled]"
+                    value="1"
+                    <?php checked(!isset($rtOptions['oopspam_is_rt_enabled']), false, true);?> /> 
+                </label>
+            </div>
+        <?php
+}
+
 function oopspam_is_loggable_render()
 {
     $options = get_option('oopspamantispam_settings');
@@ -1339,13 +1482,15 @@ function oopspam_api_key_usage_render()
     <?php
 }
 
+
+
 function oopspam_is_check_for_ip_render()
 {
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     ?>
             <div>
                 <label for="ip_check_support">
-                <input class="oopspam-toggle" type="checkbox" id="ip_check_support" name="oopspamantispam_privacy_settings[oopspam_is_check_for_ip]"  <?php checked(!isset($privacyOptions['oopspam_is_check_for_ip']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="ip_check_support" name="oopspamantispam_privacy_settings[oopspam_is_check_for_ip]"  <?php checked(!isset($privacyOptions['oopspam_is_check_for_ip']), false, true);?>/>
                 <p class="description"><?php echo __('Turning on this setting may weaken the spam protection', 'oopspam'); ?></p>
 
                 </label>
@@ -1359,7 +1504,7 @@ function oopspam_anonym_content_render()
     ?>
             <div>
                 <label for="anonym_content_support">
-                <input class="oopspam-toggle" type="checkbox" id="anonym_content_support" name="oopspamantispam_privacy_settings[oopspam_anonym_content]"  <?php checked(!isset($privacyOptions['oopspam_anonym_content']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="anonym_content_support" name="oopspamantispam_privacy_settings[oopspam_anonym_content]"  <?php checked(!isset($privacyOptions['oopspam_anonym_content']), false ,true);?>/>
                 <p class="description"><?php echo __('Before sending a message to OOPSpam for spam detection, try to remove Emails, Addresses, Phone Numbers.
 It should be noted, however, that there is no guarantee that these data points will be accurately removed. Turning on this setting may weaken the spam protection', 'oopspam'); ?></p>
 
@@ -1373,7 +1518,7 @@ function oopspam_is_check_for_email_render() {
     ?>
             <div>
                 <label for="email_check_support">
-                <input class="oopspam-toggle" type="checkbox" id="email_check_support" name="oopspamantispam_privacy_settings[oopspam_is_check_for_email]"  <?php checked(!isset($privacyOptions['oopspam_is_check_for_email']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="email_check_support" name="oopspamantispam_privacy_settings[oopspam_is_check_for_email]"  <?php checked(!isset($privacyOptions['oopspam_is_check_for_email']), false, true);?>/>
                 <p class="description"><?php echo __('Turning on this setting may weaken the spam protection', 'oopspam'); ?></p>
 
                 </label>
@@ -1386,7 +1531,7 @@ function oopspam_is_search_protection_on_render() {
     ?>
             <div>
                 <label for="search_check_support">
-                <input class="oopspam-toggle" type="checkbox" id="search_check_support" name="oopspamantispam_settings[oopspam_is_search_protection_on]"  <?php checked(!isset($options['oopspam_is_search_protection_on']), false);?>/>
+                <input class="oopspam-toggle" type="checkbox" id="search_check_support" name="oopspamantispam_settings[oopspam_is_search_protection_on]"  <?php checked(!isset($options['oopspam_is_search_protection_on']), false, true);?>/>
                 </label>
             </div>
         <?php
@@ -1541,6 +1686,45 @@ function oopspam_forminator_spam_message_render()
                         </label>
                 </div>
             <?php
+}
+
+function oopspam_forminator_content_field_render() {
+    $options = get_option('oopspamantispam_settings');
+    $formDataJson = isset($options['oopspam_forminator_content_field']) ? $options['oopspam_forminator_content_field'] : '[]';
+    $formData = json_decode($formDataJson, true); // Decode JSON data into PHP array
+    ?>
+    <div>
+        <form id="formData">
+            <label for="formIdInput">Form ID:</label>
+            <input type="text" id="formIdInput" name="formIdInput" placeholder="167">
+            <label for="fieldIdInput">Field ID:</label>
+            <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="2,3,4">
+            <button type="button" onclick="addData(this)">Add Pair</button>
+        </form>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th>Form ID</th>
+                    <th>Field ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (is_array($formData)) : ?>
+                    <?php foreach ($formData as $key => $entry) : ?>
+                        <tr>
+                            <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                            <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                            <td><button type="button" onclick="deleteRow(this)">Delete</button></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_forminator_content_field]" id="formDataInput" value="<?php echo esc_attr(json_encode($formData)); ?>">
+        <p class="description"><?php echo __('Enter the Form ID and Field ID pairs in the table above. If multiple Field IDs are provided for a Form ID, their values will be joined together.', 'oopspam'); ?></p>
+    </div>
+    <?php
 }
 
 /* Forminator UI settings section ends */
@@ -2767,12 +2951,14 @@ $options = get_option('oopspamantispam_settings');
 
     if (empty($options['oopspam_api_key']) || !isset($options['oopspam_api_key'])) {
         ?>
-            <h3><b><?php echo __('To use OOPSpam Anti-Spam plugin you need an OOPSpam Anti-Spam API key. Subscribe to get a key:'); ?></b></h3>
-            <a target="_blank" href="https://app.oopspam.com/" class="button button-primary"><?php echo html_entity_decode('Get a key directly via OOPSpam Dashboard &nearhk;'); ?></a> |
-            <a target="_blank" href="https://rapidapi.com/oopspam/api/oopspam-spam-filter/pricing" class="button button-primary"><?php echo html_entity_decode('Get a key via RapidAPI marketplace &nearhk;'); ?></a>
+            <h3><b><?php echo __('To use the OOPSpam Anti-Spam plugin, you need an OOPSpam Anti-Spam API key.'); ?></b></h3>
+            <h3><b><?php echo __('Register for an account on the OOPSpam dashboard to get your API key:'); ?></b></h3>
+            <a target="_blank" href="https://app.oopspam.com/Identity/Account/Register" class="button button-primary"><?php echo html_entity_decode('Get an API Key &nearhk;'); ?></a>
             <br/>
-            <p>Questions? Please do not hesitate to contact us via <a href="mailto:contact@oopspam.com">contact@oopspam.com</a>. We'll be happy to help you. </p>
-            <p>&vrtri; Once you have a key, please insert it into the field below.</p>
+            <h4><b><?php echo __('Need help?'); ?></b></h4>
+            <p>If you have any questions or need assistance, please feel free to reach out to us at <a href="mailto:contact@oopspam.com">contact@oopspam.com</a>. We're here to help!</p>
+            <h4><b><?php echo __('How to get started:'); ?></b></h4>
+            <p>After obtaining your API key, just paste it into the "My API Key" field below to activate the service.</p>
             <hr/><br/>
         <?php
 }
@@ -2792,6 +2978,7 @@ if( isset( $_GET[ 'tab' ] ) ) {
         <a href="?page=wp_oopspam_settings_page&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>">General</a>
         <a href="?page=wp_oopspam_settings_page&tab=privacy" class="nav-tab <?php echo $active_tab == 'privacy' ? 'nav-tab-active' : ''; ?>">Privacy</a>
         <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo $active_tab == 'manual_moderation' ? 'nav-tab-active' : ''; ?>">Manual moderation</a>
+        <a href="?page=wp_oopspam_settings_page&tab=rate_limiting" class="nav-tab <?php echo $active_tab == 'rate_limiting' ? 'nav-tab-active' : ''; ?>">Rate Limiting</a>
     </h2>
 
 
@@ -2804,6 +2991,9 @@ if( isset( $_GET[ 'tab' ] ) ) {
             } elseif ($active_tab == 'privacy') {
                 settings_fields('oopspamantispam-privacy-settings-group');
                 do_settings_sections('oopspamantispam-privacy-settings-group');
+            } elseif ($active_tab == 'rate_limiting') {
+                settings_fields('oopspamantispam-ratelimit-settings-group');
+                do_settings_sections('oopspamantispam-ratelimit-settings-group');
             } else {
            
                 settings_fields('oopspamantispam-settings-group');

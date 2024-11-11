@@ -174,6 +174,7 @@ function oopspamantispam_get_ip() {
 
     if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] !== true) {
         $headers = [
+            "HTTP_X_SUCURI_CLIENTIP", // Sucuri
             'HTTP_CF_CONNECTING_IP', // Cloudflare
             'REMOTE_ADDR',
             'HTTP_CLIENT_IP',

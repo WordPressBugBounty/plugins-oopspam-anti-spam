@@ -3,8 +3,9 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.15
+ * Version: 1.2.16
  * Author: OOPSpam
+ * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
  * License: GPL2
  */
@@ -34,6 +35,7 @@ require_once dirname(__FILE__) . '/include/oopspam-country-list.php';
 require_once dirname(__FILE__) . '/include/oopspam-language-list.php';
 require_once dirname(__FILE__) . '/include/UI/display-ham-entries.php';
 require_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
+require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
 
 add_action('init', 'do_output_buffer');
 function do_output_buffer()
@@ -148,28 +150,34 @@ function oopspam_schedule_intervals($schedules)
 add_filter('cron_schedules', 'oopspam_schedule_intervals');
 
 // Schedule Cron Job Event
-function oopspam_cron_job()
-{
-
+function oopspam_cron_job() {
     try {
+        $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+        
         $options = get_option('oopspamantispam_settings');
+        if (!is_array($options)) {
+            $options = [];
+        }
 
-        // Set default intervals for Ham/Spam Entries table clean up
+        if (isRateLimitingEnabled()) {
+            $cleanDuration = isset($rtOptions['oopspamantispam_ratelimit_cleanup_duration']) ? $rtOptions['oopspamantispam_ratelimit_cleanup_duration'] : 48; // Default is 48 hours
+            $rateLimiter = new RateLimiter();
+            $rateLimiter->reschedule_cleanup(0, $cleanDuration);
+        }
+
         if (!wp_next_scheduled('oopspam_cleanup_ham_entries_cron')) {
-            // Once per month
             wp_schedule_event(strtotime('+1 month'), 'oopspam-monthly', 'oopspam_cleanup_ham_entries_cron');
             $options['oopspam_clear_ham_entries'] = "monthly";
         }
+
         if (!wp_next_scheduled('oopspam_cleanup_spam_entries_cron')) {
-            // Once per month
             wp_schedule_event(strtotime('+1 month'), 'oopspam-monthly', 'oopspam_cleanup_spam_entries_cron');
             $options['oopspam_clear_spam_entries'] = "monthly";
         }
 
         update_option('oopspamantispam_settings', $options);
     } catch (Exception $e) {
-        // Handle the exception
-        error_log('oopspam_cron_job: ' . $e->getMessage());
+        error_log('oopspam_cron_job error: ' . $e->getMessage());
     }
 }
 
@@ -207,24 +215,47 @@ function oopspam_cleanup_spam_entries()
 add_action('oopspam_cleanup_spam_entries_cron', 'oopspam_cleanup_spam_entries');
 add_action('oopspam_cleanup_ham_entries_cron', 'oopspam_cleanup_ham_entries');
 
-function oopspam_plugin_activate()
-{
-    // plugin activated
+add_action('oopspam_cleanup_ratelimit_entries_cron', 'oopspam_ratelimit_cleanup');
+
+ function oopspam_ratelimit_cleanup() {
+     $rate_limiter = new RateLimiter();
+    
+
+    // Schedule rate limiter cleanup
+    $rate_limiter->oopspam_ratelimit_cleanup();
+   
+ }
+function oopspam_plugin_activate() {
+
+    // Schedule other cron jobs
+    oopspam_cron_job();
+
+    // Set default settings
     do_action('oopspam_set_default_settings');
 }
 
 // Set default values
 function oopspam_default_options()
 {
+
     $options = get_option('oopspamantispam_settings');
+    $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+
+    $defaultRt = array(
+        'oopspamantispam_ratelimit_ip_limit' => 2,
+        'oopspamantispam_ratelimit_email_limit' => 2
+    );
+
+    update_option('oopspamantispam_ratelimit_settings', $defaultRt);
+
     if (!isset($options['oopspam_api_key_source'])) {
         $default = array(
-            'oopspam_is_check_for_length' => true,
             'oopspam_api_key_source' => 'OOPSpamDashboard',
             'oopspam_api_key_usage' => '0/0',
             'oopspam_clear_spam_entries' => 'monthly',
             'oopspam_clear_ham_entries' => 'monthly',
         );
+       
         update_option('oopspamantispam_settings', $default);
     }
 }
@@ -236,6 +267,7 @@ function oopspam_plugin_deactivation()
     // plugin deactivation
     wp_clear_scheduled_hook('oopspam_cleanup_ham_entries_cron');
     wp_clear_scheduled_hook('oopspam_cleanup_spam_entries_cron');
+    wp_clear_scheduled_hook('oopspam_cleanup_ratelimit_entries_cron');
 }
 
 add_filter('plugin_action_links', 'oopspam_plugin_action_links', 10, 2);
@@ -447,6 +479,26 @@ function containsUrl($text) {
     return preg_match($reg_exUrl, $text);
 }
 
+function isRateLimitingEnabled() {
+    $options = get_option('oopspamantispam_ratelimit_settings');
+    $requiredKeys = [
+        'oopspam_is_rt_enabled',
+        'oopspamantispam_ratelimit_ip_limit', 
+        'oopspamantispam_ratelimit_email_limit', 
+        'oopspamantispam_ratelimit_block_duration', 
+        'oopspamantispam_ratelimit_cleanup_duration'
+    ];
+
+    // Check each required key in the provided or current settings
+    foreach ($requiredKeys as $key) {
+        if (empty($options[$key])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 
 function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnReason, $type)
 {
@@ -484,6 +536,42 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
             }
             return false;
     }
+
+    // Run rate limiting check
+    try {
+        $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+        $isRateLimitEnabled = isRateLimitingEnabled();
+        if($isRateLimitEnabled) {
+            $rate_limiter = new RateLimiter();
+        
+            if (!$rate_limiter->checkLimit($commentIP, 'ip')) {
+                if ($returnReason) {
+                    $reason = [
+                        "Score" => 6,
+                        "isItHam" => false,
+                        "Reason" => "Too many submissions from this IP address"
+                    ];
+                    return $reason;
+                }
+                return false;
+            }
+        
+            if (!$rate_limiter->checkLimit($email, 'email')) {
+                if ($returnReason) {
+                    $reason = [
+                        "Score" => 6,
+                        "isItHam" => false,
+                        "Reason" => "Too many submissions from this email"
+                    ];
+                    return $reason;
+                }
+                return false;
+            }
+        }
+    } catch (Exception $e) {
+        error_log('Rate limiter check failed: ' . $e->getMessage());
+    }
+
     
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
@@ -921,29 +1009,25 @@ function check_search_for_spam($query)
 // load the main.css style
 function oopspam_admin_init()
 {
-
-    // Add corn jobs
-    oopspam_cron_job();
-
-    // Check if we are on the plugin settings page
+    // Initialize rate limiter and create table
+    $rate_limiter = new RateLimiter();
+    
+    // Ensure styles are added only on plugin settings pages
     if (isset($_GET['page']) && (
         $_GET['page'] === 'wp_oopspam_settings_page' ||
         $_GET['page'] === 'wp_oopspam_frm_ham_entries' ||
         $_GET['page'] === 'wp_oopspam_frm_spam_entries'
     )) {
-
         wp_register_style('oopspam_stylesheet', plugins_url('styles/main.css', __FILE__));
         wp_register_style('tom-select', plugins_url('./include/libs/tom-select.min.css', __FILE__));
         add_action('admin_print_styles', 'oopspam_admin_style');
     
         require_once plugin_dir_path(__FILE__) . 'include/localize-script.php';
-    
-        function oopspam_admin_style()
-        {
-            wp_enqueue_style('oopspam_stylesheet');
-            wp_enqueue_style('tom-select');
-        }
-     }
+    }
+}
 
-   
+function oopspam_admin_style()
+{
+    wp_enqueue_style('oopspam_stylesheet');
+    wp_enqueue_style('tom-select');
 }

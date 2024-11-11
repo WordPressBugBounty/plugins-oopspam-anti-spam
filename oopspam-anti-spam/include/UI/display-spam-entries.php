@@ -208,69 +208,252 @@ class Spam_Entries extends WP_List_Table {
 		);
 	}
 
-	/**
-	 * Send an email to admin email
-	 *
-	 * @param int $id entry ID
-	 */
-	public static function notify_spam_entry( $id ) {
-		global $wpdb;
-        $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+/**
+ * Send an email notification with form submission details
+ *
+ * @param int $id entry ID
+ */
+public static function notify_spam_entry($id) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+    $spamEntry = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT message, ip, email, raw_entry, date
+            FROM $table
+            WHERE id = %s",
+            $id
+        )
+    );
 
-		$spamEntry = $wpdb->get_row(
-			$wpdb->prepare(
-				"
-					SELECT message, ip, email
-					FROM $table
-					WHERE id = %s
-				",
-				$id
-			)
-		);
-	
-		$email = $spamEntry->email;
-		$message = $spamEntry->message;
-		$body = "E-mail: " . $email . " <br><br>" . "Message " . $message;
-		
-		// Get the list of email addresses
-		$to = get_option('oopspam_admin_emails');
-		
-		// If the option is empty, get the default admin email
-		if (empty($to)) {
-			$to = get_option('admin_email');
-		}
-		
-		// Convert the email addresses to an array
-		$to_array = is_string($to) ? explode(',', $to) : (array) $to;
-		 
-		// Remove any invalid email addresses
-		$to_array = array_filter($to_array, 'is_email');
-				
-		// Check if there are valid email addresses
-		if (!empty($to_array) && is_email($email)) {
-			$subject = "A new submission from " . get_bloginfo('name');
-			$sent_to = array();
-		
-			// Send the email to each recipient
-			foreach ($to_array as $recipient) {
-				$headers = 'From: ' . $recipient . "\r\n" .
-						   'Reply-To: ' . $email . "\r\n" .
-						   'Content-Type: ' . 'text/html' . "\r\n";
-				$sent = wp_mail($recipient, $subject, $body, $headers);
-				if ($sent) {
-					$sent_to[] = $recipient;
-				}
-			}
-		
-			if (!empty($sent_to)) {
-				$recipient_list = implode(', ', $sent_to);
-				echo "<script type='text/javascript'>alert('Email is sent to: " . $recipient_list . "');</script>";
-			} else {
-				echo "<script type='text/javascript'>alert('Failed to send email.');</script>";
-			}
-		}
-		
-	}
+    // Start building the email body
+    $body = "<div style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;'>";
+    $body .= "<h2 style='color: #333;'>Form Submission Details</h2>";
+    
+    // Initialize sender email from database
+    $sender_email = $spamEntry->email;
+    
+    // Process form fields
+    if (!empty($spamEntry->raw_entry)) {
+        $processed_fields = self::process_form_fields($spamEntry->raw_entry);
+        
+        if (!empty($processed_fields)) {
+            $body .= "<table style='border-collapse: collapse; width: 100%; margin: 20px 0;'>";
+            $body .= "<tr style='background-color: #f5f5f5;'>
+                        <th style='border: 1px solid #ddd; padding: 12px; text-align: left;'>Field</th>
+                        <th style='border: 1px solid #ddd; padding: 12px; text-align: left;'>Value</th>
+                    </tr>";
+            
+            foreach ($processed_fields as $field) {
+                $formatted_value = self::format_field_value($field['value']);
+                
+                $body .= "<tr>
+                            <td style='border: 1px solid #ddd; padding: 12px;'><strong>" . esc_html($field['name']) . "</strong></td>
+                            <td style='border: 1px solid #ddd; padding: 12px;'>{$formatted_value}</td>
+                        </tr>";
+            }
+            
+            $body .= "</table>";
+        }
+    }
+    
+    // Add submission metadata
+    $body .= "<div style='background-color: #f9f9f9; padding: 15px; margin-top: 20px; border-radius: 5px;'>";
+    $body .= "<h3 style='color: #666; margin-top: 0;'>Submission Details</h3>";
+    $body .= "<p style='margin: 5px 0;'><strong>IP Address:</strong> " . esc_html($spamEntry->ip) . "</p>";
+    $body .= "<p style='margin: 5px 0;'><strong>Submission Time:</strong> " . esc_html($spamEntry->date) . "</p>";
+    $body .= "</div>";
+    
+    $body .= "</div>";
+    
+    // Get the list of email addresses
+    $to = get_option('oopspam_admin_emails');
+    
+    // If the option is empty, get the default admin email
+    if (empty($to)) {
+        $to = get_option('admin_email');
+    }
+    
+    // Convert the email addresses to an array
+    $to_array = is_string($to) ? explode(',', $to) : (array) $to;
+    
+    // Remove any invalid email addresses
+    $to_array = array_filter($to_array, 'is_email');
+    
+    // Send emails
+    if (!empty($to_array)) {
+        $subject = "Form Submission Review Required - " . get_bloginfo('name');
+        $sent_to = [];
+        
+        foreach ($to_array as $recipient) {
+            $headers = [
+                'From: ' . get_bloginfo('name') . ' <' . $recipient . '>',
+                'Reply-To: ' . $sender_email,
+                'Content-Type: text/html; charset=UTF-8'
+            ];
+            
+            $sent = wp_mail($recipient, $subject, $body, $headers);
+            if ($sent) {
+                $sent_to[] = $recipient;
+            }
+        }
+        
+        // Show success/failure message
+        if (!empty($sent_to)) {
+            $recipient_list = esc_js(implode(', ', $sent_to));
+            echo "<script type='text/javascript'>alert('Notification sent to: " . $recipient_list . "');</script>";
+        } else {
+            echo "<script type='text/javascript'>alert('Failed to send notification.');</script>";
+        }
+    }
+}
+
+/**
+ * Check if array is sequential (numeric keys) or associative
+ */
+private static function is_sequential_array($array) {
+    if (!is_array($array)) {
+        return false;
+    }
+    return array_keys($array) === range(0, count($array) - 1);
+}
+
+/**
+ * Format field value for email display
+ * 
+ * @param mixed $value The field value to format
+ * @return string Formatted value
+ */
+private static function format_field_value($value) {
+    if (is_array($value)) {
+        if (empty($value)) {
+            return '-';
+        }
+        return implode(', ', array_map('esc_html', $value));
+    }
+    
+    if (is_bool($value)) {
+        return $value ? 'Yes' : 'No';
+    }
+    
+    if ($value === '' || $value === null) {
+        return '-';
+    }
+    
+    return esc_html($value);
+}
+
+/**
+ * Prettify field name by converting various formats to readable text
+ * 
+ * @param string $field_name Raw field name
+ * @return string Prettified field name
+ */
+private static function prettify_field_name($field_name) {
+    // Remove common prefixes
+    $field_name = preg_replace('/^(your[-_]|field[-_]|input[-_]|txt[-_]|frm[-_])/i', '', $field_name);
+    
+    // Convert snake_case and kebab-case to spaces
+    $field_name = str_replace(['_', '-'], ' ', $field_name);
+    
+    // Handle special cases for common form fields
+    $special_cases = [
+        'wpcf7' => 'Contact Form',
+        'fname' => 'First Name',
+        'lname' => 'Last Name',
+        'email' => 'Email Address',
+        'tel' => 'Phone Number',
+        'msg' => 'Message',
+        'addr' => 'Address',
+        'dob' => 'Date of Birth'
+    ];
+    
+    foreach ($special_cases as $case => $replacement) {
+        if (strcasecmp($field_name, $case) === 0) {
+            return $replacement;
+        }
+    }
+    
+    // Capitalize first letter of each word
+    $field_name = ucwords($field_name);
+    
+    // Clean up extra spaces
+    return trim($field_name);
+}
+
+/**
+ * Process form data for email display
+ * 
+ * @param mixed $raw_entry Form submission data
+ * @return array Processed fields array
+ */
+private static function process_form_fields($raw_entry) {
+    $processed_fields = [];
+    
+    // Handle different form submission formats
+    if (is_string($raw_entry)) {
+        $raw_entry = json_decode($raw_entry, true);
+    }
+    
+    if (!is_array($raw_entry)) {
+        return $processed_fields;
+    }
+    
+    // Helper function to extract field data
+    $extract_field = function($key, $value) {
+        // Skip internal/technical fields
+        $skip_prefixes = ['_', 'form_', 'post_', 'date_', 'is_', 'payment_', 'transaction_'];
+        foreach ($skip_prefixes as $prefix) {
+            if (strpos($key, $prefix) === 0) {
+                return null;
+            }
+        }
+        
+        // Handle different value formats
+        if (is_array($value)) {
+            // Format 3: Object with value property
+            if (isset($value['value'])) {
+                return [
+                    'name' => isset($value['label']) ? $value['label'] : 
+                           (isset($value['key']) ? self::prettify_field_name($value['key']) : 
+                            self::prettify_field_name($key)),
+                    'value' => $value['value']
+                ];
+            }
+            // Format 4: Array format
+            if (isset($value['name']) && isset($value['value'])) {
+                return [
+                    'name' => $value['name'],
+                    'value' => $value['value']
+                ];
+            }
+        }
+        
+        // Format 1 & 2: Simple key-value pairs
+        return [
+            'name' => self::prettify_field_name($key),
+            'value' => $value
+        ];
+    };
+    
+    // Process sequential arrays
+    if (self::is_sequential_array($raw_entry)) {
+        foreach ($raw_entry as $field) {
+            if (is_array($field) && isset($field['name']) && isset($field['value'])) {
+                $processed_fields[] = $extract_field($field['name'], $field['value']);
+            }
+        }
+    } else {
+        // Process associative arrays
+        foreach ($raw_entry as $key => $value) {
+            $field_data = $extract_field($key, $value);
+            if ($field_data !== null) {
+                $processed_fields[] = $field_data;
+            }
+        }
+    }
+    
+    return array_filter($processed_fields);
+}
 
 	/**
 	 * Report a spam entry as ham/not spam
@@ -497,7 +680,8 @@ class Spam_Entries extends WP_List_Table {
             'score' => array( 'score', false ),
             'form_id' => array( 'form_id', false ),
             'ip' => array( 'ip', false ),
-			'email' => array( 'email', false )
+			'email' => array( 'email', false ),
+			'reason' => array( 'reason', false )
 		);
 
 		return $sortable_columns;

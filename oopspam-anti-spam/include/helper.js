@@ -196,8 +196,26 @@ jQuery(document).ready(function($) {
           }
     }
 
+     // Ensure correct visibility on load based on checkbox state
+    hideRateLimitSettings();
+
+    $("#rt_enabled").click(function () {
+        hideRateLimitSettings(); // Hide/show based on checkbox state
+    });
+
+    function hideRateLimitSettings() {
+        if ($("#rt_enabled").is(":checked")) {
+            // Hide settings related to rate limiting
+            // Adjust this selector based on your actual HTML structure
+            $("#rt_enabled").closest('tr').nextAll('tr').show();
+        } else {
+            // Show settings related to rate limiting
+            // Show all related rows, adjust selector as necessary
+            $("#rt_enabled").closest('tr').nextAll('tr').hide(); 
+        }
+    }
+
     $("#spam-countries").click(function () {
-       
         const spamCountries = ["ru", "cn"];
         let blockedCountriesSelect = document.querySelector('#blockcountry select').tomselect;
         blockedCountriesSelect.setValue(spamCountries);
