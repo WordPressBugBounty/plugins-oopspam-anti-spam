@@ -694,7 +694,8 @@ private static function process_form_fields($raw_entry) {
 	 */
 	public function get_bulk_actions() {
 		$actions = [
-			'bulk-delete' => 'Delete'
+			'bulk-delete' => 'Delete',
+			'bulk-report' => 'Report as ham'
 		];
 
 		return $actions;
@@ -730,6 +731,19 @@ private static function process_form_fields($raw_entry) {
 	public function process_bulk_action() {
 
 		//Detect when a bulk action is being triggered...
+		if ('bulk-report' === $this->current_action()) {
+			
+			$report_ids = isset($_POST['bulk-delete']) ? array_map('intval', $_POST['bulk-delete']) : [];
+	
+			if (!empty($report_ids)) {
+				foreach ($report_ids as $id) {
+					// Report each selected entry as ham
+					self::report_spam_entry($id);
+				}
+				// Add a message to notify the user of success
+				echo '<div class="updated"><p>Selected entries have been reported as ham.</p></div>';
+			}
+		}
 		if ( 'report' === $this->current_action() ) {
 
 			// Verify the nonce.
@@ -836,7 +850,7 @@ class SP_Plugin {
 	 */
 	public function plugin_settings_page() {
 		?>
-		<div class="wrap">
+		<div class="oopspam-wrap">
 		<div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start;">
 				<h2 style="padding-right:0.5em;"><?php _e("Spam Entries", "oopspam"); ?></h2>
 				<input type="button" id="empty-spam-entries" style="margin-right:0.5em;" class="button action" value="<?php _e("Empty the table", "oopspam"); ?>">

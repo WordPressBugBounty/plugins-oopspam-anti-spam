@@ -1443,7 +1443,6 @@ function oopspam_is_urls_allowed_render()
 function oopspam_custom_admin_notice()
 {
     $options = get_option('oopspamantispam_settings');
-
     if (get_option('over_rate_limit')) {
         ?>
             <div class="notice notice-error is-dismissible">
@@ -1454,10 +1453,10 @@ function oopspam_custom_admin_notice()
                    </p>
                    <p>
                    <strong>
-                   <?php _e("Note: You may see this warning even if you have just entered your API key. After your website receives the first submission, the warning will be automatically dismissed. ", 'oopspam');?> 
+                   <?php _e("Note: This warning may appear immediately after entering your API key. It will be automatically dismissed once your website receives its first submission.", 'oopspam');?> 
     </strong> </p>
 
-		<p><?php _e('For any questions email us: contact@oopspam.com', 'oopspam');?></p>
+		<p><?php _e('For any questions email us: <a href="mailto:contact@oopspam.com">contact@oopspam.com</a>', 'oopspam');?></p>
             </div>
             <?php
 }

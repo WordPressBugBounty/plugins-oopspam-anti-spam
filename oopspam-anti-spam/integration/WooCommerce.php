@@ -154,29 +154,6 @@ class WooSpamProtection
 
         $options = get_option('oopspamantispam_settings');
 
-        // First name validation
-        if(!empty($billing_first_name)) {
-            $cleanFName = sanitize_text_field($billing_first_name);
-            if(!ctype_upper($cleanFName) && !empty($cleanFName)) {
-                $firstPartOfFName = explode(" ", $cleanFName, 2)[0];
-                if(strlen(preg_replace('![^A-Z]+!', '', $firstPartOfFName)) > 2){
-                    $frmEntry = [
-                        "Score" => 6,
-                        "Message" => "",
-                        "IP" => "",
-                        "Email" => $email,
-                        "RawEntry" => json_encode($_POST),
-                        "FormId" => "WooCommerce",
-                    ];
-                    oopspam_store_spam_submission($frmEntry, "Failed form data validation");
-
-                    $error_to_show = $this->get_error_message();
-                    $errors->add('oopspam_error', $error_to_show);
-                    return $errors;
-                }
-            }
-        }
-
         // Check honeypot fields
         foreach ($_POST as $key => $value) {
             if (strpos($key, 'contact_by_fax_') === 0 && !empty($value)) {
@@ -204,10 +181,10 @@ class WooSpamProtection
 
         // OOPSpam check
         $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email));
-
         if ($showError) {
             $error_to_show = $this->get_error_message();
             $errors->add('oopspam_error', $error_to_show);
+            wp_die( $error_to_show );
             return $errors;
         }
 
