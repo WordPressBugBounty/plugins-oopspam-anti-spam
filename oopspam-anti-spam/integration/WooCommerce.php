@@ -32,9 +32,52 @@ class WooSpamProtection
         add_filter('woocommerce_process_login_errors', [$this, 'oopspam_woocommerce_login_errors'], 1, 1);
 
         add_action( 'woocommerce_checkout_process', [$this, 'oopspam_checkout_process'] );
+        add_action( 'woocommerce_store_api_checkout_order_processed', [$this, 'oopspam_checkout_store_api_processed'], 10, 1 );
     }
 
+    function oopspam_checkout_store_api_processed($order) {
+        
+        $data = json_decode($order, true);
+        // 
+        $options = get_option('oopspamantispam_settings');
+        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
+
+        // Check if WooCommerce -> Settings -> Advanced -> Order Attribution and "Block orders from unknown origin" are enabled.
+        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+            $sourceTypeExists = false; // Flag to track if the key exists.
+            $sourceTypeValue = null;  // Store the value if found.
+           
+            if (isset($data['meta_data'])) {
+                foreach ($data['meta_data'] as $meta) {
+                    if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
+                        $sourceTypeExists = true;
+                        $sourceTypeValue = $meta['value'];
+                        break;
+                    }
+                }
+            }
+
+            // If the key doesn't exist or its value is empty, stop execution with an error message.
+            if (!$sourceTypeExists || empty($sourceTypeValue)) {
+                
+                $frmEntry = [
+                    "Score" => 6,
+                    "Message" => "",
+                    "IP" => $data['customer_ip_address'],
+                    "Email" => $data['billing']['email'],
+                    "RawEntry" => json_encode($data),
+                    "FormId" => "WooCommerce",
+                ];
+                oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+
+                $error_to_show = $this->get_error_message();
+                wp_die($error_to_show);
+            }
+        }
+    }    
+
     function oopspam_checkout_process() {
+
         $email = "";
         if (isset($_POST["billing_email"]) && is_email($_POST["billing_email"])) {
             $email = $_POST["billing_email"];
@@ -80,8 +123,9 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_login_form()
     {
+
         $timestamp = time();
-        $field_name = 'contact_by_fax_login_' . $timestamp;
+        $field_name = 'contact_by_fax_log_' . $timestamp;
         
         if (function_exists('WC')) {
             WC()->session && WC()->session->set('honeypot_field_login', $field_name);
@@ -108,6 +152,7 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_register_errors($validation_error, $username, $password, $email)
     {
+
         $options = get_option('oopspamantispam_settings');
         
         // Check if any honeypot fields are filled
@@ -144,14 +189,6 @@ class WooSpamProtection
      */
     public function oopspam_process_registration($username, $email, $errors)
     {
-        $billing_first_name = "";
-        if(isset($_POST["billing_first_name"])) { 
-            $billing_first_name = $_POST["billing_first_name"];
-        } else {
-            $customer_data = WC()->session->get('customer');
-            $billing_first_name = $customer_data['first_name'];
-        }
-
         $options = get_option('oopspamantispam_settings');
 
         // Check honeypot fields
@@ -196,7 +233,6 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_login_errors($errors)
     {
-        $options = get_option('oopspamantispam_settings');
         $email = "";
 
         if (isset($_POST["username"]) && is_email($_POST["username"])) {

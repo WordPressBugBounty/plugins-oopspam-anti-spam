@@ -3,8 +3,8 @@ Contributors: oopspam
 Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
-Tested up to: 6.6
-Stable tag: 1.2.17
+Tested up to: 6.7
+Stable tag: 1.2.18
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,8 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.18 =
+* NEW: [WooCommerce] "Block orders from unknown origin" setting for the Block Checkout
 = 1.2.17 =
 * NEW: Added bulk reporting functionality for both Form Spam Entries and Form Ham Entries tables
 * IMPROVEMENT: [WooCommerce] Enhanced detection of spam targeting the WooCommerce Block Checkout

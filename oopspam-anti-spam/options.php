@@ -1183,6 +1183,13 @@ function oopspamantispam_settings_init()
             'oopspamantispam-woo-settings-group',
             'oopspam_woo_settings_section'
         );
+
+        add_settings_field('oopspam_woo_check_origin',
+            __('Block orders from unknown origin', 'oopspam'),
+            'oopspam_woo_check_origin_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
     }
 
 }
@@ -2757,6 +2764,22 @@ function oopspam_is_woo_activated_render()
         echo 'checked="checked"';
     }
     ?>/>
+                    </label>
+                </div>
+            <?php
+}
+
+function oopspam_woo_check_origin_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+                <div>
+                    <label for="woo_order_origin">
+                    <input class="oopspam-toggle" type="checkbox" id="woo_order_origin" name="oopspamantispam_settings[oopspam_woo_check_origin]" value="1" <?php if (isset($options['oopspam_woo_check_origin']) && 1 == $options['oopspam_woo_check_origin']) {
+        echo 'checked="checked"';
+    }
+    ?>/>
+                     <p class="description"><?php echo __('This setting applies only to Block Checkout and requires the "Order Attribution" option to be enabled in WooCommerce (Settings → Advanced).', 'oopspam'); ?></p>
                     </label>
                 </div>
             <?php
