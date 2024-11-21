@@ -35,7 +35,7 @@ function oopspamantispam_plugin_check($plugin)
             }
             break;
         case 'ws':
-            if (is_plugin_active('ws-form-pro/ws-form.php')) {
+            if (is_plugin_active('ws-form-pro/ws-form.php') || is_plugin_active('ws-form/ws-form.php')) {
                 $result = true;
             }
             break;

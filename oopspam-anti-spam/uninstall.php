@@ -8,6 +8,7 @@ delete_option( 'manual_moderation_settings' );
 delete_option( 'oopspamantispam_privacy_settings' );
 delete_option( 'oopspamantispam_ratelimit_settings' );
 delete_option( 'oopspam_db_version' );
+delete_option( 'oopspam_rt_db_version' );
 delete_option( 'oopspam-activation-date' );
 delete_option( 'oopspam_countryallowlist' );
 delete_option( 'oopspam_languageallowlist' );

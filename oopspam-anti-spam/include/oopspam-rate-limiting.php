@@ -31,8 +31,6 @@ class RateLimiter {
         ];
     }
     
-
-        $this->createTable();
         add_filter('cron_schedules', [$this, 'oopspam_register_cron_schedule']);
     }
     
@@ -49,29 +47,7 @@ class RateLimiter {
      */
     private function getDateTimeWithOffset($hours) {
         return date('Y-m-d H:i:s', strtotime($this->getCurrentDateTime() . " {$hours} hours"));
-    }
-
-    public function createTable() {
-        global $wpdb;
-        
-        $charset_collate = $wpdb->get_charset_collate();
-        
-        $sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}{$this->db_table} (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            identifier varchar(255) NOT NULL,
-            type enum('ip','email') NOT NULL,
-            attempts int(11) NOT NULL DEFAULT 1,
-            first_attempt datetime NOT NULL,
-            last_attempt datetime NOT NULL,
-            is_blocked tinyint(1) NOT NULL DEFAULT 0,
-            blocked_until datetime DEFAULT NULL,
-            PRIMARY KEY  (id),
-            UNIQUE KEY identifier_type (identifier, type)
-        ) $charset_collate;";
-        
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
-    }
+    }  
 
     public function checkLimit($identifier, $type = 'ip') {
         // Schedule clean up if not set
