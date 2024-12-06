@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.19
+Stable tag: 1.2.20
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,6 +70,7 @@ The plugin filters both **comments**, **site search**, and **contact form submis
 - Ultimate Member
 - MemberPress
 - Paid Memberships Pro
+- Jetpack Forms
 
 
 OOPSpam Anti-Spam Wordpress plugin requires minimal configuration. The only thing you need to do is to [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -99,6 +100,9 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.20 =
+* **NEW:** Added support for Jetpack Form
+* **IMPROVEMENT:** Form Spam and Ham Entries tables now delete entries older than the selected interval instead of completely clearing the entire table.
 = 1.2.19 =
 * **IMPROVEMENT:** Extended WS Form support to include the Lite version
 * **FIX:** Removed an unnecessary query during the rate limit table creation

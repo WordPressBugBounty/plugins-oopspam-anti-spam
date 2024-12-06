@@ -168,6 +168,14 @@
    border-bottom-color: #b85a1b;
 }
 
+.jform {
+   background-color: white;
+}
+.jform h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #069e08;
+}
+
 .mpress {
    background-color: white;
 }

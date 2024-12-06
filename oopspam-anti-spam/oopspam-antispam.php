@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.19
+ * Version: 1.2.20
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -68,6 +68,7 @@ require_once dirname(__FILE__) . '/integration/BeaverBuilder.php';
 require_once dirname(__FILE__) . '/integration/UMember.php';
 require_once dirname(__FILE__) . '/integration/MemberPress.php';
 require_once dirname(__FILE__) . '/integration/Pmpro.php';
+require_once dirname(__FILE__) . '/integration/JetpackForms.php';
 
 
 add_action('init', function () {
@@ -182,34 +183,59 @@ function oopspam_cron_job() {
     }
 }
 
-function oopspam_cleanup_ham_entries()
-{
-    // Truncate the table
+function oopspam_cleanup_ham_entries() {
     try {
         global $wpdb;
         $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
+        $options = get_option('oopspamantispam_settings');
 
-        $wpdb->query("TRUNCATE TABLE $table");
+        // Determine the time threshold based on the user setting
+        $time_period = isset($options['oopspam_clear_ham_entries']) ? $options['oopspam_clear_ham_entries'] : 'monthly';
+        $interval = ($time_period === 'monthly') ? '-1 month' : '-2 weeks';
+
+        // Calculate the date threshold
+        $date_threshold = date('Y-m-d H:i:s', strtotime($interval));
+
+        // Delete entries older than the calculated date
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM $table WHERE `date` < %s",
+                $date_threshold
+            )
+        );
+
         wp_send_json_success(array(
             'success' => true,
         ), 200);
     } catch (Exception $e) {
-        // Handle the exception
         error_log('oopspam_cleanup_ham_entries: ' . $e->getMessage());
     }
 }
-function oopspam_cleanup_spam_entries()
-{
-    // Truncate the table
+function oopspam_cleanup_spam_entries() {
     try {
         global $wpdb;
         $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
-        $wpdb->query("TRUNCATE TABLE $table");
+        $options = get_option('oopspamantispam_settings');
+
+        // Determine the time threshold based on the user setting
+        $time_period = isset($options['oopspam_clear_spam_entries']) ? $options['oopspam_clear_spam_entries'] : 'monthly';
+        $interval = ($time_period === 'monthly') ? '-1 month' : '-2 weeks';
+
+        // Calculate the date threshold
+        $date_threshold = date('Y-m-d H:i:s', strtotime($interval));
+
+        // Delete entries older than the calculated date
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM $table WHERE `date` < %s",
+                $date_threshold
+            )
+        );
+
         wp_send_json_success(array(
             'success' => true,
         ), 200);
     } catch (Exception $e) {
-        // Handle the exception
         error_log('oopspam_cleanup_spam_entries: ' . $e->getMessage());
     }
 }

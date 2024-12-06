@@ -119,6 +119,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'jform':
+                if (is_plugin_active('jetpack/jetpack.php')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;

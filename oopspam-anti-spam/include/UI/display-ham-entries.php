@@ -6,8 +6,6 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 
 
 function empty_ham_entries(){
-	 // [optional] Verify if user is logged in
-	 // wp_ajax_{$action} already runs for logged in users only
 
 	 if ( ! is_user_logged_in() ) {
         wp_send_json_error( array(

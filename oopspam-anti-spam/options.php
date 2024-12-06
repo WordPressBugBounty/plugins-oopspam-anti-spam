@@ -925,6 +925,42 @@ function oopspamantispam_settings_init()
         );
     }
 
+    /* Jetpack Form settings section starts */
+
+function oopspam_is_jform_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+                <div>
+                    <label for="jform_support">
+                    <input class="oopspam-toggle" type="checkbox" id="jform_support" name="oopspamantispam_settings[oopspam_is_jform_activated]" value="1" <?php if (isset($options['oopspam_is_jform_activated']) && 1 == $options['oopspam_is_jform_activated']) {
+        echo 'checked="checked"';
+    }
+    ?>/>
+                    </label>
+                </div>
+            <?php
+}
+
+function oopspam_jform_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_jform_spam_message">
+                    <input id="oopspam_jform_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_jform_spam_message]" value="<?php if (isset($options['oopspam_jform_spam_message'])) {
+        esc_html_e($options['oopspam_jform_spam_message'], "oopspam");
+    }
+    ?>">
+                        <p class="description"><?php echo __('Enter a short message to display when a spam Jetpack Form entry has been submitted. (e.g Our spam detection classified your donation as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+
+/* Jetpack Form settings section ends */
+
     // Contact Form 7 settings section
     if (oopspamantispam_plugin_check('cf7') && !empty($options['oopspam_api_key'])) {
 
@@ -955,6 +991,29 @@ function oopspamantispam_settings_init()
         );
     }
 
+    // Jetpack Forms settings section
+    if (oopspamantispam_plugin_check('jform') && !empty($options['oopspam_api_key'])) {
+
+        add_settings_section('oopspam_jform_settings_section',
+            __('Jetpack Form', 'oopspam'),
+            false,
+            'oopspamantispam-jform-settings-group'
+        );
+        add_settings_field('oopspam_is_jform_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_jform_activated_render',
+            'oopspamantispam-jform-settings-group',
+            'oopspam_jform_settings_section'
+        );
+
+        add_settings_field('oopspam_jform_spam_message',
+            __('Jetpack Form Spam Message', 'oopspam'),
+            'oopspam_jform_spam_message_render',
+            'oopspamantispam-jform-settings-group',
+            'oopspam_jform_settings_section'
+        );
+    }
+    
     // Fluent Forms settings section
     if (oopspamantispam_plugin_check('ff') && !empty($options['oopspam_api_key'])) {
 
@@ -3054,6 +3113,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                             <div class="cf7 form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-cf7-settings-group');
+                    ?>
+                            </div>
+                            <div class="jform form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-jform-settings-group');
                     ?>
                             </div>
                             <div class="wpforms form-setting">
