@@ -379,6 +379,34 @@ class Ham_Entries extends WP_List_Table {
 		return '';
 	}
 
+    function column_ip($item) {
+        $ip = esc_html($item['ip']);
+        $country = $this->get_country_by_ip($ip);
+        return $ip . '<br>' . $country;
+    }
+
+    private function get_country_by_ip($ip) {
+        // Ignore local IPs
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return 'Local IP';
+        }
+
+        $response = wp_remote_get("https://reallyfreegeoip.org/json/{$ip}");
+        if (is_wp_error($response)) {
+            return '';
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        if (isset($data['country_code'])) {
+            $country_code = strtolower($data['country_code']);
+            $countries = oopspam_get_isocountries();
+            return isset($countries[$country_code]) ? $countries[$country_code] : 'Unknown';
+        }
+
+        return '';
+    }
+
     /**
 	 *  Prettify JSON
 	 *

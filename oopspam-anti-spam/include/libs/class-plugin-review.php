@@ -54,55 +54,56 @@ class OOPSpam_Plugin_Review {
 	public function seconds_to_words( $seconds ) {
 
 		// Get the years.
-		$years = ( intval( $seconds ) / YEAR_IN_SECONDS ) % 100;
+		$years = intval( floor( $seconds / YEAR_IN_SECONDS ) % 100 );
 		if ( $years > 1 ) {
 			return sprintf( __( '%s years', $this->slug ), $years );
-		} elseif ( $years > 0) {
+		} elseif ( $years > 0 ) {
 			return __( 'a year', $this->slug );
 		}
-
+	
 		// Get the weeks.
-		$weeks = ( intval( $seconds ) / WEEK_IN_SECONDS ) % 52;
+		$weeks = intval( floor( $seconds / WEEK_IN_SECONDS ) % 52 );
 		if ( $weeks > 1 ) {
 			return sprintf( __( '%s weeks', $this->slug ), $weeks );
-		} elseif ( $weeks > 0) {
+		} elseif ( $weeks > 0 ) {
 			return __( 'a week', $this->slug );
 		}
-
+	
 		// Get the days.
-		$days = ( intval( $seconds ) / DAY_IN_SECONDS ) % 7;
+		$days = intval( floor( $seconds / DAY_IN_SECONDS ) % 7 );
 		if ( $days > 1 ) {
 			return sprintf( __( '%s days', $this->slug ), $days );
-		} elseif ( $days > 0) {
+		} elseif ( $days > 0 ) {
 			return __( 'a day', $this->slug );
 		}
-
+	
 		// Get the hours.
-		$hours = ( intval( $seconds ) / HOUR_IN_SECONDS ) % 24;
+		$hours = intval( floor( $seconds / HOUR_IN_SECONDS ) % 24 );
 		if ( $hours > 1 ) {
 			return sprintf( __( '%s hours', $this->slug ), $hours );
-		} elseif ( $hours > 0) {
+		} elseif ( $hours > 0 ) {
 			return __( 'an hour', $this->slug );
 		}
-
+	
 		// Get the minutes.
-		$minutes = ( intval( $seconds ) / MINUTE_IN_SECONDS ) % 60;
+		$minutes = intval( floor( $seconds / MINUTE_IN_SECONDS ) % 60 );
 		if ( $minutes > 1 ) {
 			return sprintf( __( '%s minutes', $this->slug ), $minutes );
-		} elseif ( $minutes > 0) {
+		} elseif ( $minutes > 0 ) {
 			return __( 'a minute', $this->slug );
 		}
-
+	
 		// Get the seconds.
-		$seconds = intval( $seconds ) % 60;
+		$seconds = intval( floor( $seconds % 60 ) );
 		if ( $seconds > 1 ) {
 			return sprintf( __( '%s seconds', $this->slug ), $seconds );
-		} elseif ( $seconds > 0) {
+		} elseif ( $seconds > 0 ) {
 			return __( 'a second', $this->slug );
 		}
-
+	
 		return;
 	}
+	
 
 	/**
 	 * Check date on admin initiation and add to admin notice if it was more than the time limit.

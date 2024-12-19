@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.20
+Stable tag: 1.2.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -100,9 +100,14 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.21 =
+- **IMPROVEMENT:** [WooCommerce] Exclude honeypot field detection when allowed in Manual Moderation settings.  
+- **IMPROVEMENT:** [WooCommerce] Enhanced honeypot field functionality for better accuracy.  
+- **IMPROVEMENT:** Form Spam and Ham Entries tables now display the country name associated with an IP address.  
+- **IMPROVEMENT:** Minor UX enhancements for Allowed and Blocked Country settings.  
 = 1.2.20 =
 * **NEW:** Added support for Jetpack Form
-* **IMPROVEMENT:** Form Spam and Ham Entries tables now delete entries older than the selected interval instead of completely clearing the entire table.
+* **IMPROVEMENT:** Form Spam and Ham Entries tables now delete entries older than the selected interval instead of completely clearing the entire table
 = 1.2.19 =
 * **IMPROVEMENT:** Extended WS Form support to include the Lite version
 * **FIX:** Removed an unnecessary query during the rate limit table creation
@@ -234,6 +239,8 @@ Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam
 1. OOPSpam admin settings
 2. Spam Entries from contact forms
 3. Manual moderation settings
+4. Rate Limiting settings
+5. Privacy settings
 
 
 == Frequently Asked Questions ==

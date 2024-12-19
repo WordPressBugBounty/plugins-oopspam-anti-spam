@@ -38,7 +38,15 @@ class WooSpamProtection
     function oopspam_checkout_store_api_processed($order) {
         
         $data = json_decode($order, true);
-        // 
+
+        // Check for allowed email/IP
+        $hasAllowedEmail = $this->isEmailAllowed($data['billing']['email'], json_encode($data));
+
+        if ($hasAllowedEmail) {
+            return $order;
+        }
+
+        
         $options = get_option('oopspamantispam_settings');
         $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
 
@@ -64,7 +72,7 @@ class WooSpamProtection
                     "Score" => 6,
                     "Message" => "",
                     "IP" => $data['customer_ip_address'],
-                    "Email" => $data['billing']['email'],
+                    "Email" => sanitize_email($data['billing']['email']),
                     "RawEntry" => json_encode($data),
                     "FormId" => "WooCommerce",
                 ];
@@ -72,6 +80,13 @@ class WooSpamProtection
 
                 $error_to_show = $this->get_error_message();
                 wp_die($error_to_show);
+            }
+
+            // Now check with OOPSpam API
+            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']));
+            if ($showError) {
+                $error_to_show = $this->get_error_message();
+                wc_add_notice( esc_html__( $error_to_show ), 'error' );
             }
         }
     }    
@@ -95,7 +110,7 @@ class WooSpamProtection
     {
         // Generate a unique field name using timestamp
         $timestamp = time();
-        $field_name = 'contact_by_fax_' . $timestamp;
+        $field_name = 'honey_' . $timestamp;
         
         // Store the field name in session for validation
         if (function_exists('WC')) {
@@ -125,7 +140,7 @@ class WooSpamProtection
     {
 
         $timestamp = time();
-        $field_name = 'contact_by_fax_log_' . $timestamp;
+        $field_name = 'honey_log_' . $timestamp;
         
         if (function_exists('WC')) {
             WC()->session && WC()->session->set('honeypot_field_login', $field_name);
@@ -154,10 +169,17 @@ class WooSpamProtection
     {
 
         $options = get_option('oopspamantispam_settings');
+
+        // Bypass honeypot check for allowed emails/IPs
+        $hasAllowedEmail = $this->isEmailAllowed($email, json_encode($_POST));
+
+        if ($hasAllowedEmail) {
+            return $validation_error;
+        }
         
         // Check if any honeypot fields are filled
         foreach ($_POST as $key => $value) {
-            if (strpos($key, 'contact_by_fax_') === 0 && !empty($value)) {
+            if (strpos($key, 'honey_') === 0 && !empty($value)) {
                 $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
 
                 if ($isHoneypotDisabled) {
@@ -185,15 +207,22 @@ class WooSpamProtection
     }
 
     /**
-     * Process registration
+     * Registration during the checkout process
      */
     public function oopspam_process_registration($username, $email, $errors)
     {
+
         $options = get_option('oopspamantispam_settings');
+
+        $hasAllowedEmail = $this->isEmailAllowed($email, json_encode($_POST));
+
+        if ($hasAllowedEmail) {
+            return $errors;
+        }
 
         // Check honeypot fields
         foreach ($_POST as $key => $value) {
-            if (strpos($key, 'contact_by_fax_') === 0 && !empty($value)) {
+            if (strpos($key, 'honey_') === 0 && !empty($value)) {
                 $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
 
                 if ($isHoneypotDisabled) {
@@ -239,9 +268,15 @@ class WooSpamProtection
             $email = $_POST["username"];
         }
 
+        $hasAllowedEmail = $this->isEmailAllowed($email, json_encode($_POST));
+
+        if ($hasAllowedEmail) {
+            return $errors;
+        }
+
         // Check honeypot fields
         foreach ($_POST as $key => $value) {
-            if (strpos($key, 'contact_by_fax_') === 0 && !empty($value)) {
+            if (strpos($key, 'honey_') === 0 && !empty($value)) {
                 $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
 
                 if ($isHoneypotDisabled) {
@@ -329,5 +364,24 @@ private function get_error_message()
         : __('There was an error with your submission. Please try again.', 'woocommerce');
 }
 
+private function isEmailAllowed($email, $rawEntry)
+    {
+        $hasAllowedEmail = is_email_allowed($email);
+        
+        if ($hasAllowedEmail) {
+            $userIP = \WC_Geolocation::get_ip_address();
+            $frmEntry = [
+                "Score" => 0,
+                "Message" => "",
+                "IP" => $userIP,
+                "Email" => $email,
+                "RawEntry" => json_encode($rawEntry),
+                "FormId" => "WooCommerce",
+            ];
+            oopspam_store_ham_submission($frmEntry);
+            return true;
+        }
 
+        return false;
+    }
 }
