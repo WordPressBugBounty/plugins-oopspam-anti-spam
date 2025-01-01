@@ -838,7 +838,7 @@ private static function process_form_fields($raw_entry) {
 }
 
 
-class SP_Plugin {
+class OOPSpam_Spam {
 
 	// class instance
 	static $instance;
@@ -944,5 +944,5 @@ class SP_Plugin {
 
 
 add_action( 'plugins_loaded', function () {
-	SP_Plugin::get_instance();
+	OOPSpam_Spam::get_instance();
 } );

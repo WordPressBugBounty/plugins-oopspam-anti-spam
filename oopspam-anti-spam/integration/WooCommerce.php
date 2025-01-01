@@ -366,7 +366,7 @@ private function get_error_message()
 
 private function isEmailAllowed($email, $rawEntry)
     {
-        $hasAllowedEmail = is_email_allowed($email);
+        $hasAllowedEmail = oopspam_is_email_allowed($email);
         
         if ($hasAllowedEmail) {
             $userIP = \WC_Geolocation::get_ip_address();

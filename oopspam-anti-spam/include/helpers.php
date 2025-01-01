@@ -124,6 +124,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'mc4wp':
+                if (is_plugin_active('mailchimp-for-wp/mailchimp-for-wp.php')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;

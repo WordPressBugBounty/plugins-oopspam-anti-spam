@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.21
+ * Version: 1.2.22
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -69,6 +69,7 @@ require_once dirname(__FILE__) . '/integration/UMember.php';
 require_once dirname(__FILE__) . '/integration/MemberPress.php';
 require_once dirname(__FILE__) . '/integration/Pmpro.php';
 require_once dirname(__FILE__) . '/integration/JetpackForms.php';
+require_once dirname(__FILE__) . '/integration/MC4WP.php';
 
 
 add_action('init', function () {
@@ -316,7 +317,7 @@ function oopspam_plugin_action_links($links, $file)
     return $links;
 }
 
-function is_keyword_blocked($text) {
+function oopspam_is_keyword_blocked($text) {
     // Get keywords
     $manual_moderation_options = get_option('manual_moderation_settings');
     $blocked_keywords = isset($manual_moderation_options['mm_blocked_keywords']) ? $manual_moderation_options['mm_blocked_keywords'] : '';
@@ -354,7 +355,7 @@ function is_keyword_blocked($text) {
 }
 
 // Check if an email is blocked locally
-function is_email_blocked($email) {
+function oopspam_is_email_blocked($email) {
  
     $email = strtolower($email);
      // Get email
@@ -397,7 +398,7 @@ function is_email_blocked($email) {
 }
 
 // Check if an IP is blocked locally
-function is_ip_blocked($ip) {
+function oopspam_is_ip_blocked($ip) {
  
     // Get email
     $manual_moderation_options = get_option('manual_moderation_settings');
@@ -426,7 +427,7 @@ function is_ip_blocked($ip) {
 }
 
 // Check if an email is allowed locally
-function is_email_allowed($email) {
+function oopspam_is_email_allowed($email) {
  
     $email = strtolower($email);
      // Get email
@@ -469,7 +470,7 @@ function is_email_allowed($email) {
 }
 
 // Check if an IP is allowed locally
-function is_ip_allowed($ip) {
+function oopspam_is_ip_allowed($ip) {
  
     // Get email
     $manual_moderation_options = get_option('manual_moderation_settings');
@@ -531,11 +532,11 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 {
 
     // Check blocked emails, IPs, keywords locally
-    $hasBlockedKeyword = is_keyword_blocked($commentText);
-    $hasBlockedEmail = is_email_blocked($email);
-    $hasBlockedIP = is_ip_blocked($commentIP);
-    $hasAllowedEmail = is_email_allowed($email);
-    $hasAllowedIP = is_ip_allowed($commentIP);
+    $hasBlockedKeyword = oopspam_is_keyword_blocked($commentText);
+    $hasBlockedEmail = oopspam_is_email_blocked($email);
+    $hasBlockedIP = oopspam_is_ip_blocked($commentIP);
+    $hasAllowedEmail = oopspam_is_email_allowed($email);
+    $hasAllowedIP = oopspam_is_ip_allowed($commentIP);
 
     if ($hasAllowedEmail || $hasAllowedIP) {
     
@@ -666,7 +667,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 
 
     // Bypass content length check as GiveWP & Woo usually doesn't have content field
-    if ($type === "give" || $type === "woo"
+    if ($type === "give" || $type === "woo" || $type === "mc4wp"
     || $type === "mailpoet" || $type === "search" 
     || $type === "wpregister" || $type === "umember" || $type === "mpress"
     || $type === "pmp") {

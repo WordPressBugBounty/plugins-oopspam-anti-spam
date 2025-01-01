@@ -318,6 +318,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-pionet-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-kb-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-wpdis-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-mc4wp-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-mpoet-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-forminator-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-bd-settings-group', 'oopspamantispam_settings');
@@ -537,7 +538,7 @@ function oopspamantispam_settings_init()
             'oopspam_forminator_settings_section'
         );
     }
-    // Mainpoet settings section
+    // Mailpoet settings section
     if (oopspamantispam_plugin_check('mpoet') && !empty($options['oopspam_api_key'])) {
 
         add_settings_section('oopspam_mpoet_settings_section',
@@ -559,6 +560,30 @@ function oopspamantispam_settings_init()
             'oopspam_mpoet_settings_section'
         );
     }
+
+    // MC4WP settings section
+    if (oopspamantispam_plugin_check('mc4wp') && !empty($options['oopspam_api_key'])) {
+
+        add_settings_section('oopspam_mc4wp_settings_section',
+            __('MC4WP: Mailchimp for WordPress', 'oopspam'),
+            false,
+            'oopspamantispam-mc4wp-settings-group'
+        );
+        add_settings_field('oopspam_is_mc4wp_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_mc4wp_activated_render',
+            'oopspamantispam-mc4wp-settings-group',
+            'oopspam_mc4wp_settings_section'
+        );
+
+        add_settings_field('oopspam_mc4wp_spam_message',
+            __('Mailchimp Spam Message', 'oopspam'),
+            'oopspam_mc4wp_spam_message_render',
+            'oopspamantispam-mc4wp-settings-group',
+            'oopspam_mc4wp_settings_section'
+        );
+    }
+
     // WPDiscuz settings section
     if (oopspamantispam_plugin_check('wpdis') && !empty($options['oopspam_api_key'])) {
 
@@ -1793,6 +1818,41 @@ function oopspam_forminator_content_field_render() {
 }
 
 /* Forminator UI settings section ends */
+
+/* MC4WP UI settings section starts */
+
+function oopspam_is_mc4wp_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+                <div>
+                    <label for="mc4wp_support">
+                    <input class="oopspam-toggle" type="checkbox" id="mc4wp_support" name="oopspamantispam_settings[oopspam_is_mc4wp_activated]" value="1" <?php if (isset($options['oopspam_is_mc4wp_activated']) && 1 == $options['oopspam_is_mc4wp_activated']) {
+        echo 'checked="checked"';
+    }
+    ?>/>
+                    </label>
+                </div>
+            <?php
+}
+
+function oopspam_mc4wp_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_mc4wp_spam_message">
+                    <input id="oopspam_mc4wp_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_mc4wp_spam_message]" value="<?php if (isset($options['oopspam_mc4wp_spam_message'])) {
+        esc_html_e($options['oopspam_mc4wp_spam_message'], "oopspam");
+    }
+    ?>">
+                        <p class="description"><?php echo __('Enter a short message to display when a spam email has been submitted via Mailchimp form. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+/* MC4WP UI settings section ends */
 
 /* MailPoet UI settings section starts */
 
@@ -3168,6 +3228,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                             <div class="wpdiscuz form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-wpdis-settings-group');
+                    ?>
+                            </div>
+                            <div class="mc4wp form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-mc4wp-settings-group');
                     ?>
                             </div>
                             <div class="mpoet form-setting">

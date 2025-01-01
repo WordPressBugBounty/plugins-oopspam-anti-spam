@@ -4,7 +4,7 @@
  * 
  * @author OOPSpam LLC
  * @link   https://www.oopspam.com/
- * @copyright Copyright (c) 2017 - 2024, oopspam.com
+ * @copyright Copyright (c) 2017 - 2025, oopspam.com
  */
 class OOPSpamAPI {
     const version='v1';

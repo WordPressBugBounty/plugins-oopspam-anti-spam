@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.21
+Stable tag: 1.2.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -100,6 +100,9 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.22 =
+* **NEW:** Added support for MC4WP: Mailchimp for WordPress
+* **FIX:** Added prefixes to functions to prevent conflicts with other plugins
 = 1.2.21 =
 - **IMPROVEMENT:** [WooCommerce] Exclude honeypot field detection when allowed in Manual Moderation settings.  
 - **IMPROVEMENT:** [WooCommerce] Enhanced honeypot field functionality for better accuracy.  
