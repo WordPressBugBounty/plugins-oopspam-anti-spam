@@ -61,28 +61,28 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
 
 
     if (isRateLimitingEnabled() && !wp_next_scheduled("oopspam_cleanup_ratelimit_entries_cron")) {
-        if (class_exists('RateLimiter')) {
+        if (class_exists('OOPSpam_RateLimiter')) {
             try {
-                $rateLimiter = new RateLimiter();
+                $rateLimiter = new OOPSpam_RateLimiter();
                 $rateLimiter->schedule_cleanup($new_duration);
             } catch (Exception $e) {
                 error_log("Error scheduling cleanup job: " . $e->getMessage());
             }
         } else {
-            error_log("RateLimiter class not found");
+            error_log("OOPSpam_RateLimiter class not found");
         }
     }
     // Case 2: Duration changed while rate limit is enabled - reschedule cleanup job
     elseif ($new_duration !== $old_duration && isRateLimitingEnabled()) {
-        if (class_exists('RateLimiter')) {
+        if (class_exists('OOPSpam_RateLimiter')) {
             try {
-                $rateLimiter = new RateLimiter();
+                $rateLimiter = new OOPSpam_RateLimiter();
                 $rateLimiter->reschedule_cleanup($old_duration, $new_duration);
             } catch (Exception $e) {
                 error_log("Error rescheduling cleanup job: " . $e->getMessage());
             }
         } else {
-            error_log("RateLimiter class not found");
+            error_log("OOPSpam_RateLimiter class not found");
         }
     }
     // Case 3: Rate limit fields are cleared - unschedule any existing cleanup job
@@ -90,7 +90,7 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
         $timestamp = wp_next_scheduled('oopspam_cleanup_ratelimit_entries_cron');
         if ($timestamp) {
             wp_unschedule_event($timestamp, 'oopspam_cleanup_ratelimit_entries_cron');
-            $rateLimiter = new RateLimiter();
+            $rateLimiter = new OOPSpam_RateLimiter();
             $rateLimiter->oopspam_truncate_ratelimit();
         }
     }
@@ -243,6 +243,27 @@ function render_number_field($args) {
     <?php
 }
 
+function render_oopspamantispam_ratelimit_gclid_limit($args) {
+    $option_name = $args['label_for'];
+    $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+
+    // Determine the value to display in the input field
+    $value = isset($rtOptions[$option_name]) ? $rtOptions[$option_name] : '';
+    ?>
+    <div>
+        <input type="number" min="1" step="1" 
+               id="<?php echo esc_attr($option_name); ?>" 
+               name="oopspamantispam_ratelimit_settings[<?php echo esc_attr($option_name); ?>]" 
+               value="<?php echo esc_attr($value); ?>" 
+               placeholder="Example: 1"
+               class="regular-text">
+    </div>
+    <p class="description">
+        <?php echo __('This setting works independently and does not require the \'Enable Rate Limiting\' option.', 'oopspam'); ?>
+    </p>
+    <?php
+}
+
 
 
 function sanitize_positive_int($value) {
@@ -334,7 +355,7 @@ function oopspamantispam_settings_init()
         'oopspamantispam-ratelimit-settings-group'
     );
 
-    // Add settings fields
+    // Start Register Rate Limit settings
     add_settings_field(
         'oopspam_is_rt_enabled',
         __('Enable rate limiting', 'oopspam'),
@@ -379,6 +400,14 @@ function oopspamantispam_settings_init()
         ['label_for' => 'oopspamantispam_ratelimit_cleanup_duration']
     );
     
+    add_settings_field(
+        'oopspamantispam_ratelimit_gclid_limit',
+        'Restrict submissions per Google Ads lead',
+        'render_oopspamantispam_ratelimit_gclid_limit',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section',
+        ['label_for' => 'oopspamantispam_ratelimit_gclid_limit']
+    );
     // End Register Rate Limit settings
 
 
@@ -2898,7 +2927,7 @@ function oopspam_woo_check_origin_render()
         echo 'checked="checked"';
     }
     ?>/>
-                     <p class="description"><?php echo __('This setting applies only to Block Checkout and requires the "Order Attribution" option to be enabled in WooCommerce (Settings → Advanced).', 'oopspam'); ?></p>
+                     <p class="description"><?php echo __('This setting applies only to Block Checkout and requires the "Order Attribution" option to be enabled in WooCommerce (Settings → Advanced → Features).', 'oopspam'); ?></p>
                     </label>
                 </div>
             <?php

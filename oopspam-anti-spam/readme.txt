@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.22
+Stable tag: 1.2.23
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,33 +15,35 @@ The OOPSpam WordPress plugin is a modern spam filter that uses machine learning 
 
 It uses the [OOPSpam API](https://www.oopspam.com/), which protects over 3.5M websites daily. 
 
-Features:
 
-* Customize the "sensitivity level" of spam filtering so you don't miss important messages
-* Checks messages using a machine learning model
-* Country restrictions
-* Language restrictions
-* Automatically checks against multiple IP & email blacklists
-* Automatically detects spam word patterns
-* Manual moderation to block email, IP and by exact keywords
-* [Privacy] `Do not analyze IP addresses` setting
-* [Privacy] `Do not analyze Emails` setting. 
-* [Privacy] `Remove sensitive information from messages` setting
-* Form Spam Entries: view spam entries, delete, send submission to website admin or report them to us.
-* Form Ham Entries: view not spam entries, delete or report them to us.
-* and many custom rules, advanced analysis to detect and mark as spam
+### Features:  
+- **Spam Filtering Sensitivity**: Customize the "sensitivity level" to ensure important messages aren't missed.  
+- **Machine Learning Spam Detection**: Messages are analyzed using advanced machine learning models.  
+- **Country Restrictions**: Block or allow submissions based on geographic location.  
+- **Language Restrictions**: Restrict submissions based on language.  
+- **Blacklist Integration**: Automatically checks messages against multiple IP and email blacklists.  
+- **Spam Word Detection**: Identifies and blocks messages containing common spam patterns.  
+- **Manual Moderation**: Block email, IP, or specific keywords manually.  
+- **Privacy Features**:  
+  - `Do not analyze IP addresses`  
+  - `Do not analyze Emails`  
+  - `Remove sensitive information from messages`  
+- **Form Spam Entries Management**: View, delete, send submissions to website admins, or report them.  
+- **Form Ham Entries Management**: View non-spam entries, delete, or report them.  
+- **Rate Limiting**: Control submission rates to prevent abuse and click frauds.
+
 
 The value we bring:
 
 * Fast, Lightweight & Accessible
-* No cookies, no challenges, no javascript, no tracking
+* No cookies, no challenges, no JavaScript, no tracking.
 * High accuracy (%99.9)
-* Use one API key with unlimited websites
+* Use one API key across unlimited websites.
 * No data stored on our servers. All your data is stored in your local WordPress database.
 * Privacy by design
-* Well tested so it will NOT break your website with every update
-* Transparent and responsible company. We have an active vulnerability disclosure program.
-* Support (24 hour response)
+* Thoroughly tested to ensure compatibility and stability with every update.
+* Operated by a company with an active vulnerability disclosure program.
+* Enjoy 24-hour response times for any assistance you need.
 
 
 The plugin filters both **comments**, **site search**, and **contact form submissions**.
@@ -71,6 +73,7 @@ The plugin filters both **comments**, **site search**, and **contact form submis
 - MemberPress
 - Paid Memberships Pro
 - Jetpack Forms
+- MC4WP: Mailchimp for WordPress
 
 
 OOPSpam Anti-Spam Wordpress plugin requires minimal configuration. The only thing you need to do is to [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -100,6 +103,8 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.23 =
+* **NEW:** Added a new rate-limiting setting: "Restrict submissions per Google Ads lead"
 = 1.2.22 =
 * **NEW:** Added support for MC4WP: Mailchimp for WordPress
 * **FIX:** Added prefixes to functions to prevent conflicts with other plugins

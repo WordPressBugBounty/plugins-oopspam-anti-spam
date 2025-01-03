@@ -1,6 +1,6 @@
 <?php
 
-class RateLimiter {
+class OOPSpam_RateLimiter {
     private $db_table = 'oopspam_rate_limits';
     private $config;
     private $cron_hook = 'oopspam_cleanup_ratelimit_entries_cron';
@@ -203,7 +203,7 @@ class RateLimiter {
                 $this->schedule_cleanup(null);
             }
         } catch (Exception $e) {
-            error_log('RateLimiter cleanup error: ' . $e->getMessage());
+            error_log('OOPSpam_RateLimiter cleanup error: ' . $e->getMessage());
         }
     }
 
@@ -217,7 +217,7 @@ class RateLimiter {
             );
             
         } catch (Exception $e) {
-            error_log('RateLimiter cleanup error: ' . $e->getMessage());
+            error_log('OOPSpam_RateLimiter cleanup error: ' . $e->getMessage());
         }
     }
 
@@ -238,7 +238,7 @@ class RateLimiter {
             }
             
         } catch (Exception $e) {
-            error_log('RateLimiter reschedule_cleanup error: ' . $e->getMessage());
+            error_log('OOPSpam_RateLimiter reschedule_cleanup error: ' . $e->getMessage());
         }
     }
     
@@ -262,7 +262,7 @@ class RateLimiter {
                 }
             }
         } catch (Exception $e) {
-            error_log('RateLimiter schedule_cleanup error: ' . $e->getMessage());
+            error_log('OOPSpam_RateLimiter schedule_cleanup error: ' . $e->getMessage());
         }
     }    
     

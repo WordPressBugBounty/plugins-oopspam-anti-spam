@@ -211,7 +211,11 @@ jQuery(document).ready(function($) {
         } else {
             // Show settings related to rate limiting
             // Show all related rows, adjust selector as necessary
-            $("#rt_enabled").closest('tr').nextAll('tr').hide(); 
+            $("#rt_enabled").closest('tr').nextAll('tr').each(function() {
+                if (!$(this).find('#oopspamantispam_ratelimit_gclid_limit').length) {
+                    $(this).hide();
+                }
+            });
         }
     }
 

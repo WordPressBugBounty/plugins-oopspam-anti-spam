@@ -1,7 +1,7 @@
 <?php
 
 global $oopspam_db_version;
-$oopspam_db_version = '1.4';
+$oopspam_db_version = '1.5';
 
 function oopspam_db_install() {
 	global $wpdb;
@@ -34,6 +34,7 @@ function oopspam_db_install() {
 		score int NULL,
         raw_entry MEDIUMTEXT NULL,
 		reported boolean NULL,
+		gclid varchar(100) NULL,
 		date timestamp default current_timestamp not null,
 		PRIMARY KEY  (id)
 	) $charset_collate;";
@@ -73,6 +74,7 @@ function oopspam_db_install() {
 			score int NULL,
 			raw_entry MEDIUMTEXT NULL,
 			reported boolean NULL,
+			gclid varchar(100) NULL,
 			date timestamp default current_timestamp not null,
 			PRIMARY KEY  (id)
 		) $charset_collate;";

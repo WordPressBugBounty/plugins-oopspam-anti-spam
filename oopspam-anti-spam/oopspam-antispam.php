@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.22
+ * Version: 1.2.23
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -164,7 +164,7 @@ function oopspam_cron_job() {
 
         if (isRateLimitingEnabled()) {
             $cleanDuration = isset($rtOptions['oopspamantispam_ratelimit_cleanup_duration']) ? $rtOptions['oopspamantispam_ratelimit_cleanup_duration'] : 48; // Default is 48 hours
-            $rateLimiter = new RateLimiter();
+            $rateLimiter = new OOPSpam_RateLimiter();
             $rateLimiter->reschedule_cleanup(0, $cleanDuration);
         }
 
@@ -246,7 +246,7 @@ add_action('oopspam_cleanup_ham_entries_cron', 'oopspam_cleanup_ham_entries');
 add_action('oopspam_cleanup_ratelimit_entries_cron', 'oopspam_ratelimit_cleanup');
 
  function oopspam_ratelimit_cleanup() {
-     $rate_limiter = new RateLimiter();
+     $rate_limiter = new OOPSpam_RateLimiter();
     
 
     // Schedule rate limiter cleanup
@@ -526,8 +526,6 @@ function isRateLimitingEnabled() {
     return true;
 }
 
-
-
 function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnReason, $type)
 {
 
@@ -570,7 +568,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         $rtOptions = get_option('oopspamantispam_ratelimit_settings');
         $isRateLimitEnabled = isRateLimitingEnabled();
         if($isRateLimitEnabled) {
-            $rate_limiter = new RateLimiter();
+            $rate_limiter = new OOPSpam_RateLimiter();
         
             if (!$rate_limiter->checkLimit($commentIP, 'ip')) {
                 if ($returnReason) {
@@ -596,6 +594,28 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
                 return false;
             }
         }
+
+        // Check for unique Google Ads lead per submission
+        $gclid = oopspam_get_gclid_from_url();
+        $gclidLimit = isset($rtOptions['oopspamantispam_ratelimit_gclid_limit']) ? $rtOptions['oopspamantispam_ratelimit_gclid_limit'] : '';
+        
+        if (!empty($gclid) && !empty($gclidLimit)) {
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'oopspam_frm_ham_entries';
+            $gclid_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE gclid = %s", $gclid));
+            if ($gclid_count >= $gclidLimit) {
+            if ($returnReason) {
+                $reason = [
+                "Score" => 6,
+                "isItHam" => false,
+                "Reason" => "Submission with this Google Ads lead exceeds the allowed limit"
+                ];
+                return $reason;
+            }
+            return false;
+            }
+        }
+
     } catch (Exception $e) {
         error_log('Rate limiter check failed: ' . $e->getMessage());
     }
@@ -1038,7 +1058,7 @@ function check_search_for_spam($query)
 function oopspam_admin_init()
 {
     // Initialize rate limiter and create table
-    $rate_limiter = new RateLimiter();
+    $rate_limiter = new OOPSpam_RateLimiter();
     
     // Ensure styles are added only on plugin settings pages
     if (isset($_GET['page']) && (

@@ -40,7 +40,7 @@ class WooSpamProtection
         $data = json_decode($order, true);
 
         // Check for allowed email/IP
-        $hasAllowedEmail = $this->isEmailAllowed($data['billing']['email'], json_encode($data));
+        $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
 
         if ($hasAllowedEmail) {
             return $order;
@@ -50,11 +50,11 @@ class WooSpamProtection
         $options = get_option('oopspamantispam_settings');
         $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
 
-        // Check if WooCommerce -> Settings -> Advanced -> Order Attribution and "Block orders from unknown origin" are enabled.
+        // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
             $sourceTypeExists = false; // Flag to track if the key exists.
             $sourceTypeValue = null;  // Store the value if found.
-           
+
             if (isset($data['meta_data'])) {
                 foreach ($data['meta_data'] as $meta) {
                     if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
@@ -65,7 +65,7 @@ class WooSpamProtection
                 }
             }
 
-            // If the key doesn't exist or its value is empty, stop execution with an error message.
+            // This is to prevent the order from being processed if the source type is not set.            
             if (!$sourceTypeExists || empty($sourceTypeValue)) {
                 
                 $frmEntry = [
@@ -171,7 +171,7 @@ class WooSpamProtection
         $options = get_option('oopspamantispam_settings');
 
         // Bypass honeypot check for allowed emails/IPs
-        $hasAllowedEmail = $this->isEmailAllowed($email, json_encode($_POST));
+        $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
 
         if ($hasAllowedEmail) {
             return $validation_error;
@@ -214,7 +214,7 @@ class WooSpamProtection
 
         $options = get_option('oopspamantispam_settings');
 
-        $hasAllowedEmail = $this->isEmailAllowed($email, json_encode($_POST));
+        $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
 
         if ($hasAllowedEmail) {
             return $errors;
@@ -268,7 +268,7 @@ class WooSpamProtection
             $email = $_POST["username"];
         }
 
-        $hasAllowedEmail = $this->isEmailAllowed($email, json_encode($_POST));
+        $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
 
         if ($hasAllowedEmail) {
             return $errors;

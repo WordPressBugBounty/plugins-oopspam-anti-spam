@@ -235,6 +235,9 @@ function oopspam_store_spam_submission($frmEntry, $reason)
 function oopspam_store_ham_submission($frmEntry)
 {
     global $wpdb;
+
+    $gclid = oopspam_get_gclid_from_url();
+
     $table_name = $wpdb->prefix . 'oopspam_frm_ham_entries';
     $data = array(
         'message' => $frmEntry["Message"],
@@ -243,8 +246,21 @@ function oopspam_store_ham_submission($frmEntry)
         'score' => $frmEntry["Score"],
         'raw_entry' => $frmEntry["RawEntry"],
         'form_id' => $frmEntry["FormId"],
+        'gclid' => $gclid
     );
     $format = array('%s', '%s', '%s', '%d', '%s', '%s');
     $wpdb->insert($table_name, $data, $format);
 
+}
+
+function oopspam_get_gclid_from_url() {
+    $referer_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+    if (!empty($referer_url)) {
+        $url_parts = wp_parse_url($referer_url);
+        if (!empty($url_parts['query'])) {
+            parse_str($url_parts['query'], $query_params);
+            return isset($query_params['gclid']) ? sanitize_text_field($query_params['gclid']) : '';
+        }
+    }
+    return '';
 }
