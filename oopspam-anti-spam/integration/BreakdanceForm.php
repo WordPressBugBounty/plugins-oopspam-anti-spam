@@ -1,11 +1,14 @@
 <?php
+
+namespace OOPSPAM\Integrations;
+
 class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
 
     /**
      * @return string
      */
     public static function name() {
-    	return 'Check for spam by OOPSpam';
+        return 'Check for spam by OOPSpam';
     }
 
     /**
@@ -42,7 +45,7 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
                         $message = $field["value"];
                     }
 
-                      // Check if the form is excluded from spam protection
+                    // Check if the form is excluded from spam protection
                     if (isset($options['oopspam_bd_exclude_form']) && $options['oopspam_bd_exclude_form']) {
                         $formIds = sanitize_text_field(trim($options['oopspam_bd_exclude_form']));
                         // Split the IDs string into an array using the comma as the delimiter
@@ -57,17 +60,15 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
                         }
                     }
 
-                     // unless it's custom field ID is set by the user
+                    // unless it's custom field ID is set by the user
                     if (isset($options['oopspam_bd_content_field']) && $options['oopspam_bd_content_field']) {
                         $nameOfCustomTextareaField = sanitize_text_field(trim($options['oopspam_bd_content_field']));
                         // Split the IDs string into an array using the comma as the delimiter
                         $idsArray = array_map('trim', explode(',', $nameOfCustomTextareaField));
 
-                        
                         // Iterate through each ID to look for message field value
                         foreach ($idsArray as $id) {
                             // Capture the content
-
                             if ($field["advanced"]["id"] === $id) {
                                 $message = $field["value"];
                                 break;
@@ -102,7 +103,6 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
                 ];
 
                 if (!$detectionResult["isItHam"]) {
-
                     // It's spam, store the submission and show error
                     oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
@@ -113,16 +113,14 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
                     // It's ham
                     oopspam_store_ham_submission($frmEntry);
                     return ['type' => 'success', 'message' => "ok"];
-
                 }
-             }
-             return ['type' => 'success', 'message' => "ok"];
+            }
+            return ['type' => 'success', 'message' => "ok"];
 
         } catch(Exception $e) {
             return ['type' => 'error', 'message' => $e->getMessage()];
         }
 
         return ['type' => 'success', 'message' => "ok"];
-    
     }
 }

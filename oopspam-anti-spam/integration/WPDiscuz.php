@@ -1,26 +1,25 @@
 <?php
-add_filter('wpdiscuz_before_comment_post', 'oopspam_wpdis_pre_submission');
+namespace OOPSPAM\Integrations;
+
+add_filter('wpdiscuz_before_comment_post', 'OOPSPAM\Integrations\oopspam_wpdis_pre_submission');
 
 // Filter function
 function oopspam_wpdis_pre_submission()
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_wpdis_activated'])) {
-
         // Capture the content
         $message = "";
         $email = "";
-         // get email and comment
+        // get email and comment
         if (isset($_POST)) {
             if (isset($_POST["wc_comment"])) {
                 $message = $_POST["wc_comment"];
             }
             if (isset($_POST["wc_email"])) {
                 $email = sanitize_email($_POST["wc_email"]);
-
             }
         }
 
@@ -52,13 +51,11 @@ function oopspam_wpdis_pre_submission()
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_wpdis_spam_message'];
             wp_die( __( $error_to_show, 'oopspam' ) );
-
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
 
     return;
-};
+}

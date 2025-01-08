@@ -1,5 +1,7 @@
 <?php
-add_action('mepr-validate-signup', 'oopspamantispam_mpress_validate_signup', 10, 1);
+namespace OOPSPAM\Integrations;
+
+add_action('mepr-validate-signup', 'OOPSPAM\Integrations\oopspamantispam_mpress_validate_signup', 10, 1);
 
 function oopspamantispam_mpress_validate_signup($errors)
 {

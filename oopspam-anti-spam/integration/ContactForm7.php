@@ -1,10 +1,11 @@
 <?php
 
-add_filter('wpcf7_spam', 'oopspamantispam_cf7_pre_submission', 10, 1);
+namespace OOPSPAM\Integrations;
+
+add_filter('wpcf7_spam', 'OOPSPAM\Integrations\oopspamantispam_cf7_pre_submission', 10, 1);
 
 function oopspamantispam_cf7_pre_submission($spam)
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
@@ -61,14 +62,13 @@ function oopspamantispam_cf7_pre_submission($spam)
         ];
 
         if (!$detectionResult["isItHam"]) {
-
             // It's spam, store the submission and log it
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
             $spam = true;
 
             // Leaving a spam log.
-            $submission = WPCF7_Submission::get_instance();
+            $submission = \WPCF7_Submission::get_instance();
 
             $submission->add_spam_log(array(
                 'agent' => 'OOPSpam',

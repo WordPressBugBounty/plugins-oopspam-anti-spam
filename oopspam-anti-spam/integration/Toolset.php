@@ -1,9 +1,10 @@
 <?php
-add_filter('cred_form_validate', 'oopspam_toolset_pre_submission', 10, 2);
+namespace OOPSPAM\Integrations;
+
+add_filter('cred_form_validate', 'OOPSPAM\Integrations\oopspam_toolset_pre_submission', 10, 2);
 
 function oopspam_toolset_pre_submission($error_fields, $form_data)
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $email = "";
@@ -19,7 +20,6 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
             if (!empty($message)) {
                 break;
             }
-
         }
         // Capture textarea field
         if (strpos($field['type'], "textarea") !== false) {
@@ -27,7 +27,6 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
             if (!empty($email)) {
                 break;
             }
-
         }
     }
 
@@ -51,7 +50,6 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
     ];
 
     if (!$detectionResult["isItHam"]) {
-
         // It's spam, store the submission and show error
         oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
@@ -60,12 +58,10 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
         // Get first element in the form to display error message
         $keys = array_keys($fields);
         $errors[$keys[0]] = $error_to_show;
-
     } else {
         // It's ham
         oopspam_store_ham_submission($frmEntry);
     }
 
     return array($fields, $errors);
-
-};
+}

@@ -1,6 +1,11 @@
 <?php
-function oopspam_jpack_validation( $post_id, $all_values, $extra_values ) {
-    
+
+namespace OOPSPAM\Integrations;
+
+add_filter( 'jetpack_contact_form_is_spam', 'OOPSPAM\Integrations\oopspam_contact_form_is_spam_jetpack', 11, 2 );
+
+function oopspam_contact_form_is_spam_jetpack($_is_spam, $form) {
+
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $message = "";
@@ -9,48 +14,40 @@ function oopspam_jpack_validation( $post_id, $all_values, $extra_values ) {
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_jform_activated'])) { 
 
-        // Process fields in $all_values
-        foreach ( $all_values as $key => $value ) {
-            // Check if the field value is a valid email
-            if ( filter_var( $value, FILTER_VALIDATE_EMAIL ) && empty($email) ) {
-                $email = $value;
-            }
-
-            // Heuristic: Detect textarea by large content
-            if ( strlen( $value ) > 100 && empty($message) ) {
-                $message = sanitize_textarea_field($value);
-            }
-        }
+        // Capture the content
+        $message = isset($form['comment_content']) ? sanitize_textarea_field($form['comment_content']) : "";
+        $email = isset($form['comment_author_email']) ? sanitize_email($form['comment_author_email']) : "";
+        $author = isset($form['comment_author']) ? sanitize_text_field($form['comment_author']) : "";
+        $message = $author . ' ' . $message;
 
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-            $userIP = oopspamantispam_get_ip();
+            $userIP = isset($form['user_ip']) ? sanitize_text_field($form['user_ip']) : "";
         }
 
         $detectionResult = oopspamantispam_call_OOPSpam($message, $userIP, $email, true, "jform");
         if (!isset($detectionResult["isItHam"])) {
-            return;
+            return $_is_spam;
         }
         $frmEntry = [
             "Score" => $detectionResult["Score"],
             "Message" => $message,
             "IP" => $userIP,
             "Email" => $email,
-            "RawEntry" => json_encode($all_values),
-            "FormId" => $post_id,
+            "RawEntry" => json_encode($form),
+            "FormId" => "Jetpack Form",
         ];
 
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_jform_spam_message'];
-            wp_die( $error_to_show );
+            // $error_to_show = $options['oopspam_jform_spam_message'];
+            // wp_die( $error_to_show );
+            $_is_spam = true;
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
 
-    return true;
+    return $_is_spam;
 }
-add_filter( 'grunion_pre_message_sent', 'oopspam_jpack_validation', 10, 3 );

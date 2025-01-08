@@ -1,10 +1,11 @@
 <?php
 
-add_filter('bricks/form/validate', 'oopspam_spam_check', 10, 2);
+namespace OOPSPAM\Integrations;
+
+add_filter('bricks/form/validate', 'OOPSPAM\Integrations\oopspam_spam_check', 10, 2);
 
 function oopspam_spam_check($errors, $form)
 {
-    
     $fields = $form->get_fields();
     $formId = $fields['formId'];
     $settings = $form->get_settings();
@@ -14,8 +15,8 @@ function oopspam_spam_check($errors, $form)
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_br_activated'])) {
 
-          // Check if the form is excluded from spam protection
-          if (isset($options['oopspam_br_exclude_form']) && $options['oopspam_br_exclude_form']) {
+        // Check if the form is excluded from spam protection
+        if (isset($options['oopspam_br_exclude_form']) && $options['oopspam_br_exclude_form']) {
             $formIds = sanitize_text_field(trim($options['oopspam_br_exclude_form']));
             // Split the IDs string into an array using the comma as the delimiter
             $excludedFormIds = array_map('trim', explode(',', $formIds));
@@ -64,9 +65,7 @@ function oopspam_spam_check($errors, $form)
                         break;
                     }
                 }
-                
             }
-
         }
 
         // Capture the email
@@ -114,15 +113,13 @@ function oopspam_spam_check($errors, $form)
                 'i' => array(),
                 'u' => array()
             );
-            $errors[] = wp_kses($error_to_show , 'oopspam' );
+            $errors[] = wp_kses($error_to_show, 'oopspam');
             return $errors;
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);
             return $errors;
         }
-
-
     }
 
     return $errors;

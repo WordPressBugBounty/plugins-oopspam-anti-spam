@@ -1,25 +1,27 @@
 <?php
-add_filter('gform_entry_is_spam', 'oopspamantispam_gform_check_spam', 999, 3);
-add_filter( 'gform_confirmation', function ( $confirmation, $form, $entry ) {
-    if ( empty( $entry ) || rgar( $entry, 'status' ) === 'spam' ) {
- 
+
+namespace OOPSPAM\Integrations;
+
+add_filter('gform_entry_is_spam', 'OOPSPAM\Integrations\oopspamantispam_gform_check_spam', 999, 3);
+add_filter('gform_confirmation', function ($confirmation, $form, $entry) {
+    if (empty($entry) || rgar($entry, 'status') === 'spam') {
         $options = get_option('oopspamantispam_settings');
-        if ( isset($options['oopspam_gf_spam_message']) && !empty($options['oopspam_gf_spam_message']) )
-        return "<div class='gform_confirmation_message'>" . $options['oopspam_gf_spam_message'] . "</div>";
+        if (isset($options['oopspam_gf_spam_message']) && !empty($options['oopspam_gf_spam_message'])) {
+            return "<div class='gform_confirmation_message'>" . $options['oopspam_gf_spam_message'] . "</div>";
+        }
     }
- 
     return $confirmation;
-}, 11, 3 );
+}, 11, 3);
 
 // Report spam to OOPSpam when an entry is flagged as spam
-add_filter( 'gform_update_status', 'marked_as_spam', 10, 3 );
-function marked_as_spam($entry_id, $property_value, $previous_value) {
-
+add_filter('gform_update_status', 'OOPSPAM\Integrations\marked_as_spam', 10, 3);
+function marked_as_spam($entry_id, $property_value, $previous_value)
+{
     $should_report = ($property_value == 'spam') || ($property_value == 'active' && $previous_value == 'spam');
 
     if ($should_report) {
-        $entry = GFAPI::get_entry($entry_id);
-        $form = GFAPI::get_form(rgar($entry, 'form_id'));
+        $entry = \GFAPI::get_entry($entry_id);
+        $form = \GFAPI::get_form(rgar($entry, 'form_id'));
         $extractedData = extractData($form, $entry);
 
         $is_spam = ($property_value == 'spam');
@@ -42,7 +44,6 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
     $message = $extractedData['message'];
     $userIP = $extractedData['ip'];
     $email = $extractedData['email'];
-    
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_gf_activated'])) {
         // Check if the form is excluded from spam protection
@@ -55,7 +56,6 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
         }
 
         $escapedMsg = sanitize_textarea_field($message);
-        
 
         $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "gravity");
         if (!isset($detectionResult["isItHam"])) {
@@ -74,8 +74,8 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            if ( method_exists( 'GFCommon', 'set_spam_filter' ) ) {
-                GFCommon::set_spam_filter( rgar( $form, 'id' ), 'OOPSpam Spam Protection', "The submission has a spam score of " . $detectionResult["Score"] . " , which is higher than the threshold of " . oopspamantispam_get_spamscore_threshold() );
+            if (method_exists('GFCommon', 'set_spam_filter')) {
+                \GFCommon::set_spam_filter(rgar($form, 'id'), 'OOPSpam Spam Protection', "The submission has a spam score of " . $detectionResult["Score"] . " , which is higher than the threshold of " . oopspamantispam_get_spamscore_threshold());
             }
             return true; // Mark as spam
         } else {
@@ -87,13 +87,14 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
     return $is_spam;
 }
 
-function extractData($form, $entry) {
+function extractData($form, $entry)
+{
     $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     $message = "";
     $email = "";
     $userIP = "";
-
 
     // Capture the email
     foreach ($form['fields'] as $field) {
@@ -152,5 +153,4 @@ function extractData($form, $entry) {
         'ip' => $userIP,
         'email' => $email
     );
-
 }

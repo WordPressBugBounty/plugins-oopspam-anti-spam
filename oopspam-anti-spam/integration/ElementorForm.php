@@ -1,10 +1,11 @@
 <?php
 
-add_action('elementor_pro/forms/validation', 'oopspamantispam_el_pre_submission', 10, 2);
+namespace OOPSPAM\Integrations;
+
+add_action('elementor_pro/forms/validation', 'OOPSPAM\Integrations\oopspamantispam_el_pre_submission', 10, 2);
 
 function oopspamantispam_el_pre_submission($record, $ajax_handler)
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
@@ -28,8 +29,8 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
 
         $form_id = $record->get('form_settings');
         
-          // Check if the form is excluded from spam protection
-          if (isset($options['oopspam_el_exclude_form']) && $options['oopspam_el_exclude_form']) {
+        // Check if the form is excluded from spam protection
+        if (isset($options['oopspam_el_exclude_form']) && $options['oopspam_el_exclude_form']) {
             $formIds = sanitize_text_field(trim($options['oopspam_el_exclude_form']));
             // Split the IDs string into an array using the comma as the delimiter
             $excludedFormIds = array_map('trim', explode(',', $formIds));
@@ -74,21 +75,20 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
             }
         }
 
-    // 2. Attempt to capture any textarea with its value
+        // 2. Attempt to capture any textarea with its value
         if (empty($message) && !empty($field)) {
             $message = $field["value"];
-    }
-
-        
-    // 3. No textarea found, capture any text/name field
-    if (empty($message)) {
-        $any_textfield = $record->get_field([
-            'type' => 'text',
-        ]);
-        if(!empty($any_textfield)) {
-            $message = current($any_textfield)['value'];
         }
-    }
+
+        // 3. No textarea found, capture any text/name field
+        if (empty($message)) {
+            $any_textfield = $record->get_field([
+                'type' => 'text',
+            ]);
+            if (!empty($any_textfield)) {
+                $message = current($any_textfield)['value'];
+            }
+        }
 
         // Capture the email
         $email = "";
@@ -96,19 +96,16 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
             $email = $email_field['value'];
         }
 
-
         $raw_entry = $record->get('sent_data');
 
         // Remove any password fields
-        if($password_fields) {
+        if ($password_fields) {
             foreach ($password_fields as $field => $field_val) {
                 unset($raw_entry[$field]);
             }
         }
         $raw_entry = json_encode($raw_entry);
 
-
-        
         $userIP = "";
 
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
@@ -150,7 +147,6 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
             // It's ham
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
 
     return;

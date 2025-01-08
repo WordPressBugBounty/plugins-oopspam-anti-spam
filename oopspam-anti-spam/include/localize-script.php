@@ -1,10 +1,12 @@
 <?php
+
+namespace OOPSPAM\UI;
+
 // Localize the script with the nonce value
 function enqueue_custom_scripts() {
     wp_enqueue_script( 'tom-select', plugin_dir_url( __FILE__ ) . 'libs/tom-select.complete.min.js', array( 'jquery' ), false, true);
 
     wp_enqueue_script( 'helper', plugin_dir_url( __FILE__ ) . 'helper.js', array( 'jquery', 'tom-select' ), false, true );
-
 
     // Localize the script with the nonce
     wp_localize_script('helper', 'customScript', array(
@@ -14,4 +16,4 @@ function enqueue_custom_scripts() {
         'exportHamEntriesNonce' => wp_create_nonce('export_ham_entries_nonce'),
     ));
 }
-add_action( 'admin_enqueue_scripts', 'enqueue_custom_scripts' );
+add_action( 'admin_enqueue_scripts', 'OOPSPAM\UI\enqueue_custom_scripts' );

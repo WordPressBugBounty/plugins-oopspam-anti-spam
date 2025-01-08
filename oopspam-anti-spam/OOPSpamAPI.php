@@ -1,4 +1,7 @@
 <?php
+
+namespace OOPSPAM\API;
+
 /**
  * Helper class for sending a request to OOPSpam API
  * 

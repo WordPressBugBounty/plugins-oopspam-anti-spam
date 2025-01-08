@@ -3,10 +3,11 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.23
+ * Version: 1.2.24
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
+ * Copyright: (c) 2017 - 2025, OOPSpam LLC
  * License: GPL2
  */
 if (!function_exists('add_action')) {
@@ -14,6 +15,8 @@ if (!function_exists('add_action')) {
 }
 // include a helper class to call the OOPSpam API
 require_once dirname(__FILE__) . '/OOPSpamAPI.php';
+use OOPSPAM\API\OOPSpamAPI;
+use OOPSPAM\RateLimiting\OOPSpam_RateLimiter;
 
 if (is_admin()) { //if admin include the admin specific functions
     require_once dirname(__FILE__) . '/options.php';
@@ -37,8 +40,8 @@ require_once dirname(__FILE__) . '/include/UI/display-ham-entries.php';
 require_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
 require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
 
-add_action('init', 'do_output_buffer');
-function do_output_buffer()
+add_action('init', 'oopspam_do_output_buffer');
+function oopspam_do_output_buffer()
 {
     ob_start();
 }
@@ -162,7 +165,7 @@ function oopspam_cron_job() {
             $options = [];
         }
 
-        if (isRateLimitingEnabled()) {
+        if (oopspam_isRateLimitingEnabled()) {
             $cleanDuration = isset($rtOptions['oopspamantispam_ratelimit_cleanup_duration']) ? $rtOptions['oopspamantispam_ratelimit_cleanup_duration'] : 48; // Default is 48 hours
             $rateLimiter = new OOPSpam_RateLimiter();
             $rateLimiter->reschedule_cleanup(0, $cleanDuration);
@@ -499,7 +502,7 @@ function oopspam_is_ip_allowed($ip) {
 }
 
 
-function containsUrl($text) {
+function oopspam_containsUrl($text) {
     // The Regular Expression filter to detect URLs
     $reg_exUrl = "/(?i)\b((?:https?:\/\/|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))/";
 
@@ -507,7 +510,7 @@ function containsUrl($text) {
     return preg_match($reg_exUrl, $text);
 }
 
-function isRateLimitingEnabled() {
+function oopspam_isRateLimitingEnabled() {
     $options = get_option('oopspamantispam_ratelimit_settings');
     $requiredKeys = [
         'oopspam_is_rt_enabled',
@@ -566,7 +569,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     // Run rate limiting check
     try {
         $rtOptions = get_option('oopspamantispam_ratelimit_settings');
-        $isRateLimitEnabled = isRateLimitingEnabled();
+        $isRateLimitEnabled = oopspam_isRateLimitingEnabled();
         if($isRateLimitEnabled) {
             $rate_limiter = new OOPSpam_RateLimiter();
         
@@ -627,7 +630,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     // Check if the message contains any URLs
     $blockURLs = (isset($options['oopspam_is_urls_allowed']) ? $options['oopspam_is_urls_allowed'] : false);
     if ($blockURLs) {
-        $hasURL = containsUrl($commentText);
+        $hasURL = oopspam_containsUrl($commentText);
         if ($hasURL) {
             if ($returnReason) {
                 $reason = [
@@ -848,7 +851,7 @@ function oopspamantispam_get_ip_address()
 }
 
 // Remove http & https from domain
-function urlToDomain($url)
+function oopspam_urlToDomain($url)
 {
     return implode(array_slice(explode('/', preg_replace('/https?:\/\/(www\.)?/', '', $url)), 0, 1));
 }
@@ -879,7 +882,7 @@ function oopspamantispam_check_comment($approved, $commentdata)
         $email = sanitize_email($commentdata['comment_author_email']);
     }
 
-    $trimmedURL = urlToDomain($commentdata['comment_author_url']);
+    $trimmedURL = oopspam_urlToDomain($commentdata['comment_author_url']);
 
     $sanitized_author_url = esc_url_raw($trimmedURL);
     $sanitized_content = sanitize_text_field($commentdata['comment_content']);
@@ -955,7 +958,7 @@ function oopspamantispam_check_pingback($approved, $commentdata)
             $email = sanitize_email($commentdata['comment_author_email']);
         }
 
-        $trimmedURL = urlToDomain($commentdata['comment_author_url']);
+        $trimmedURL = oopspam_urlToDomain($commentdata['comment_author_url']);
 
         $sanitized_author_url = esc_url_raw($trimmedURL);
         $sanitized_content = sanitize_text_field($commentdata['comment_content']);
@@ -991,7 +994,7 @@ add_filter( 'pre_comment_approved', 'oopspamantispam_check_pingback', 10, 2 );
 
 add_action('admin_init', 'oopspam_admin_init');
 
-add_action('pre_get_posts', 'check_search_for_spam');
+add_action('pre_get_posts', 'oopspam_check_search_for_spam');
 
 // When a comment flagged as spam, let OOPSpam know too
 add_action('transition_comment_status', 'oopspam_comment_spam_transition', 10, 3);
@@ -1007,7 +1010,7 @@ function oopspam_comment_spam_transition($new_status, $old_status, $comment) {
     }
 }
 
-function check_search_for_spam($query)
+function oopspam_check_search_for_spam($query)
 {
     // Only front end search
     if (!is_admin() && $query->is_main_query() && $query->is_search()) {

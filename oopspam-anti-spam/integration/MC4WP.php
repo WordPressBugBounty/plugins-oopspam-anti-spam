@@ -1,5 +1,7 @@
 <?php
-add_filter( 'mc4wp_form_errors', function( array $errors, MC4WP_Form $form ) {
+namespace OOPSPAM\Integrations;
+
+add_filter( 'mc4wp_form_errors', function( array $errors, \MC4WP_Form $form ) {
 
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
@@ -38,17 +40,12 @@ add_filter( 'mc4wp_form_errors', function( array $errors, MC4WP_Form $form ) {
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $errors[] = 'oopspam_spam';
             return $errors;
-
-            
-
         } else {
             // It's ham, continue with the subscription
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
-	return $errors;
-
+    return $errors;
 }, 10, 2 );
 
 /**
@@ -61,6 +58,6 @@ function oopspam_add_mc4wp_error_message($messages) {
     $error_to_show = $options['oopspam_mc4wp_spam_message'];
     $messages['oopspam_spam'] = $error_to_show;
     return $messages;
-  }
-  
-add_filter('mc4wp_form_messages', 'oopspam_add_mc4wp_error_message');
+}
+
+add_filter('mc4wp_form_messages', 'OOPSPAM\Integrations\oopspam_add_mc4wp_error_message');

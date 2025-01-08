@@ -1,6 +1,8 @@
 <?php
-add_action( 'kadence_blocks_form_submission', 'oopspamantispam_kb_pre_submission' , 5, 4 );
-add_action( 'kadence_blocks_advanced_form_submission', 'oopspamantispam_kb_adv_pre_submission' , 5, 3 );
+namespace OOPSPAM\Integrations;
+
+add_action( 'kadence_blocks_form_submission', 'OOPSPAM\Integrations\oopspamantispam_kb_pre_submission' , 5, 4 );
+add_action( 'kadence_blocks_advanced_form_submission', 'OOPSPAM\Integrations\oopspamantispam_kb_adv_pre_submission' , 5, 3 );
 
 if ( file_exists( WP_PLUGIN_DIR . '/kadence-blocks/includes/form-ajax.php' ) ) {
     require_once( WP_PLUGIN_DIR . '/kadence-blocks/includes/form-ajax.php' );
@@ -53,7 +55,7 @@ function oopspamantispam_kb_adv_pre_submission($form_args, $processed_fields, $p
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_kb_spam_message'];
-            $kb = new KB_Ajax_Form();
+            $kb = new \KB_Ajax_Form();
             $kb -> process_bail( __( $error_to_show, 'oopspam' ), __( 'Spam Detected by OOPSpam', 'oopspam' ) );
             return;
         } else {
@@ -114,7 +116,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_kb_spam_message'];
-            $kb = new KB_Ajax_Form();
+            $kb = new \KB_Ajax_Form();
             $kb -> process_bail( __( $error_to_show, 'oopspam' ), __( 'Spam Detected by OOPSpam', 'oopspam' ) );
             return;
         } else {
@@ -125,4 +127,4 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
 
     }
     return;
-};
+}

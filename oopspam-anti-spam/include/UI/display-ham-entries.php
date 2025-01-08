@@ -1,6 +1,8 @@
 <?php
 
-if ( ! class_exists( 'WP_List_Table' ) ) {
+namespace OOPSPAM\UI;
+
+if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
 
@@ -37,7 +39,7 @@ function empty_ham_entries(){
 	wp_die(); // this is required to terminate immediately and return a proper response
 }
 
-add_action('wp_ajax_empty_ham_entries', 'empty_ham_entries' ); // executed when logged in
+add_action('wp_ajax_empty_ham_entries', 'OOPSPAM\UI\empty_ham_entries' ); // executed when logged in
 
 function export_ham_entries(){
 
@@ -113,9 +115,9 @@ function export_ham_entries(){
     wp_die(); // this is required to terminate immediately and return a proper response
 }
 
-add_action('wp_ajax_export_ham_entries', 'export_ham_entries' ); // executed when logged in
+add_action('wp_ajax_export_ham_entries', 'OOPSPAM\UI\export_ham_entries' ); // executed when logged in
 
-class Ham_Entries extends WP_List_Table {
+class Ham_Entries extends \WP_List_Table {
 
 	/** Class constructor */
 	public function __construct() {

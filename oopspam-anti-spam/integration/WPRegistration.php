@@ -1,6 +1,8 @@
 <?php
 
-add_filter('registration_errors', 'oopspamantispam_validate_email', 10, 3);
+namespace OOPSPAM\Integrations;
+
+add_filter('registration_errors', 'OOPSPAM\Integrations\oopspamantispam_validate_email', 10, 3);
 
 function oopspamantispam_validate_email($errors, $sanitized_user_login, $user_email)
 {

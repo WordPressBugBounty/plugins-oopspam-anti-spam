@@ -1,6 +1,8 @@
 <?php
 
-add_action('give_checkout_error_checks', 'oopspamantispam_givewp_pre_submission', 10, 1);
+namespace OOPSPAM\Integrations;
+
+add_action('give_checkout_error_checks', 'OOPSPAM\Integrations\oopspamantispam_givewp_pre_submission', 10, 1);
 
 function oopspamantispam_givewp_pre_submission($data)
 {

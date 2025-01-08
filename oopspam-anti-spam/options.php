@@ -60,7 +60,7 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
     $old_duration = $old_value['oopspamantispam_ratelimit_cleanup_duration'] ?? null;
 
 
-    if (isRateLimitingEnabled() && !wp_next_scheduled("oopspam_cleanup_ratelimit_entries_cron")) {
+    if (oopspam_isRateLimitingEnabled() && !wp_next_scheduled("oopspam_cleanup_ratelimit_entries_cron")) {
         if (class_exists('OOPSpam_RateLimiter')) {
             try {
                 $rateLimiter = new OOPSpam_RateLimiter();
@@ -73,7 +73,7 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
         }
     }
     // Case 2: Duration changed while rate limit is enabled - reschedule cleanup job
-    elseif ($new_duration !== $old_duration && isRateLimitingEnabled()) {
+    elseif ($new_duration !== $old_duration && oopspam_isRateLimitingEnabled()) {
         if (class_exists('OOPSpam_RateLimiter')) {
             try {
                 $rateLimiter = new OOPSpam_RateLimiter();
@@ -86,7 +86,7 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
         }
     }
     // Case 3: Rate limit fields are cleared - unschedule any existing cleanup job
-    elseif (!isRateLimitingEnabled()) {
+    elseif (!oopspam_isRateLimitingEnabled()) {
         $timestamp = wp_next_scheduled('oopspam_cleanup_ratelimit_entries_cron');
         if ($timestamp) {
             wp_unschedule_event($timestamp, 'oopspam_cleanup_ratelimit_entries_cron');

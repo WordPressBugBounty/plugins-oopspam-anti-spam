@@ -1,5 +1,7 @@
 <?php
-add_filter('um_submit_form_errors_hook', 'oopspamantispam_um_submission', 10, 1);
+namespace OOPSPAM\Integrations;
+
+add_filter('um_submit_form_errors_hook', 'OOPSPAM\Integrations\oopspamantispam_um_submission', 10, 1);
 
 // Filter function
 function oopspamantispam_um_submission($post)
@@ -19,13 +21,12 @@ function oopspamantispam_um_submission($post)
         }
         if (isset($post["user_email"])) {
             $email = $post["user_email"]; 
-         }
+        }
         
         if (isset($post["user_password"])) {
             unset($post["user_password"]);
             unset($post["submitted"]["user_password"]);
         }
-        
 
         // Capture user's IP if allowed
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
@@ -49,18 +50,15 @@ function oopspamantispam_um_submission($post)
         ];
 
         if (!$detectionResult["isItHam"]) {
-
             // It's spam, store the submission in Form Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_umember_spam_message'];
             UM()->form()->add_error( 'user_email', __( $error_to_show, 'oopspam' ) );
-          
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
     
     return;
-};
+}

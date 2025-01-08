@@ -1,11 +1,14 @@
 <?php
-add_filter('wsf_submit_validate', 'oopspamantispam_ws_pre_submission', 10, 3);
+
+namespace OOPSPAM\Integrations;
+
+add_filter('wsf_submit_validate', 'OOPSPAM\Integrations\oopspamantispam_ws_pre_submission', 10, 3);
 
 // Filter function
 function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode, $submit)
 {
     // Only process validation if the form is submitted and not saved
-    if ( $post_mode !== 'submit' ) {
+    if ($post_mode !== 'submit') {
         return $field_error_action_array;
     }
 
@@ -44,14 +47,12 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
             }
         }
 
-
         // 1. Check if custom Form ID|Field ID pair is set for content field
         if (isset($options['oopspam_ws_content_field']) && $options['oopspam_ws_content_field']) {
 
             $nameOfTextareaField = sanitize_text_field(trim($options['oopspam_ws_content_field']));
             // Decode the JSON data into an associative array
             $jsonData = json_decode($nameOfTextareaField, true);
-            // $currentFormId = $form_data['id']; 
 
             foreach ($jsonData as $contentFieldPair) {
                 // Scan only for this form by matching Form ID
@@ -59,44 +60,36 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
                     $fieldIds = explode(',', $contentFieldPair['fieldId']);
 
                     foreach ($submit->meta as $field) {
-                        
                         if (!empty($field) && in_array($field['id'], $fieldIds)) {
                             $message .= $field['value'] . ' '; // Concatenate the field values with a space
                         }
                     }
-        
+
                     // Trim any extra spaces from the end of the message
                     $message = trim($message);
                     // Break the loop once the message is captured
                     break 1;
                 }
             }
-
         }
 
-      
-
-         // 2. Attempt to capture any textarea with its value
+        // 2. Attempt to capture any textarea with its value
         if (empty($message)) {
             foreach ($submit->meta as $field) {
-            if (!empty($field))
-            if ($field["type"] === "textarea") {
-                $message = $field["value"];
-            }
-        }
-     }
-
-        
-        // 3. No textarea found, capture any text/name field
-        if (empty($message)) {
-            foreach ($submit->meta as $field) {
-                if (!empty($field))
-                if ($field["type"] === "text") {
+                if (!empty($field) && $field["type"] === "textarea") {
                     $message = $field["value"];
                 }
             }
-        }               
+        }
 
+        // 3. No textarea found, capture any text/name field
+        if (empty($message)) {
+            foreach ($submit->meta as $field) {
+                if (!empty($field) && $field["type"] === "text") {
+                    $message = $field["value"];
+                }
+            }
+        }
 
         // Sanitize message field
         $escapedMsg = sanitize_textarea_field($message);
@@ -123,7 +116,6 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
         ];
 
         if (!$detectionResult["isItHam"]) {
-
             // It's spam, store the submission in Form Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_ws_spam_message'];
@@ -138,8 +130,7 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
             oopspam_store_ham_submission($frmEntry);
             return $field_error_action_array;
         }
-
     }
-    
+
     return $field_error_action_array;
-};
+}

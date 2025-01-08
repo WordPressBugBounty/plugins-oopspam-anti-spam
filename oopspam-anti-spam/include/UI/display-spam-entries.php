@@ -1,6 +1,8 @@
 <?php
 
-if ( ! class_exists( 'WP_List_Table' ) ) {
+namespace OOPSPAM\UI;
+
+if ( ! class_exists( '\WP_List_Table' ) ) {
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
 
@@ -42,7 +44,7 @@ function empty_spam_entries(){
 	wp_die(); // this is required to terminate immediately and return a proper response
 }
 
-add_action('wp_ajax_empty_spam_entries', 'empty_spam_entries' ); // executed when logged in
+add_action('wp_ajax_empty_spam_entries', 'OOPSPAM\UI\empty_spam_entries' ); // executed when logged in
 
 function export_spam_entries(){
 
@@ -119,9 +121,9 @@ function export_spam_entries(){
 }
 
 
-add_action('wp_ajax_export_spam_entries', 'export_spam_entries' ); // executed when logged in
+add_action('wp_ajax_export_spam_entries', 'OOPSPAM\UI\export_spam_entries' ); // executed when logged in
 
-class Spam_Entries extends WP_List_Table {
+class Spam_Entries extends \WP_List_Table {
 
 	/** Class constructor */
 	public function __construct() {

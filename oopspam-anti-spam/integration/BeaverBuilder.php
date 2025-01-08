@@ -1,10 +1,11 @@
 <?php
 
-add_action('fl_module_contact_form_before_send', 'oopspamantispam_bb_pre_submission', 10, 5);
+namespace OOPSPAM\Integrations;
 
-function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $headers, $settings )
+add_action('fl_module_contact_form_before_send', 'OOPSPAM\Integrations\oopspamantispam_bb_pre_submission', 10, 5);
+
+function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $headers, $settings)
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
@@ -12,13 +13,13 @@ function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $header
 
         // Capture the content
         $message = "";
-        if ( isset( $_POST['message'] ) ) {
+        if (isset($_POST['message'])) {
             $message = $_POST['message'];
         }
 
         // Capture the email
         $email = "";
-        if ( isset( $_POST['email'] ) ) {
+        if (isset($_POST['email'])) {
             $email = $_POST['email'];
         }
 
@@ -49,12 +50,10 @@ function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $header
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             wp_die();
-            
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
 
     return;

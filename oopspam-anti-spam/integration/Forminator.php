@@ -1,16 +1,20 @@
 <?php
 
-add_action('forminator_custom_form_submit_before_set_fields', 'oopspam_forminator_pre_submission', 10, 3);
+namespace OOPSPAM\Integrations;
+
+add_action('forminator_custom_form_submit_before_set_fields', 'OOPSPAM\Integrations\oopspam_forminator_pre_submission', 10, 3);
 
 function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    $userIP = '' ; $email = ''; $message = ''; $raw_entry = json_encode($field_data_array);
+    $userIP = ''; 
+    $email = ''; 
+    $message = ''; 
+    $raw_entry = json_encode($field_data_array);
 
-     // 1. Check if custom Form ID|Field ID pair is set for content field
-     if (isset($options['oopspam_forminator_content_field']) && $options['oopspam_forminator_content_field']) {
+    // 1. Check if custom Form ID|Field ID pair is set for content field
+    if (isset($options['oopspam_forminator_content_field']) && $options['oopspam_forminator_content_field']) {
         $nameOfTextareaField = sanitize_text_field(trim($options['oopspam_forminator_content_field']));
         // Decode the JSON data into an associative array
         $jsonData = json_decode($nameOfTextareaField, true);
@@ -37,7 +41,7 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
     }
 
     // 2. Attempt to capture any textarea with its value
-        if (empty($message)) {
+    if (empty($message)) {
         foreach ($field_data_array as $field) {
             if (!isset($field["field_type"])) continue;
             if ($field["field_type"] == "textarea") {
@@ -47,7 +51,6 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         }
     }
 
-        
     // 3. No textarea found, capture any text/name field
     if (empty($message)) {
         foreach ($field_data_array as $field) {
@@ -60,7 +63,6 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
     }
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_forminator_activated'])) {
-
         $escapedMsg = sanitize_textarea_field($message);
 
         // Capture message and email
@@ -76,7 +78,6 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
-        
 
         // Perform spam check using OOPSpam
         $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "forminator");

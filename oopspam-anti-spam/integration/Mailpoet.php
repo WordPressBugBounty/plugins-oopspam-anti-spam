@@ -1,6 +1,7 @@
 <?php
+namespace OOPSPAM\Integrations;
 
-add_action('mailpoet_subscription_before_subscribe', 'oopspam_mailpoet_pre_subscription', 10, 3);
+add_action('mailpoet_subscription_before_subscribe', 'OOPSPAM\Integrations\oopspam_mailpoet_pre_subscription', 10, 3);
 
 function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_data)
 {
@@ -8,7 +9,6 @@ function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_mpoet_activated'])) {
-
         // Capture the email address
         $email = sanitize_email($subscriber_data['email']);
 
@@ -39,11 +39,9 @@ function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_mpoet_spam_message'];
             throw new \MailPoet\UnexpectedValueException($error_to_show);
-
         } else {
             // It's ham, continue with the subscription
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
 }

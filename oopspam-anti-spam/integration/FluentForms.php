@@ -1,10 +1,11 @@
 <?php
 
-add_action('fluentform/before_insert_submission', 'oopspamantispam_ff_pre_submission', 20, 3);
+namespace OOPSPAM\Integrations;
+
+add_action('fluentform/before_insert_submission', 'OOPSPAM\Integrations\oopspamantispam_ff_pre_submission', 20, 3);
 
 function oopspamantispam_ff_pre_submission($insertData, $data, $form)
 {
-   
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $fields = json_decode($form->form_fields, true);
@@ -42,26 +43,24 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
     }
 
     // 2. Attempt to capture any textarea with its value
-        if (empty($message)) {
-        
+    if (empty($message)) {
         // Use default textarea field name first
         $nameOfTextareaField = "description";
-            if (isset($data[$nameOfTextareaField])) {
-                $message = $data[$nameOfTextareaField];
-            } else {
-                // Capture the textarea field name and value
-                foreach ($fields["fields"] as $field) {
-                    if (isset($field["attributes"]["type"]) && $field["attributes"]["type"] == "textarea") {
-                        $nameOfTextareaField = $field["attributes"]["name"];
-                    }
+        if (isset($data[$nameOfTextareaField])) {
+            $message = $data[$nameOfTextareaField];
+        } else {
+            // Capture the textarea field name and value
+            foreach ($fields["fields"] as $field) {
+                if (isset($field["attributes"]["type"]) && $field["attributes"]["type"] == "textarea") {
+                    $nameOfTextareaField = $field["attributes"]["name"];
                 }
-                // error_log($nameOfTextareaField);
-                if ($nameOfTextareaField != "description")
+            }
+            if ($nameOfTextareaField != "description") {
                 $message = $data[$nameOfTextareaField];
             }
+        }
     }
 
-        
     // 3. No textarea found, capture any text/name field
     if (empty($message)) {
         foreach ($fields["fields"] as $field) {
@@ -71,16 +70,14 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         }
     }
 
-
     // Capture the email
     if (isset($data["email"])) {
         $email = sanitize_email($data["email"]);
     }
 
-
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_ff_activated'])) {
 
-         // Check if the form is excluded from spam protection
+        // Check if the form is excluded from spam protection
         if (isset($options['oopspam_ff_exclude_form']) && $options['oopspam_ff_exclude_form']) {
             $formIds = sanitize_text_field(trim($options['oopspam_ff_exclude_form']));
             // Split the IDs string into an array using the comma as the delimiter
@@ -118,7 +115,6 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         ];
 
         if (!$detectionResult["isItHam"]) {
-
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
@@ -135,5 +131,4 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
     }
 
     return;
-
 }

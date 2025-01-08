@@ -1,5 +1,7 @@
 <?php
 
+namespace OOPSPAM\RateLimiting;
+
 class OOPSpam_RateLimiter {
     private $db_table = 'oopspam_rate_limits';
     private $config;
@@ -282,5 +284,4 @@ class OOPSpam_RateLimiter {
        
         return $schedules;
     }
-    
 }

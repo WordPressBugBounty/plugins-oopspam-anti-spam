@@ -1,12 +1,10 @@
 <?php
+namespace OOPSPAM\Integrations;
 
-add_filter( 'piotnetforms/form_builder/validate_pre_submit_form', 'oopspamantispam_pionetf_pre_submission', 10, 4 );
-
-
+add_filter( 'piotnetforms/form_builder/validate_pre_submit_form', 'OOPSPAM\Integrations\oopspamantispam_pionetf_pre_submission', 10, 4 );
 
 function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form, $form_id)
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     $message = "";
@@ -16,9 +14,8 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
         return;
     }
 
-
-      // Check if the form is excluded from spam protection
-      if (isset($options['oopspam_pionet_exclude_form']) && $options['oopspam_pionet_exclude_form']) {
+    // Check if the form is excluded from spam protection
+    if (isset($options['oopspam_pionet_exclude_form']) && $options['oopspam_pionet_exclude_form']) {
         $formIds = sanitize_text_field(trim($options['oopspam_pionet_exclude_form']));
         // Split the IDs string into an array using the comma as the delimiter
         $excludedFormIds = array_map('trim', explode(',', $formIds));
@@ -62,7 +59,6 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
     }
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_pionet_activated'])) {
-
         $userIP = "";
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
@@ -83,7 +79,6 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
         ];
 
         if (!$detectionResult["isItHam"]) {
-
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = $options['oopspam_pionet_spam_message'];
@@ -93,8 +88,6 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
             oopspam_store_ham_submission($frmEntry);
             return;
         }
-
     }
-
     return;
 }

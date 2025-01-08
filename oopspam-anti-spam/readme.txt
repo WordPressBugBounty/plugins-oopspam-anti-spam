@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.23
+Stable tag: 1.2.24
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,11 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.43 =
+* **IMPROVEMENT:** Enhanced method to prevent naming collisions with other plugins
+* **IMPROVEMENT:** [Jetpack Forms] Spam submissions are now categorized under Feedback->Spam
+* **IMPROVEMENT:** [Jetpack Forms] Improved handling of `textarea` fields
+* **FIX:** [Gravity Forms] Privacy settings were not being respected
 = 1.2.23 =
 * **NEW:** Added a new rate-limiting setting: "Restrict submissions per Google Ads lead"
 = 1.2.22 =

@@ -1,6 +1,8 @@
 <?php
 
-add_action('wpforms_process', 'oopspamantispam_wpf_pre_submission', 10, 4);
+namespace OOPSPAM\Integrations;
+
+add_action('wpforms_process', 'OOPSPAM\Integrations\oopspamantispam_wpf_pre_submission', 10, 4);
 
 function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
 {

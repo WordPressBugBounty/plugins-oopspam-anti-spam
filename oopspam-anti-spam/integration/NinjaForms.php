@@ -1,9 +1,10 @@
 <?php
-add_filter('ninja_forms_submit_data', 'oopspamantispam_forms_after_submission');
+namespace OOPSPAM\Integrations;
+
+add_filter('ninja_forms_submit_data', 'OOPSPAM\Integrations\oopspamantispam_forms_after_submission');
 
 function oopspamantispam_forms_after_submission($form_data)
 {
-
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
@@ -15,8 +16,8 @@ function oopspamantispam_forms_after_submission($form_data)
         // Default Field Key (aka ID) starts with "textarea"
         $keyToLook = "textarea";
 
-          // Check if the form is excluded from spam protection
-          if (isset($options['oopspam_nj_exclude_form']) && $options['oopspam_nj_exclude_form']) {
+        // Check if the form is excluded from spam protection
+        if (isset($options['oopspam_nj_exclude_form']) && $options['oopspam_nj_exclude_form']) {
             $formIds = sanitize_text_field(trim($options['oopspam_nj_exclude_form']));
             // Split the IDs string into an array using the comma as the delimiter
             $excludedFormIds = array_map('trim', explode(',', $formIds));
@@ -89,7 +90,6 @@ function oopspamantispam_forms_after_submission($form_data)
         ];
 
         if (!$detectionResult["isItHam"]) {
-
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
@@ -113,7 +113,6 @@ function oopspamantispam_forms_after_submission($form_data)
             // It's ham
             oopspam_store_ham_submission($frmEntry);
         }
-
     }
     return $form_data;
 }
