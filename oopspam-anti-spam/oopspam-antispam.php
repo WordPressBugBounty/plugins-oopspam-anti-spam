@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.24
+ * Version: 1.2.25
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -85,7 +85,7 @@ add_action('init', function () {
     require_once (dirname(__FILE__) . '/integration/BreakdanceForm.php');
 
     // Register the action
-    \Breakdance\Forms\Actions\registerAction(new OOPSpamBreakdanceAction());
+    \Breakdance\Forms\Actions\registerAction(new \OOPSPAM\Integrations\OOPSpamBreakdanceAction());
 });
 
 require_once dirname(__FILE__) . '/integration/WooCommerce.php';

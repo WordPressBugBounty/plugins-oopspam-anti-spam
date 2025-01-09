@@ -42,7 +42,7 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
 
     $extractedData = extractData($form, $entry);
     $message = $extractedData['message'];
-    $userIP = $extractedData['ip'];
+    $userIP = oopspamantispam_get_ip();
     $email = $extractedData['email'];
 
     if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_gf_activated'])) {

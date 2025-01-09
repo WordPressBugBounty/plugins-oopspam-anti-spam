@@ -40,6 +40,7 @@ function oopspam_contact_form_is_spam_jetpack($_is_spam, $form) {
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
+            // TODO: Remove oopspam_jform_spam_message from options
             // $error_to_show = $options['oopspam_jform_spam_message'];
             // wp_die( $error_to_show );
             $_is_spam = true;
