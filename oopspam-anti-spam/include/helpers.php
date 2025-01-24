@@ -129,6 +129,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'sure':
+                if (is_plugin_active('sureforms/sureforms.php')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;

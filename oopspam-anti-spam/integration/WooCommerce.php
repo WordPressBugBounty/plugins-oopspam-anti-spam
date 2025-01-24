@@ -23,16 +23,22 @@ class WooSpamProtection
 
     public function __construct()
     {
+        $options = get_option('oopspamantispam_settings');
+        $honeypot_enabled = isset($options['oopspam_woo_check_honeypot']) && $options['oopspam_woo_check_honeypot'] == 1;
+
         // Initialize actions & filters
-        add_action('woocommerce_register_form', [$this, 'oopspam_woocommerce_register_form'], 1, 0);
-        add_action('woocommerce_after_checkout_billing_form', [$this, 'oopspam_woocommerce_register_form']);
+        if ($honeypot_enabled) {
+            add_action('woocommerce_register_form', [$this, 'oopspam_woocommerce_register_form'], 1, 0);
+            add_action('woocommerce_after_checkout_billing_form', [$this, 'oopspam_woocommerce_register_form']);
+            add_action('woocommerce_login_form', [$this, 'oopspam_woocommerce_login_form'], 1, 0);
+        }
+        
+        // Always add these hooks as they handle both honeypot and API validation
         add_action('woocommerce_register_post', array($this, 'oopspam_process_registration'), 10, 3);
         add_action('woocommerce_process_registration_errors', [$this, 'oopspam_woocommerce_register_errors'], 10, 4);
-        add_action('woocommerce_login_form', [$this, 'oopspam_woocommerce_login_form'], 1, 0);
         add_filter('woocommerce_process_login_errors', [$this, 'oopspam_woocommerce_login_errors'], 1, 1);
-
-        add_action( 'woocommerce_checkout_process', [$this, 'oopspam_checkout_process'] );
-        add_action( 'woocommerce_store_api_checkout_order_processed', [$this, 'oopspam_checkout_store_api_processed'], 10, 1 );
+        add_action('woocommerce_checkout_process', [$this, 'oopspam_checkout_process']);
+        add_action('woocommerce_store_api_checkout_order_processed', [$this, 'oopspam_checkout_store_api_processed'], 10, 1);
     }
 
     function oopspam_checkout_store_api_processed($order) {
@@ -177,29 +183,26 @@ class WooSpamProtection
             return $validation_error;
         }
         
-        // Check if any honeypot fields are filled
-        foreach ($_POST as $key => $value) {
-            if (strpos($key, 'honey_') === 0 && !empty($value)) {
-                $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
+        // Only check honeypot if enabled
+        if ($this->should_check_honeypot()) {
+            // Check if any honeypot fields are filled
+            foreach ($_POST as $key => $value) {
+                if (strpos($key, 'honey_') === 0 && !empty($value)) {
+                    $error_to_show = $this->get_error_message();
+                    $validation_error = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
 
-                if ($isHoneypotDisabled) {
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => sanitize_text_field($value),
+                        "IP" => "",
+                        "Email" => $email,
+                        "RawEntry" => json_encode($_POST),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
+
                     return $validation_error;
                 }
-
-                $error_to_show = $this->get_error_message();
-                $validation_error = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
-
-                $frmEntry = [
-                    "Score" => 6,
-                    "Message" => sanitize_text_field($value),
-                    "IP" => "",
-                    "Email" => $email,
-                    "RawEntry" => json_encode($_POST),
-                    "FormId" => "WooCommerce",
-                ];
-                oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
-
-                return $validation_error;
             }
         }
 
@@ -221,27 +224,29 @@ class WooSpamProtection
         }
 
         // Check honeypot fields
-        foreach ($_POST as $key => $value) {
-            if (strpos($key, 'honey_') === 0 && !empty($value)) {
-                $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
+        if ($this->should_check_honeypot()) {
+            foreach ($_POST as $key => $value) {
+                if (strpos($key, 'honey_') === 0 && !empty($value)) {
+                    $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
 
-                if ($isHoneypotDisabled) {
+                    if ($isHoneypotDisabled) {
+                        return $errors;
+                    }
+
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => sanitize_text_field($value),
+                        "IP" => "",
+                        "Email" => $email,
+                        "RawEntry" => json_encode($_POST),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
+
+                    $error_to_show = $this->get_error_message();
+                    $errors->add('oopspam_error', $error_to_show);
                     return $errors;
                 }
-
-                $frmEntry = [
-                    "Score" => 6,
-                    "Message" => sanitize_text_field($value),
-                    "IP" => "",
-                    "Email" => $email,
-                    "RawEntry" => json_encode($_POST),
-                    "FormId" => "WooCommerce",
-                ];
-                oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
-
-                $error_to_show = $this->get_error_message();
-                $errors->add('oopspam_error', $error_to_show);
-                return $errors;
             }
         }
 
@@ -275,27 +280,29 @@ class WooSpamProtection
         }
 
         // Check honeypot fields
-        foreach ($_POST as $key => $value) {
-            if (strpos($key, 'honey_') === 0 && !empty($value)) {
-                $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
+        if ($this->should_check_honeypot()) {
+            foreach ($_POST as $key => $value) {
+                if (strpos($key, 'honey_') === 0 && !empty($value)) {
+                    $isHoneypotDisabled = apply_filters('oopspam_woo_disable_honeypot', false);
 
-                if ($isHoneypotDisabled) {
+                    if ($isHoneypotDisabled) {
+                        return $errors;
+                    }
+
+                    $error_to_show = $this->get_error_message();
+                    $errors = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
+                    
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => sanitize_text_field($value),
+                        "IP" => "",
+                        "Email" => $email,
+                        "RawEntry" => json_encode($_POST),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
                     return $errors;
                 }
-
-                $error_to_show = $this->get_error_message();
-                $errors = new \WP_Error('oopspam_error', __($error_to_show, 'woocommerce'));
-                
-                $frmEntry = [
-                    "Score" => 6,
-                    "Message" => sanitize_text_field($value),
-                    "IP" => "",
-                    "Email" => $email,
-                    "RawEntry" => json_encode($_POST),
-                    "FormId" => "WooCommerce",
-                ];
-                oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
-                return $errors;
             }
         }
 
@@ -384,4 +391,9 @@ private function isEmailAllowed($email, $rawEntry)
 
         return false;
     }
+
+private function should_check_honeypot() {
+    $options = get_option('oopspamantispam_settings');
+    return isset($options['oopspam_woo_check_honeypot']) && $options['oopspam_woo_check_honeypot'] == 1;
+}
 }

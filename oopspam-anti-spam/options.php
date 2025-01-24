@@ -1303,6 +1303,51 @@ function oopspam_jform_spam_message_render()
             'oopspamantispam-woo-settings-group',
             'oopspam_woo_settings_section'
         );
+
+        add_settings_field(
+            'oopspam_woo_check_honeypot',
+            __('Enable honeypot protection', 'oopspam'),
+            'oopspam_woo_check_honeypot_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+    }
+
+    // SureForms settings section
+    if (oopspamantispam_plugin_check('sure') && !empty($options['oopspam_api_key'])) {
+
+        add_settings_section('oopspam_sure_settings_section',
+            __('SureForms', 'oopspam'),
+            false,
+            'oopspamantispam-sure-settings-group'
+        );
+        add_settings_field('oopspam_is_sure_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_sure_activated_render',
+            'oopspamantispam-sure-settings-group',
+            'oopspam_sure_settings_section'
+        );
+
+        add_settings_field('oopspam_sure_spam_message',
+            __('SureForms Spam Message', 'oopspam'),
+            'oopspam_sure_spam_message_render',
+            'oopspamantispam-sure-settings-group',
+            'oopspam_sure_settings_section'
+        );
+
+        add_settings_field('oopspam_sure_content_field',
+            __('The main content field ID (optional)', 'oopspam'),
+            'oopspam_sure_content_field_render',
+            'oopspamantispam-sure-settings-group',
+            'oopspam_sure_settings_section'
+        );
+
+        add_settings_field('oopspam_sure_exclude_form',
+            __("Don't protect these forms", 'oopspam'),
+            'oopspam_sure_exclude_form_render',
+            'oopspamantispam-sure-settings-group',
+            'oopspam_sure_settings_section'
+        );
     }
 
 }
@@ -2559,6 +2604,74 @@ function oopspam_ws_spam_message_render()
 
 /* WS Form UI settings section ends */
 
+/* SureForms UI settings section starts */
+
+function oopspam_is_sure_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+           <div>
+               <label for="sure_support">
+               <input class="oopspam-toggle" type="checkbox" id="sure_support" name="oopspamantispam_settings[oopspam_is_sure_activated]" value="1" <?php if (isset($options['oopspam_is_sure_activated']) && 1 == $options['oopspam_is_sure_activated']) {
+        echo 'checked="checked"';
+    }
+    ?>/>
+               </label>
+           </div>
+       <?php
+}
+
+function oopspam_sure_content_field_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_sure_content_field">
+                    <input type="text" class="regular-text" name="oopspamantispam_settings[oopspam_sure_content_field]" value="<?php if (isset($options['oopspam_sure_content_field'])) {
+        echo esc_html($options['oopspam_sure_content_field']);
+    }
+    ?>">
+                        <p class="description"><?php echo __('By default, OOPSpam looks for a textarea field in your SureForms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam'); ?></p>
+                        <p class="description"><?php echo __('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+function oopspam_sure_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+       <div>
+               <label for="oopspam_sure_exclude_form">
+               <input id="oopspam_sure_exclude_form" type="text" placeholder="Enter form IDs (e.g 1,5,2 or 5)" class="regular-text" name="oopspamantispam_settings[oopspam_sure_exclude_form]" value="<?php if (isset($options['oopspam_sure_exclude_form'])) {
+        echo esc_html($options['oopspam_sure_exclude_form']);
+    }
+    ?>">
+                   </label>
+           </div>
+       <?php
+}
+
+function oopspam_sure_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_sure_spam_message">
+                  <input id="oopspam_sure_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_sure_spam_message]" value="<?php if (isset($options['oopspam_sure_spam_message'])) {
+        esc_html_e($options['oopspam_sure_spam_message'], "oopspam");
+    }
+    ?>">
+                      <p class="description"><?php echo __('Enter a short message to display when a spam SureForms entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                      <p class="description" style="color: red;"><?php echo __('Note: This feature is not currently supported due to a limitation in SureForms.', 'oopspam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* SureForms UI settings section ends */
+
 /* WPForms  settings section starts */
 
 function oopspam_is_wpf_activated_render()
@@ -2949,6 +3062,20 @@ function oopspam_woo_spam_message_render()
             <?php
 }
 
+function oopspam_woo_check_honeypot_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_honeypot">
+            <input class="oopspam-toggle" type="checkbox" id="woo_honeypot" 
+                   name="oopspamantispam_settings[oopspam_woo_check_honeypot]" 
+                   value="1" <?php checked(isset($options['oopspam_woo_check_honeypot']) && $options['oopspam_woo_check_honeypot'] == 1); ?>/>
+        </label>
+    </div>
+    <?php
+}
+
 /* WooCommerce settings section ends */
 
 /* WP Registration settings section starts */
@@ -3292,6 +3419,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                     <div class="mpress form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-mpress-settings-group');
+                    ?>
+                    </div>
+                    <div class="sure-forms form-setting">
+                    <?php
+                    do_settings_sections('oopspamantispam-sure-settings-group');
                     ?>
                     </div>
                     <?php

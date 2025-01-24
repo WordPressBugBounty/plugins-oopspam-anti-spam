@@ -94,7 +94,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
 
         $userIP = "";
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-            $userIP = $insertData["ip"];
+            $userIP = oopspamantispam_get_ip();
         }
 
         $escapedMsg = sanitize_textarea_field($message);

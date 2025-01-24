@@ -126,15 +126,25 @@ class OOPSpamAPI {
     */
     public function getAPIUsage($response, $currentEndpointSource)
     {       
-    
         $headerResult = wp_remote_retrieve_headers($response);
         $options = get_option('oopspamantispam_settings');
+        
+        // Default values
+        $remaining = '0';
+        $limit = '0';
+
         if ($currentEndpointSource == "OOPSpamDashboard") {
-            $options['oopspam_api_key_usage'] = strval($headerResult['X-RateLimit-Remaining']."/".$headerResult['X-RateLimit-Limit']);
+            // Check if headers exist before accessing them
+            $remaining = isset($headerResult['X-RateLimit-Remaining']) ? $headerResult['X-RateLimit-Remaining'] : '0';
+            $limit = isset($headerResult['X-RateLimit-Limit']) ? $headerResult['X-RateLimit-Limit'] : '0';
         } else {
-            $options['oopspam_api_key_usage'] = strval($headerResult['x-ratelimit-requests-remaining']."/".$headerResult['x-ratelimit-requests-limit']);
+            // RapidAPI headers
+            $remaining = isset($headerResult['x-ratelimit-requests-remaining']) ? $headerResult['x-ratelimit-requests-remaining'] : '0';
+            $limit = isset($headerResult['x-ratelimit-requests-limit']) ? $headerResult['x-ratelimit-requests-limit'] : '0';
         }
-        update_option('oopspamantispam_settings', $options );
+
+        $options['oopspam_api_key_usage'] = $remaining . '/' . $limit;
+        update_option('oopspamantispam_settings', $options);
     }
 
     /**

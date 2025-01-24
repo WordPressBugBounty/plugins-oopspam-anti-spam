@@ -119,6 +119,15 @@
    border-bottom-color: #bf3445;
 }
 
+.sure-forms {
+   background-color: white;
+}
+
+.sure-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #bf3445;
+}
+
 .forminator {
    background-color: white;
 }
