@@ -162,6 +162,7 @@ function oopspam_get_isocountries()
         'nz' => '🇳🇿 New Zealand',
         'ng' => '🇳🇬 Nigeria',
         'no' => '🇳🇴 Norway',
+        'kp' => '🇰🇵 North Korea',
         'om' => '🇴🇲 Oman',
         'pk' => '🇵🇰 Pakistan',
         'ph' => '🇵🇭 Philippines',

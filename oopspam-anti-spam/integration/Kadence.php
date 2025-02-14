@@ -1,14 +1,14 @@
 <?php
 namespace OOPSPAM\Integrations;
 
-add_action( 'kadence_blocks_form_submission', 'OOPSPAM\Integrations\oopspamantispam_kb_pre_submission' , 5, 4 );
-add_action( 'kadence_blocks_advanced_form_submission', 'OOPSPAM\Integrations\oopspamantispam_kb_adv_pre_submission' , 5, 3 );
+add_action( 'kadence_blocks_form_submission', 'OOPSPAM\Integrations\oopspamantispam_kb_pre_submission' , 10, 4 );
+add_action( 'kadence_blocks_advanced_form_submission_reject', 'OOPSPAM\Integrations\oopspamantispam_kb_adv_pre_submission' , 10, 4 );
 
 if ( file_exists( WP_PLUGIN_DIR . '/kadence-blocks/includes/form-ajax.php' ) ) {
     require_once( WP_PLUGIN_DIR . '/kadence-blocks/includes/form-ajax.php' );
 }
 
-function oopspamantispam_kb_adv_pre_submission($form_args, $processed_fields, $post_id)
+function oopspamantispam_kb_adv_pre_submission($reject, $form_args, $processed_fields, $post_id)
 {
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
@@ -16,7 +16,7 @@ function oopspamantispam_kb_adv_pre_submission($form_args, $processed_fields, $p
     $email = "";
 
     if (empty($processed_fields)) {
-        return;
+        return $reject;
     }
 
     // Attempt to capture textarea and email fields value
@@ -40,7 +40,7 @@ function oopspamantispam_kb_adv_pre_submission($form_args, $processed_fields, $p
         $raw_entry = json_encode($processed_fields);
         $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "kadence");
         if (!isset($detectionResult["isItHam"])) {
-            return;
+            return $reject;
         }
         $frmEntry = [
             "Score" => $detectionResult["Score"],
@@ -54,18 +54,27 @@ function oopspamantispam_kb_adv_pre_submission($form_args, $processed_fields, $p
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_kb_spam_message'];
-            $kb = new \KB_Ajax_Form();
-            $kb -> process_bail( __( $error_to_show, 'oopspam' ), __( 'Spam Detected by OOPSpam', 'oopspam' ) );
-            return;
+
+            // Hook into the kadence_blocks_advanced_form_submission_reject_message filter
+            add_filter('kadence_blocks_advanced_form_submission_reject_message', 'OOPSPAM\Integrations\oopspam_kadence_reject_message', 10, 4);
+            $reject = true;
+            return $reject;
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);
-            return;
+            return $reject;
         }
 
     }
-    return;
+    return $reject;
+}
+
+// Custom rejection message function
+function oopspam_kadence_reject_message($message, $form_args, $processed_fields, $post_id) {
+    // Customize the rejection message
+    $options = get_option('oopspamantispam_settings');
+    $error_to_show = $options['oopspam_kb_spam_message'];
+    return __($error_to_show, 'oopspam');
 }
 // Filter function
 function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_id)

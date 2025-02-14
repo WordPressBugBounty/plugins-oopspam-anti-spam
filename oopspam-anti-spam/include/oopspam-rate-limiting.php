@@ -204,7 +204,7 @@ class OOPSpam_RateLimiter {
             if (!$next_run) {
                 $this->schedule_cleanup(null);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('OOPSpam_RateLimiter cleanup error: ' . $e->getMessage());
         }
     }
@@ -218,7 +218,7 @@ class OOPSpam_RateLimiter {
                 "TRUNCATE {$wpdb->prefix}{$this->db_table}"
             );
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('OOPSpam_RateLimiter cleanup error: ' . $e->getMessage());
         }
     }
@@ -239,7 +239,7 @@ class OOPSpam_RateLimiter {
                 error_log("Failed to schedule new cleanup event");
             }
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('OOPSpam_RateLimiter reschedule_cleanup error: ' . $e->getMessage());
         }
     }
@@ -263,7 +263,7 @@ class OOPSpam_RateLimiter {
                     error_log('Failed to schedule initial rate limiter cron event');
                 }
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log('OOPSpam_RateLimiter schedule_cleanup error: ' . $e->getMessage());
         }
     }    

@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.26
+Stable tag: 1.2.27
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,11 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.27 =
+* **NEW:** Added North Korea to the list of supported countries
+* **IMPROVEMENT:** [WooCommerce] Enhanced blocking of orders from unknown origins for both the Legacy API and the classic checkout
+* **IMPROVEMENT:** [Kadence] Prevented email notifications in the Kadence Advanced Form Block
+* **FIX:** Resolved error occurring during rate limiting deactivation
 = 1.2.26 =
 * **NEW:** Added integration support for SureForms plugin
 * **NEW:** [WooCommerce] Added option to toggle honeypot field protection

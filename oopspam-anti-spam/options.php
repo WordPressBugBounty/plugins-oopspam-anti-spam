@@ -5,6 +5,9 @@ if (!function_exists('add_action')) {
 
 include_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
 include_once dirname(__FILE__) . '/include/UI/display-ham-entries.php';
+require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
+
+use OOPSPAM\RateLimiting\OOPSpam_RateLimiter;
 
 add_action('admin_menu', 'oopspamantispam_admin_menu');
 add_action('admin_init', 'oopspamantispam_settings_init');
@@ -61,7 +64,7 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
 
 
     if (oopspam_isRateLimitingEnabled() && !wp_next_scheduled("oopspam_cleanup_ratelimit_entries_cron")) {
-        if (class_exists('OOPSpam_RateLimiter')) {
+        if (class_exists('OOPSPAM\RateLimiting\OOPSpam_RateLimiter')) {
             try {
                 $rateLimiter = new OOPSpam_RateLimiter();
                 $rateLimiter->schedule_cleanup($new_duration);
@@ -74,7 +77,7 @@ function oopspam_ratelimit_schedule_cron_job($option, $old_value, $new_value)
     }
     // Case 2: Duration changed while rate limit is enabled - reschedule cleanup job
     elseif ($new_duration !== $old_duration && oopspam_isRateLimitingEnabled()) {
-        if (class_exists('OOPSpam_RateLimiter')) {
+        if (class_exists('OOPSPAM\RateLimiting\OOPSpam_RateLimiter')) {
             try {
                 $rateLimiter = new OOPSpam_RateLimiter();
                 $rateLimiter->reschedule_cleanup($old_duration, $new_duration);
@@ -3040,7 +3043,8 @@ function oopspam_woo_check_origin_render()
         echo 'checked="checked"';
     }
     ?>/>
-                     <p class="description"><?php echo __('This setting applies only to Block Checkout and requires the "Order Attribution" option to be enabled in WooCommerce (Settings → Advanced → Features).', 'oopspam'); ?></p>
+                     <p class="description"><?php echo __('Enable this setting if all your legitimate orders have a proper origin that is not "Unknown." The "Order Attribution" feature must be enabled in WooCommerce (Settings → Advanced → Features).', 'oopspam'); ?></p>
+                     <p class="description"><?php echo __('Avoid using this feature if you place orders via the API.', 'oopspam'); ?></p>
                     </label>
                 </div>
             <?php

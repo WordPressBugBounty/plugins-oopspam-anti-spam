@@ -38,8 +38,81 @@ class WooSpamProtection
         add_action('woocommerce_process_registration_errors', [$this, 'oopspam_woocommerce_register_errors'], 10, 4);
         add_filter('woocommerce_process_login_errors', [$this, 'oopspam_woocommerce_login_errors'], 1, 1);
         add_action('woocommerce_checkout_process', [$this, 'oopspam_checkout_process']);
+
         add_action('woocommerce_store_api_checkout_order_processed', [$this, 'oopspam_checkout_store_api_processed'], 10, 1);
+        add_action('woocommerce_checkout_order_processed', [$this, 'oopspam_checkout_classic_processed'], 10, 3);
+        // Legacy API hook
+        add_action('woocommerce_new_order', [$this, 'oopspam_legacy_checkout_classic_processed'], 10, 2);
     }
+
+    function oopspam_legacy_checkout_classic_processed($order_id, $order) {
+        
+        $data = json_decode($order, true);
+        $post = $_POST;
+
+        // Check for allowed email/IP
+        $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
+
+        if ($hasAllowedEmail) {
+            return $order;
+        }
+
+        $options = get_option('oopspamantispam_settings');
+        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
+
+        // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
+        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+
+            $sourceTypeExists = false; // Flag to track if the key exists.
+            $sourceTypeValue = null;  // Store the value if found.
+
+            if (isset($data['meta_data'])) {
+                foreach ($data['meta_data'] as $meta) {
+                    if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
+                        $sourceTypeExists = true;
+                        $sourceTypeValue = $meta['value'];
+                        break;
+                    }
+                }
+            }
+
+            // Check legacy origin attributes
+            if (empty($sourceTypeValue) && isset($post['wc_order_attribution_source_type'])) {
+                $sourceTypeExists = true;
+                $sourceTypeValue = $post['wc_order_attribution_source_type'];
+            }
+
+            // This is to prevent the order from being processed if the source type is not set.            
+            if (!$sourceTypeExists || empty($sourceTypeValue)) {
+                
+                $frmEntry = [
+                    "Score" => 6,
+                    "Message" => "",
+                    "IP" => $data['customer_ip_address'],
+                    "Email" => sanitize_email($data['billing']['email']),
+                    "RawEntry" => json_encode(array_merge($data, $post)),
+                    "FormId" => "WooCommerce",
+                ];
+                oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+
+                // Trash the order
+                if ( $order ) {
+                    $order->delete( true ); // 'false' moves to trash, 'true' deletes permanently
+                }
+
+                $error_to_show = $this->get_error_message();
+                wp_die($error_to_show);
+            }
+
+            // Now check with OOPSpam API
+            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']));
+            if ($showError) {
+                $error_to_show = $this->get_error_message();
+                wc_add_notice( esc_html__( $error_to_show ), 'error' );
+            }
+        }
+    }    
+    
 
     function oopspam_checkout_store_api_processed($order) {
         
@@ -52,12 +125,68 @@ class WooSpamProtection
             return $order;
         }
 
+        $options = get_option('oopspamantispam_settings');
+        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
+        
+        // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
+        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+
+            $sourceTypeExists = false; // Flag to track if the key exists.
+            $sourceTypeValue = null;  // Store the value if found.
+
+            if (isset($data['meta_data'])) {
+                foreach ($data['meta_data'] as $meta) {
+                    if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
+                        $sourceTypeExists = true;
+                        $sourceTypeValue = $meta['value'];
+                        break;
+                    }
+                }
+            }
+
+            // This is to prevent the order from being processed if the source type is not set.            
+            if (!$sourceTypeExists || empty($sourceTypeValue)) {
+                
+                $frmEntry = [
+                    "Score" => 6,
+                    "Message" => "",
+                    "IP" => $data['customer_ip_address'],
+                    "Email" => sanitize_email($data['billing']['email']),
+                    "RawEntry" => json_encode($data),
+                    "FormId" => "WooCommerce",
+                ];
+                oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+
+                $error_to_show = $this->get_error_message();
+                wp_die($error_to_show);
+            }
+
+            // Now check with OOPSpam API
+            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']));
+            if ($showError) {
+                $error_to_show = $this->get_error_message();
+                wc_add_notice( esc_html__( $error_to_show ), 'error' );
+            }
+        }
+    }    
+
+    function oopspam_checkout_classic_processed($order_id, $posted_data, $order) {
+        
+        $data = json_decode($order, true);
+
+        // Check for allowed email/IP
+        $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
+
+        if ($hasAllowedEmail) {
+            return $order;
+        }
         
         $options = get_option('oopspamantispam_settings');
         $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
 
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+
             $sourceTypeExists = false; // Flag to track if the key exists.
             $sourceTypeValue = null;  // Store the value if found.
 
@@ -267,11 +396,7 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_login_errors($errors)
     {
-        $email = "";
-
-        if (isset($_POST["username"]) && is_email($_POST["username"])) {
-            $email = $_POST["username"];
-        }
+        $email = isset($_POST["username"]) && is_email($_POST["username"]) ? $_POST["username"] : "unknown";
 
         $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
 
