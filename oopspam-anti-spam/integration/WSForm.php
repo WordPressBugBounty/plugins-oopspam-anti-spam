@@ -54,21 +54,23 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
             // Decode the JSON data into an associative array
             $jsonData = json_decode($nameOfTextareaField, true);
 
-            foreach ($jsonData as $contentFieldPair) {
-                // Scan only for this form by matching Form ID
-                if ($contentFieldPair['formId'] == $form_id) {
-                    $fieldIds = explode(',', $contentFieldPair['fieldId']);
-
-                    foreach ($submit->meta as $field) {
-                        if (!empty($field) && in_array($field['id'], $fieldIds)) {
-                            $message .= $field['value'] . ' '; // Concatenate the field values with a space
+            if(is_array($jsonData)) {
+                foreach ($jsonData as $contentFieldPair) {
+                    // Scan only for this form by matching Form ID
+                    if ($contentFieldPair['formId'] == $form_id) {
+                        $fieldIds = explode(',', $contentFieldPair['fieldId']);
+    
+                        foreach ($submit->meta as $field) {
+                            if (!empty($field) && in_array($field['id'], $fieldIds)) {
+                                $message .= $field['value'] . ' '; // Concatenate the field values with a space
+                            }
                         }
+    
+                        // Trim any extra spaces from the end of the message
+                        $message = trim($message);
+                        // Break the loop once the message is captured
+                        break 1;
                     }
-
-                    // Trim any extra spaces from the end of the message
-                    $message = trim($message);
-                    // Break the loop once the message is captured
-                    break 1;
                 }
             }
         }

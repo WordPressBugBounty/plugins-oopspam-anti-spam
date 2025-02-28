@@ -48,7 +48,6 @@ function oopspamantispam_sure_pre_submission($submission_data) {
             $message = trim($message);
         }
 
-        error_log(json_encode($submission_data));
         // If still no message, use any input field
         if (empty($message)) {
             foreach ($submission_data['data'] as $key => $value) {

@@ -16,6 +16,8 @@ class OOPSpamAPI {
     protected $check_for_length;
     protected $oopspam_is_loggable;
     protected $oopspam_block_tempemail;
+    protected $oopspam_block_vpns;
+    protected $oopspam_block_datacenters;
     
     /**
     * Constructor
@@ -23,11 +25,13 @@ class OOPSpamAPI {
     * @param string $api_key
     * @return OOPSpamAPI
     */
-    public function __construct($api_key, $check_for_length, $oopspam_is_loggable, $oopspam_block_tempemail ) {
+    public function __construct($api_key, $check_for_length, $oopspam_is_loggable, $oopspam_block_tempemail, $oopspam_block_vpns, $oopspam_block_datacenters) {
         $this->api_key = $api_key;
         $this->check_for_length = $this->convertToString($check_for_length);
         $this->oopspam_is_loggable = $this->convertToString($oopspam_is_loggable);
         $this->oopspam_block_tempemail = $this->convertToString($oopspam_block_tempemail);
+        $this->oopspam_block_vpns = $this->convertToString($oopspam_block_vpns);
+        $this->oopspam_block_datacenters = $this->convertToString($oopspam_block_datacenters);
     }
     
      /**
@@ -164,7 +168,9 @@ class OOPSpamAPI {
             'allowedLanguages' => $languageallowlistSetting,
             'allowedCountries' => $countryallowlistSetting,
             'blockedCountries' => $countryblocklistSetting,
-            'blockTempEmail' => $this->oopspam_block_tempemail
+            'blockTempEmail' => $this->oopspam_block_tempemail,
+            'blockDC' => $this->oopspam_block_datacenters,
+            'blockVPN' => $this->oopspam_block_vpns
         );
 
         $jsonreply=$this->RequestToOOPSpamAPI(json_encode($parameters));
@@ -191,9 +197,14 @@ class OOPSpamAPI {
             'allowedLanguages' => $languageallowlistSetting,
             'allowedCountries' => $countryallowlistSetting,
             'blockedCountries' => $countryblocklistSetting,
+            'blockTempEmail' => $this->oopspam_block_tempemail,
+            'blockDC' => $this->oopspam_block_datacenters,
+            'blockVPN' => $this->oopspam_block_vpns,
             "shouldBeSpam" => $isSpam,
             "sensitivityLevel" => $currentSensitivityLevel
         );
+
+        error_log("OOPSpamAPI: Report parameters: " . json_encode($parameters));
         
         $jsonreply=$this->RequestToOOPSpamReportingAPI(json_encode($parameters));
         

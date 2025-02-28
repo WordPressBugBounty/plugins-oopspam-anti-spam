@@ -139,10 +139,17 @@ function oopspamantispam_plugin_check($plugin)
     return $result;
 }
 
-function oopspamantispam_get_key()
-{
+function oopspamantispam_get_key() {
+    // Check if the constant is defined in wp-config.php
+    if (defined('OOPSPAM_API_KEY')) {
+        return OOPSPAM_API_KEY;
+    }
+
+    // Fallback to GUI settings
     $options = get_option('oopspamantispam_settings');
-    return $options['oopspam_api_key'];
+    
+    // Safely return the API key from options (avoids undefined index notices)
+    return isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '';
 }
 
 function oopspamantispam_get_spamscore_threshold()
@@ -161,12 +168,10 @@ function oopspamantispam_get_folder_for_spam()
 
 function oopspamantispam_checkIfValidKey()
 {
-    //fetch the API key
     $apiKey = oopspamantispam_get_key();
-    if ($apiKey == false || $apiKey == '' || empty($apiKey)) {
+    if (empty($apiKey)) {
         return false;
     }
-
     return $apiKey;
 }
 

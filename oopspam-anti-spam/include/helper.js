@@ -219,11 +219,52 @@ jQuery(document).ready(function($) {
         }
     }
 
+    // Define African countries ISO codes
+    const africanCountries = [
+        "dz", "ao", "bj", "bw", "bf", "bi", "cm", "cv", "cf", "td", 
+        "km", "cg", "cd", "dj", "eg", "gq", "er", "et", "ga", "gm", 
+        "gh", "gn", "gw", "ci", "ke", "ls", "lr", "ly", "mg", "mw", 
+        "ml", "mr", "mu", "ma", "mz", "na", "ne", "ng", "rw", "st", 
+        "sn", "sc", "sl", "so", "za", "ss", "sd", "sz", "tz", "tg", 
+        "tn", "ug", "zm", "zw"
+    ];
+
+    // Define EU countries ISO codes
+    const euCountries = [
+        "at", "be", "bg", "hr", "cy", "cz", "dk", "ee", "fi", "fr",
+        "de", "gr", "hu", "ie", "it", "lv", "lt", "lu", "mt", "nl",
+        "pl", "pt", "ro", "sk", "si", "es", "se"
+    ];
+
+    $("#eu-countries").click(function () {
+        let blockedCountriesSelect = document.querySelector('#blockcountry select').tomselect;
+        // Get current selections
+        let currentSelections = blockedCountriesSelect.getValue();
+        // Add EU countries to current selections 
+        let newSelections = [...new Set([...currentSelections, ...euCountries])];
+        blockedCountriesSelect.setValue(newSelections);
+    });
+
+    $("#african-countries").click(function () {
+        let blockedCountriesSelect = document.querySelector('#blockcountry select').tomselect;
+        // Get current selections
+        let currentSelections = blockedCountriesSelect.getValue();
+        // Add African countries to current selections
+        let newSelections = [...new Set([...currentSelections, ...africanCountries])];
+        console.log(newSelections);
+
+        blockedCountriesSelect.setValue(newSelections);
+    });
+
     $("#spam-countries").click(function () {
         const spamCountries = ["ru", "cn"];
         let blockedCountriesSelect = document.querySelector('#blockcountry select').tomselect;
-        blockedCountriesSelect.setValue(spamCountries);
-    })
+        // Get current selections
+        let currentSelections = blockedCountriesSelect.getValue();
+        // Add spam countries to current selections
+        let newSelections = [...new Set([...currentSelections, ...spamCountries])];
+        blockedCountriesSelect.setValue(newSelections);
+    });
 
 });
 

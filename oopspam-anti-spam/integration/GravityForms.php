@@ -114,16 +114,18 @@ function extractData($form, $entry)
         $jsonData = json_decode($nameOfTextareaField, true);
         $currentFormId = $form['id'];
 
-        foreach ($jsonData as $contentFieldPair) {
-            if ($contentFieldPair['formId'] == $currentFormId) {
-                $fieldIds = explode(',', $contentFieldPair['fieldId']);
-                foreach ($fieldIds as $fieldId) {
-                    if (isset($entry[$fieldId])) {
-                        $message .= rgar($entry, $fieldId) . ' ';
+        if(is_array($jsonData)) {
+            foreach ($jsonData as $contentFieldPair) {
+                if ($contentFieldPair['formId'] == $currentFormId) {
+                    $fieldIds = explode(',', $contentFieldPair['fieldId']);
+                    foreach ($fieldIds as $fieldId) {
+                        if (isset($entry[$fieldId])) {
+                            $message .= rgar($entry, $fieldId) . ' ';
+                        }
                     }
+                    $message = trim($message);
+                    break;
                 }
-                $message = trim($message);
-                break;
             }
         }
     }

@@ -63,8 +63,8 @@ class WooSpamProtection
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
 
-            $sourceTypeExists = false; // Flag to track if the key exists.
-            $sourceTypeValue = null;  // Store the value if found.
+            $sourceTypeExists = false;
+            $sourceTypeValue = null; 
 
             if (isset($data['meta_data'])) {
                 foreach ($data['meta_data'] as $meta) {
@@ -131,8 +131,8 @@ class WooSpamProtection
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
 
-            $sourceTypeExists = false; // Flag to track if the key exists.
-            $sourceTypeValue = null;  // Store the value if found.
+            $sourceTypeExists = false;
+            $sourceTypeValue = null; 
 
             if (isset($data['meta_data'])) {
                 foreach ($data['meta_data'] as $meta) {
@@ -187,8 +187,8 @@ class WooSpamProtection
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
 
-            $sourceTypeExists = false; // Flag to track if the key exists.
-            $sourceTypeValue = null;  // Store the value if found.
+            $sourceTypeExists = false;
+            $sourceTypeValue = null;
 
             if (isset($data['meta_data'])) {
                 foreach ($data['meta_data'] as $meta) {

@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.27
+ * Version: 1.2.28
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -646,6 +646,9 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     }
 
     $apiKey = oopspamantispam_checkIfValidKey();
+
+
+    $ipFilteringOptions = get_option('oopspamantispam_ipfiltering_settings');
     
     $countryallowlistSetting = (get_option('oopspam_countryallowlist') != null ? get_option('oopspam_countryallowlist') : [""]);
     $countryblocklistSetting = (get_option('oopspam_countryblocklist') != null ? get_option('oopspam_countryblocklist') : [""]);
@@ -653,7 +656,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
     $isLoggable = (isset($options['oopspam_is_loggable']) ? $options['oopspam_is_loggable'] : false);
     $blockTempEmail = (isset($options['oopspam_block_temp_email']) ? $options['oopspam_block_temp_email'] : false);
-
+    $blockVPNs = (isset($ipFilteringOptions['oopspam_block_vpns']) ? $ipFilteringOptions['oopspam_block_vpns'] : false);
+    $blockDC = (isset($ipFilteringOptions['oopspam_block_cloud_providers']) ? $ipFilteringOptions['oopspam_block_cloud_providers'] : false);
 
     // Attempt to anonymize messages
     if (isset($privacyOptions['oopspam_anonym_content']) && $privacyOptions['oopspam_anonym_content'] && !empty($commentText)) {
@@ -712,9 +716,9 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         return false;
     }
 
-    if (oopspamantispam_checkIfValidKey()) {
+    if ($apiKey) {
 
-        $OOPSpamAPI = new OOPSpamAPI($apiKey, $checkForLength, $isLoggable, $blockTempEmail);
+        $OOPSpamAPI = new OOPSpamAPI($apiKey, $checkForLength, $isLoggable, $blockTempEmail, $blockVPNs, $blockDC);
         
         // Unicode support
         $commentText = mb_convert_encoding($commentText, "UTF-8");
@@ -820,16 +824,20 @@ function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpa
     $apiKey = oopspamantispam_checkIfValidKey();
 
     $options = get_option('oopspamantispam_settings');
+    $ipFilterOptions = get_option('oopspamantispam_ipfiltering_settings');
+
     $countryallowlistSetting = (get_option('oopspam_countryallowlist') != null ? get_option('oopspam_countryallowlist') : [""]);
     $countryblocklistSetting = (get_option('oopspam_countryblocklist') != null ? get_option('oopspam_countryblocklist') : [""]);
     $languageallowlistSetting = (get_option('oopspam_languageallowlist') != null ? get_option('oopspam_languageallowlist') : [""]);
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
     $blockTempEmail = (isset($options['oopspam_block_temp_email']) ? $options['oopspam_block_temp_email'] : false);
+    $blockVPNs = (isset($ipFilterOptions['oopspam_block_vpns']) ? $ipFilterOptions['oopspam_block_vpns'] : false);
+    $blockDC = (isset($ipFilterOptions['oopspam_block_cloud_providers']) ? $ipFilterOptions['oopspam_block_cloud_providers'] : false);
 
 
     if (oopspamantispam_checkIfValidKey()) {
 
-        $OOPSpamAPI = new OOPSpamAPI($apiKey, $checkForLength, 0, $blockTempEmail);
+        $OOPSpamAPI = new OOPSpamAPI($apiKey, $checkForLength, 0, $blockTempEmail, $blockVPNs, $blockDC);
         $response = $OOPSpamAPI->Report($commentText, $commentIP, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $isSpam);
 
         $response_code = wp_remote_retrieve_response_code($response);
@@ -876,7 +884,7 @@ function oopspamantispam_check_comment($approved, $commentdata)
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
 
     if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-        $senderIp = oopspamantispam_get_ip_address();
+        $senderIp = oopspamantispam_get_ip();
     }
 
     if (!isset($options['oopspam_is_check_for_email']) || $options['oopspam_is_check_for_email'] != true) {

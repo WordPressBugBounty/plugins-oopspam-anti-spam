@@ -22,22 +22,25 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         $jsonData = json_decode($nameOfTextareaField, true);
         $currentFormId = $insertData["form_id"]; 
 
-        foreach ($jsonData as $contentFieldPair) {
-            // Scan only for this form by matching Form ID
-            if ($contentFieldPair['formId'] == $currentFormId) {
-                $fieldIds = explode(',', $contentFieldPair['fieldId']);
-
-                foreach ($fieldIds as $fieldId) {
-                    $fieldId = trim($fieldId);
-                    if (isset($data[$fieldId])) {
-                        $message .= $data[$fieldId] . ' '; // Concatenate the field values with a space
-                    }
-                }
+        if(is_array($jsonData)) {
+            foreach ($jsonData as $contentFieldPair) {
+                
+                // Scan only for this form by matching Form ID
+                if ($contentFieldPair['formId'] == $currentFormId) {
+                    $fieldIds = explode(',', $contentFieldPair['fieldId']);
     
-                // Trim any extra spaces from the end of the message
-                $message = trim($message);
-                // Break the loop once the message is captured
-                break 1;
+                    foreach ($fieldIds as $fieldId) {
+                        $fieldId = trim($fieldId);
+                        if (isset($data[$fieldId])) {
+                            $message .= $data[$fieldId] . ' '; // Concatenate the field values with a space
+                        }
+                    }
+        
+                    // Trim any extra spaces from the end of the message
+                    $message = trim($message);
+                    // Break the loop once the message is captured
+                    break 1;
+                }
             }
         }
     }
@@ -49,11 +52,18 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         if (isset($data[$nameOfTextareaField])) {
             $message = $data[$nameOfTextareaField];
         } else {
+            
             // Capture the textarea field name and value
             foreach ($fields["fields"] as $field) {
-                if (isset($field["attributes"]["type"]) && $field["attributes"]["type"] == "textarea") {
+                // Check if the field is a textarea
+                if (isset($field["attributes"]["type"]) && ($field["attributes"]["type"] == "textarea")) {
                     $nameOfTextareaField = $field["attributes"]["name"];
+                    break;
+                } else if (!isset($field["attributes"]["type"]) && ($field["element"] == "textarea")) {
+                    $nameOfTextareaField = $field["attributes"]["name"];
+                    break;
                 }
+
             }
             if ($nameOfTextareaField != "description") {
                 $message = $data[$nameOfTextareaField];

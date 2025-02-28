@@ -281,6 +281,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-manual-moderation', 'manual_moderation_settings');
     register_setting('oopspamantispam-privacy-settings-group', 'oopspamantispam_privacy_settings');
     register_setting('oopspamantispam-ratelimit-settings-group', 'oopspamantispam_ratelimit_settings');
+    register_setting('oopspamantispam-ipfiltering-settings-group', 'oopspamantispam_ipfiltering_settings');
 
 
     add_settings_section('manual_moderation_section', 'Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
@@ -517,14 +518,14 @@ function oopspamantispam_settings_init()
 
     if(!$isItAllowedToCheckIPs) {
         add_settings_field('oopspam_countryallowlist',
-            __('Allow messages only from these countries:', 'oopspam'),
+            __('Allow submissions only from these countries:', 'oopspam'),
             'oopspam_countryallowlist_render',
             'oopspamantispam-settings-group',
             'oopspam_settings_section'
         );
 
         add_settings_field('oopspam_countryblocklist',
-        __('Block messages from these countries:', 'oopspam'),
+        __('Block submissions from these countries:', 'oopspam'),
         'oopspam_countryblocklist_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
@@ -537,6 +538,30 @@ function oopspamantispam_settings_init()
         'oopspam_languageallowlist_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
+    );
+
+    // Add this section after other general settings fields but before form-specific settings
+    add_settings_section(
+        'oopspam_vpn_cloud_section', 
+        __('IP Filtering', 'oopspam'),
+        false,
+        'oopspamantispam-ipfiltering-settings-group'
+    );
+
+    add_settings_field(
+        'oopspam_block_vpns',
+        __('Block VPNs', 'oopspam'),
+        'oopspam_block_vpns_render',
+        'oopspamantispam-ipfiltering-settings-group',
+        'oopspam_vpn_cloud_section'
+    );
+
+    add_settings_field(
+        'oopspam_block_cloud_providers',
+        __('Block Cloud Providers', 'oopspam'),
+        'oopspam_block_cloud_providers_render',
+        'oopspamantispam-ipfiltering-settings-group',
+        'oopspam_vpn_cloud_section'
     );
 
     $options = get_option('oopspamantispam_settings');
@@ -1351,6 +1376,7 @@ function oopspam_jform_spam_message_render()
             'oopspamantispam-sure-settings-group',
             'oopspam_sure_settings_section'
         );
+
     }
 
 }
@@ -1758,27 +1784,27 @@ function oopspam_countryblocklist_render()
     $countryblocklistSetting = get_option('oopspam_countryblocklist');
     $countrylist = oopspam_get_isocountries();
     ?>
-
         <div id="blockcountry">
         <select class="select" data-placeholder="Choose a country..." name="oopspam_countryblocklist[]" multiple="true" style="width:600px;">
         <optgroup label="(de)select all countries">
-
             <?php
-foreach ($countrylist as $key => $value) {
-        print "<option value=\"$key\"";
-        if (is_array($countryblocklistSetting) && in_array($key, $countryblocklistSetting)) {
-            print " selected=\"selected\" ";
-        }
-        print ">$value</option>\n";
-    }
-    echo "</optgroup>";
-    echo "                     </select>";
-
-    ?>
-        <div style="padding-top:0.3em;"><button id="spam-countries" type="button" class="button button-secondary">Click to add China and Russia to the list</button></div>
+            foreach ($countrylist as $key => $value) {
+                print "<option value=\"$key\"";
+                if (is_array($countryblocklistSetting) && in_array($key, $countryblocklistSetting)) {
+                    print " selected=\"selected\" ";
+                }
+                print ">$value</option>\n";
+            }
+            echo "</optgroup>";
+            echo "                     </select>";
+            ?>
+            <div style="padding-top:0.3em;">
+                <button id="spam-countries" type="button" class="button button-secondary">Add China and Russia</button>
+                <button id="african-countries" type="button" class="button button-secondary">Add countries in Africa</button>
+                <button id="eu-countries" type="button" class="button button-secondary">Add countries in the EU</button>
+            </div>
         </div>
         <?php
-
 }
 
 function oopspam_api_key_source_render()
@@ -2808,7 +2834,7 @@ function oopspam_ff_content_field_render() {
         <form id="formData">
             <label for="formIdInput">Form ID:</label>
             <input type="text" id="formIdInput" name="formIdInput" placeholder="167">
-            <label for="fieldIdInput">Field Name:</label>
+            <label for="fieldIdInput">Name Attribute:</label>
             <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="2,3,4">
             <button type="button" onclick="addData(this)">Add Pair</button>
         </form>
@@ -2816,7 +2842,7 @@ function oopspam_ff_content_field_render() {
             <thead>
                 <tr>
                     <th>Form ID</th>
-                    <th>Field Name</th>
+                    <th>Name Attribute</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -2833,7 +2859,7 @@ function oopspam_ff_content_field_render() {
             </tbody>
         </table>
         <input type="hidden" name="oopspamantispam_settings[oopspam_ff_content_field]" id="formDataInput" value="<?php echo esc_attr(json_encode($formData)); ?>">
-        <p class="description"><?php echo __('Enter the Form ID and Field Name pairs in the table above. If multiple Field Names are provided for a Form ID, their values will be joined together.', 'oopspam'); ?></p>
+        <p class="description"><?php echo __('Enter the Form ID and Name Attribute pairs in the table above. If multiple Field Names are provided for a Name Attribute, their values will be joined together.', 'oopspam'); ?></p>
     </div>
     <?php
 }
@@ -3280,6 +3306,7 @@ if( isset( $_GET[ 'tab' ] ) ) {
         <a href="?page=wp_oopspam_settings_page&tab=privacy" class="nav-tab <?php echo $active_tab == 'privacy' ? 'nav-tab-active' : ''; ?>">Privacy</a>
         <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo $active_tab == 'manual_moderation' ? 'nav-tab-active' : ''; ?>">Manual moderation</a>
         <a href="?page=wp_oopspam_settings_page&tab=rate_limiting" class="nav-tab <?php echo $active_tab == 'rate_limiting' ? 'nav-tab-active' : ''; ?>">Rate Limiting</a>
+        <a href="?page=wp_oopspam_settings_page&tab=ip_filtering" class="nav-tab <?php echo $active_tab == 'ip_filtering' ? 'nav-tab-active' : ''; ?>">IP Filtering</a>
     </h2>
 
 
@@ -3295,6 +3322,9 @@ if( isset( $_GET[ 'tab' ] ) ) {
             } elseif ($active_tab == 'rate_limiting') {
                 settings_fields('oopspamantispam-ratelimit-settings-group');
                 do_settings_sections('oopspamantispam-ratelimit-settings-group');
+            } elseif ($active_tab == 'ip_filtering') {
+                settings_fields('oopspamantispam-ipfiltering-settings-group');
+                do_settings_sections('oopspamantispam-ipfiltering-settings-group');
             } else {
            
                 settings_fields('oopspamantispam-settings-group');
@@ -3435,5 +3465,33 @@ if( isset( $_GET[ 'tab' ] ) ) {
         ?>
         <?php submit_button(); ?>
     </form>
+    <?php
+}
+
+function oopspam_block_vpns_render()
+{
+    $options = get_option('oopspamantispam_ipfiltering_settings');
+    ?>
+    <div>
+        <label for="block_vpns">
+            <input class="oopspam-toggle" type="checkbox" id="block_vpns" 
+                   name="oopspamantispam_ipfiltering_settings[oopspam_block_vpns]"  <?php checked(!isset($options['oopspam_block_vpns']), false, true); ?>/>
+            <p class="description"><?php echo __('Block submissions from known VPN services.', 'oopspam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_block_cloud_providers_render()
+{
+    $options = get_option('oopspamantispam_ipfiltering_settings');
+    ?>
+    <div>
+        <label for="block_cloud_providers">
+            <input class="oopspam-toggle" type="checkbox" id="block_cloud_providers" 
+                   name="oopspamantispam_ipfiltering_settings[oopspam_block_cloud_providers]"  <?php checked(!isset($options['oopspam_block_cloud_providers']), false, true); ?>/>
+            <p class="description"><?php echo __('Block submissions from over 1500+ known cloud provider IPs (AWS, Google Cloud, Azure, etc).', 'oopspam'); ?></p>
+        </label>
+    </div>
     <?php
 }

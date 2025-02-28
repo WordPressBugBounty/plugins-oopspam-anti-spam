@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.27
+Stable tag: 1.2.28
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -104,6 +104,13 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.28 =
+* **NEW:** Added IP Filtering options to block VPNs and Cloud Providers
+* **NEW:** Ability to define the global API key in wp-config.php using `define( 'OOPSPAM_API_KEY', 'YOUR_KEY' )`
+* **IMPROVEMENT:** Added quick links to "Add countries in Africa" & "Add countries in the EU" in the country blocking settings
+* **IMPROVEMENT:** Enhanced IP detection for WordPress comments
+* **FIX:** Resolved issue with textarea field detection in Fluent Forms
+* **FIX:** Fixed array validation issue
 = 1.2.27 =
 * **NEW:** Added North Korea to the list of supported countries
 * **IMPROVEMENT:** [WooCommerce] Enhanced blocking of orders from unknown origins for both the Legacy API and the classic checkout

@@ -27,6 +27,7 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
      * @return array success or error message
      */
     public function run($form, $settings, $extra) {
+
         try {
             $options = get_option('oopspamantispam_settings');
             $privacyOptions = get_option('oopspamantispam_privacy_settings');

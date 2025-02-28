@@ -20,22 +20,24 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         $jsonData = json_decode($nameOfTextareaField, true);
         $currentFormId = $form_id; 
 
-        foreach ($jsonData as $contentFieldPair) {
-            // Scan only for this form by matching Form ID
-            if ($contentFieldPair['formId'] == $currentFormId) {
-                $fieldIds = explode(',', $contentFieldPair['fieldId']);
-
-                foreach ($field_data_array as $field) {
-                    if (!isset($field["field_type"])) continue;
-                    if (in_array($field['name'], $fieldIds)) {
-                        $message .= $field['value'] . ' '; // Concatenate the field values with a space
-                    }
-                }
+        if(is_array($jsonData)) {
+            foreach ($jsonData as $contentFieldPair) {
+                // Scan only for this form by matching Form ID
+                if ($contentFieldPair['formId'] == $currentFormId) {
+                    $fieldIds = explode(',', $contentFieldPair['fieldId']);
     
-                // Trim any extra spaces from the end of the message
-                $message = trim($message);
-                // Break the loop once the message is captured
-                break 1;
+                    foreach ($field_data_array as $field) {
+                        if (!isset($field["field_type"])) continue;
+                        if (in_array($field['name'], $fieldIds)) {
+                            $message .= $field['value'] . ' '; // Concatenate the field values with a space
+                        }
+                    }
+        
+                    // Trim any extra spaces from the end of the message
+                    $message = trim($message);
+                    // Break the loop once the message is captured
+                    break 1;
+                }
             }
         }
     }
