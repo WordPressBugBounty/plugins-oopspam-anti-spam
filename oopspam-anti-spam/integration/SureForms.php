@@ -8,7 +8,7 @@ function oopspamantispam_sure_pre_submission($submission_data) {
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_sure_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('sure')) {
         $form_id = $submission_data['form_id'];
         $message = "";
         $email = "";
@@ -83,7 +83,8 @@ function oopspamantispam_sure_pre_submission($submission_data) {
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            wp_die(__($options['oopspam_sure_spam_message'], 'oopspam'));
+            $error_to_show = isset($options['oopspam_sure_spam_message']) ? $options['oopspam_sure_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+            wp_die(__($error_to_show, 'oopspam'));
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

@@ -25,7 +25,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
     $field = current($text_fields);
     $email_field = current($email_fields);
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_el_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('el')) {
 
         $form_id = $record->get('form_settings');
         
@@ -141,7 +141,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
                 $field_id = $field['id'];
             }
 
-            $error_to_show = $options['oopspam_el_spam_message'];
+            $error_to_show = isset($options['oopspam_el_spam_message']) ? $options['oopspam_el_spam_message'] : 'Your submission has been flagged as spam.';
             $ajax_handler->add_error($field_id, $error_to_show);
         } else {
             // It's ham

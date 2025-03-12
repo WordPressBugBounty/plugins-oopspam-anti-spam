@@ -71,7 +71,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
         }
     }
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_wpf_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('wpf')) {
         
         // Check if the form is excluded from spam protection
         if (isset($options['oopspam_wpf_exclude_form']) && $options['oopspam_wpf_exclude_form']) { 
@@ -112,7 +112,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
 
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_wpf_spam_message'];
+            $error_to_show = isset($options['oopspam_wpf_spam_message']) ? $options['oopspam_wpf_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
             $allowedEls = array(
                 'a' => array(
                     'href' => array(),

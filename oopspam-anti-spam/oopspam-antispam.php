@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.28
+ * Version: 1.2.29
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -537,8 +537,23 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     $hasBlockedKeyword = oopspam_is_keyword_blocked($commentText);
     $hasBlockedEmail = oopspam_is_email_blocked($email);
     $hasBlockedIP = oopspam_is_ip_blocked($commentIP);
+
     $hasAllowedEmail = oopspam_is_email_allowed($email);
     $hasAllowedIP = oopspam_is_ip_allowed($commentIP);
+
+    if ($hasBlockedEmail || $hasBlockedIP) {
+    
+        // The entry blocked locally by the Manual moderation settings
+        if ($returnReason) {
+            $reason = [
+                "Score" => 6,
+                "isItHam" => false,
+                "Reason" => $hasBlockedEmail && $hasBlockedIP ? "Blocked Email and IP under the Manual Moderation" : ($hasBlockedEmail ? "Blocked Email under the Manual Moderation" : "Blocked IP under the Manual Moderation")
+            ];
+            return $reason;
+        }
+        return false;
+}
 
     if ($hasAllowedEmail || $hasAllowedIP) {
     
@@ -553,14 +568,14 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         return false;
     }
 
-    if ($hasBlockedKeyword || $hasBlockedEmail || $hasBlockedIP) {
+    if ($hasBlockedKeyword) {
     
             // The entry blocked locally by the Manual moderation settings
             if ($returnReason) {
                 $reason = [
                     "Score" => 6,
                     "isItHam" => false,
-                    "Reason" => "Block under the Manual Moderation"
+                    "Reason" => "Blocked keyword under the Manual Moderation"
                 ];
                 return $reason;
             }
@@ -579,7 +594,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
                     $reason = [
                         "Score" => 6,
                         "isItHam" => false,
-                        "Reason" => "Too many submissions from this IP address"
+                        "Reason" => "Too many submissions from the IP address"
                     ];
                     return $reason;
                 }
@@ -591,7 +606,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
                     $reason = [
                         "Score" => 6,
                         "isItHam" => false,
-                        "Reason" => "Too many submissions from this email"
+                        "Reason" => "Too many submissions from the email"
                     ];
                     return $reason;
                 }
@@ -637,7 +652,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
                 $reason = [
                     "Score" => 6,
                     "isItHam" => false,
-                    "Reason" => "An URL in the message"
+                    "Reason" => "A URL in the message"
                 ];
                 return $reason;
             }

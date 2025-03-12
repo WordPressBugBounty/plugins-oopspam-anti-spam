@@ -9,7 +9,7 @@ function oopspamantispam_um_submission($post)
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_umember_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('umember')) {
 
         $form_id = "";
         $email = "";
@@ -52,7 +52,7 @@ function oopspamantispam_um_submission($post)
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission in Form Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_umember_spam_message'];
+            $error_to_show = isset($options['oopspam_umember_spam_message']) ? $options['oopspam_umember_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
             UM()->form()->add_error( 'user_email', __( $error_to_show, 'oopspam' ) );
         } else {
             // It's ham

@@ -9,7 +9,7 @@ function oopspamantispam_cf7_pre_submission($spam)
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_cf7_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('cf7')) {
 
         if ($spam) {
             return $spam;
@@ -78,8 +78,10 @@ function oopspamantispam_cf7_pre_submission($spam)
             // Show a custom message
             if (isset($options['oopspam_cf7_spam_message']) && $options['oopspam_cf7_spam_message']) {
                 $error_to_show = $options['oopspam_cf7_spam_message'];
-                add_filter('wpcf7_display_message', function($message, $status) use ($error_to_show) { return $error_to_show;}, 10, 2);
+            } else {
+                $error_to_show = "Your submission has been flagged as spam.";
             }
+            add_filter('wpcf7_display_message', function($message, $status) use ($error_to_show) { return $error_to_show; }, 10, 2);
 
         } else {
             // It's ham

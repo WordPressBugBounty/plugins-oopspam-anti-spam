@@ -58,7 +58,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
         }
     }
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_pionet_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('pionet')) {
         $userIP = "";
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
@@ -81,7 +81,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_pionet_spam_message'];
+            $error_to_show = isset($options['oopspam_pionet_spam_message']) && !empty($options['oopspam_pionet_spam_message']) ? $options['oopspam_pionet_spam_message'] : "Your submission has been flagged as spam.";
             return $error_to_show;
         } else {
             // It's ham

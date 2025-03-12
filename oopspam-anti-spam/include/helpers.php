@@ -1,4 +1,5 @@
 <?php
+
 function oopspamantispam_plugin_check($plugin)
 {
     $result = false;
@@ -137,6 +138,74 @@ function oopspamantispam_plugin_check($plugin)
     }
 
     return $result;
+}
+
+function oopspam_is_spamprotection_enabled($form_builder) {
+    $options = get_option('oopspamantispam_settings');
+    $wp_config_constants = array(
+        'forminator' => 'OOPSPAM_IS_FORMINATOR_ACTIVATED',
+        'mpoet' => 'OOPSPAM_IS_MPOET_ACTIVATED',
+        'mc4wp' => 'OOPSPAM_IS_MC4WP_ACTIVATED',
+        'wpdis' => 'OOPSPAM_IS_WPDIS_ACTIVATED',
+        'kb' => 'OOPSPAM_IS_KB_ACTIVATED',
+        'nj' => 'OOPSPAM_IS_NJ_ACTIVATED',
+        'pionet' => 'OOPSPAM_IS_PIONET_ACTIVATED',
+        'ts' => 'OOPSPAM_IS_TS_ACTIVATED',
+        'fable' => 'OOPSPAM_IS_FABLE_ACTIVATED',
+        'gf' => 'OOPSPAM_IS_GF_ACTIVATED',
+        'el' => 'OOPSPAM_IS_EL_ACTIVATED',
+        'br' => 'OOPSPAM_IS_BR_ACTIVATED',
+        'ws' => 'OOPSPAM_IS_WS_ACTIVATED',
+        'wpf' => 'OOPSPAM_IS_WPF_ACTIVATED',
+        'ff' => 'OOPSPAM_IS_FF_ACTIVATED',
+        'cf7' => 'OOPSPAM_IS_CF7_ACTIVATED',
+        'give' => 'OOPSPAM_IS_GIVE_ACTIVATED',
+        'wpregister' => 'OOPSPAM_IS_WPREGISTER_ACTIVATED',
+        'woo' => 'OOPSPAM_IS_WOO_ACTIVATED',
+        'bb' => 'OOPSPAM_IS_BB_ACTIVATED',
+        'umember' => 'OOPSPAM_IS_UMEMBER_ACTIVATED',
+        'pmp' => 'OOPSPAM_IS_PMP_ACTIVATED',
+        'mpress' => 'OOPSPAM_IS_MPRESS_ACTIVATED',
+        'sure' => 'OOPSPAM_IS_SURE_ACTIVATED',
+        'jform' => 'OOPSPAM_IS_JFORM_ACTIVATED'
+    );
+
+    // Check if there's a constant defined for this form builder
+    if (isset($wp_config_constants[$form_builder]) && defined($wp_config_constants[$form_builder])) {
+        return constant($wp_config_constants[$form_builder]);
+    }
+
+    // Map form builder to option name
+    $option_map = array(
+        'forminator' => 'oopspam_is_forminator_activated',
+        'mpoet' => 'oopspam_is_mpoet_activated',
+        'mc4wp' => 'oopspam_is_mc4wp_activated',
+        'wpdis' => 'oopspam_is_wpdis_activated',
+        'kb' => 'oopspam_is_kb_activated',
+        'nj' => 'oopspam_is_nj_activated',
+        'pionet' => 'oopspam_is_pionet_activated',
+        'ts' => 'oopspam_is_ts_activated',
+        'fable' => 'oopspam_is_fable_activated',
+        'gf' => 'oopspam_is_gf_activated',
+        'el' => 'oopspam_is_el_activated',
+        'br' => 'oopspam_is_br_activated',
+        'ws' => 'oopspam_is_ws_activated',
+        'wpf' => 'oopspam_is_wpf_activated',
+        'ff' => 'oopspam_is_ff_activated',
+        'cf7' => 'oopspam_is_cf7_activated',
+        'give' => 'oopspam_is_give_activated',
+        'wpregister' => 'oopspam_is_wpregister_activated',
+        'woo' => 'oopspam_is_woo_activated',
+        'bb' => 'oopspam_is_bb_activated',
+        'umember' => 'oopspam_is_umember_activated',
+        'pmp' => 'oopspam_is_pmp_activated',
+        'mpress' => 'oopspam_is_mpress_activated',
+        'sure' => 'oopspam_is_sure_activated',
+        'jform' => 'oopspam_is_jform_activated'
+    );
+
+    $option_name = isset($option_map[$form_builder]) ? $option_map[$form_builder] : $form_builder;
+    return isset($options[$option_name]) && $options[$option_name];
 }
 
 function oopspamantispam_get_key() {

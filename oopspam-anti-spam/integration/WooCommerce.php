@@ -45,6 +45,23 @@ class WooSpamProtection
         add_action('woocommerce_new_order', [$this, 'oopspam_legacy_checkout_classic_processed'], 10, 2);
     }
 
+    private function cleanSensitiveData($data) {
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+        }
+        
+        if (is_array($data)) {
+            if (isset($data['password'])) {
+                unset($data['password']);
+            }
+            if (isset($data['user_pass'])) {
+                unset($data['user_pass']);
+            }
+        }
+        
+        return json_encode($data);
+    }
+
     function oopspam_legacy_checkout_classic_processed($order_id, $order) {
         
         $data = json_decode($order, true);
@@ -90,7 +107,7 @@ class WooSpamProtection
                     "Message" => "",
                     "IP" => $data['customer_ip_address'],
                     "Email" => sanitize_email($data['billing']['email']),
-                    "RawEntry" => json_encode(array_merge($data, $post)),
+                    "RawEntry" => $this->cleanSensitiveData(array_merge($data, $post)),
                     "FormId" => "WooCommerce",
                 ];
                 oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
@@ -144,6 +161,9 @@ class WooSpamProtection
                 }
             }
 
+            if (isset($data['password'])) {
+                unset($data['password']);
+            }
             // This is to prevent the order from being processed if the source type is not set.            
             if (!$sourceTypeExists || empty($sourceTypeValue)) {
                 
@@ -152,7 +172,7 @@ class WooSpamProtection
                     "Message" => "",
                     "IP" => $data['customer_ip_address'],
                     "Email" => sanitize_email($data['billing']['email']),
-                    "RawEntry" => json_encode($data),
+                    "RawEntry" => $this->cleanSensitiveData($data),
                     "FormId" => "WooCommerce",
                 ];
                 oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
@@ -208,7 +228,7 @@ class WooSpamProtection
                     "Message" => "",
                     "IP" => $data['customer_ip_address'],
                     "Email" => sanitize_email($data['billing']['email']),
-                    "RawEntry" => json_encode($data),
+                    "RawEntry" => $this->cleanSensitiveData($data),
                     "FormId" => "WooCommerce",
                 ];
                 oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
@@ -325,7 +345,7 @@ class WooSpamProtection
                         "Message" => sanitize_text_field($value),
                         "IP" => "",
                         "Email" => $email,
-                        "RawEntry" => json_encode($_POST),
+                        "RawEntry" => $this->cleanSensitiveData($_POST),
                         "FormId" => "WooCommerce",
                     ];
                     oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
@@ -367,7 +387,7 @@ class WooSpamProtection
                         "Message" => sanitize_text_field($value),
                         "IP" => "",
                         "Email" => $email,
-                        "RawEntry" => json_encode($_POST),
+                        "RawEntry" => $this->cleanSensitiveData($_POST),
                         "FormId" => "WooCommerce",
                     ];
                     oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
@@ -422,7 +442,7 @@ class WooSpamProtection
                         "Message" => sanitize_text_field($value),
                         "IP" => "",
                         "Email" => $email,
-                        "RawEntry" => json_encode($_POST),
+                        "RawEntry" => $this->cleanSensitiveData($_POST),
                         "FormId" => "WooCommerce",
                     ];
                     oopspam_store_spam_submission($frmEntry, "Failed honeypot validation");
@@ -450,7 +470,7 @@ class WooSpamProtection
         $privacyOptions = get_option('oopspamantispam_privacy_settings');
         $userIP = "";
 
-        if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_woo_activated'])) {
+        if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('woo')) {
 
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = \WC_Geolocation::get_ip_address();
@@ -507,7 +527,7 @@ private function isEmailAllowed($email, $rawEntry)
                 "Message" => "",
                 "IP" => $userIP,
                 "Email" => $email,
-                "RawEntry" => json_encode($rawEntry),
+                "RawEntry" => $this->cleanSensitiveData($rawEntry),
                 "FormId" => "WooCommerce",
             ];
             oopspam_store_ham_submission($frmEntry);

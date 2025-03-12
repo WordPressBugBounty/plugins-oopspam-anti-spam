@@ -92,22 +92,12 @@ class OOPSpamAPI {
 
         $options = get_option('oopspamantispam_settings');
 
-        // By Default use RapidAPI
-        // $apiEndpoint = "https://oopspam.p.rapidapi.com/";
-        // $headers = array(
-        //     'content-type' => 'application/json',
-        //     'accept' => 'application/json',
-        //     'x-rapidapi-key' => $this->api_key
-        // );
-        
-        // if ($options['oopspam_api_key_source'] == "OOPSpamDashboard") {
             $apiEndpoint = "https://api.oopspam.com/";
             $headers = array(
                 'content-type' => 'application/json',
                 'accept' => 'application/json',
                 'X-Api-Key' => $this->api_key
             );
-        // }
        
         $args = array(
             'body' => $POSTparameters,

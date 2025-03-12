@@ -20,7 +20,7 @@ function oopspamantispam_mpress_validate_signup($errors)
     // Capture the message (combine various fields)
     $message = $_POST['user_first_name'] . ' ' . $_POST['user_last_name'] . ' ';
  
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_mpress_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('mpress')) {
         
         // Check if the membership is excluded from spam protection
         if (isset($options['oopspam_mpress_exclude_form']) && $options['oopspam_mpress_exclude_form']) { 
@@ -56,7 +56,7 @@ function oopspamantispam_mpress_validate_signup($errors)
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and add error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_mpress_spam_message'];
+            $error_to_show = isset($options['oopspam_mpress_spam_message']) ? $options['oopspam_mpress_spam_message'] : "Your submission has been flagged as spam.";
             $errors[] = wp_kses($error_to_show, 'post');
         } else {
             // It's ham

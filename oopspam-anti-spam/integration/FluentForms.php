@@ -85,7 +85,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         $email = sanitize_email($data["email"]);
     }
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_ff_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('ff')) {
 
         // Check if the form is excluded from spam protection
         if (isset($options['oopspam_ff_exclude_form']) && $options['oopspam_ff_exclude_form']) {
@@ -128,7 +128,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-            $error_to_show = $options['oopspam_ff_spam_message'];
+            $error_to_show = isset($options['oopspam_ff_spam_message']) ? $options['oopspam_ff_spam_message'] : 'Your submission has been flagged as spam.';
             wp_send_json(['errors' => [
                 'restricted' => [
                     $error_to_show,

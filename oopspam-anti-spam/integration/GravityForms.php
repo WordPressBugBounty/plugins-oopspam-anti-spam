@@ -8,6 +8,8 @@ add_filter('gform_confirmation', function ($confirmation, $form, $entry) {
         $options = get_option('oopspamantispam_settings');
         if (isset($options['oopspam_gf_spam_message']) && !empty($options['oopspam_gf_spam_message'])) {
             return "<div class='gform_confirmation_message'>" . $options['oopspam_gf_spam_message'] . "</div>";
+        } else {
+            return "<div class='gform_confirmation_message'>Your submission has been flagged as spam.</div>";
         }
     }
     return $confirmation;
@@ -45,7 +47,7 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
     $userIP = oopspamantispam_get_ip();
     $email = $extractedData['email'];
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_gf_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('gf')) {
         // Check if the form is excluded from spam protection
         if (isset($options['oopspam_gf_exclude_form']) && $options['oopspam_gf_exclude_form']) {
             $excludedFormIdsSanitized = sanitize_text_field(trim($options['oopspam_gf_exclude_form']));

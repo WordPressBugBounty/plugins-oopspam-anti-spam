@@ -30,7 +30,7 @@ function empty_ham_entries(){
 
 	$action_type = $_POST['action_type'];
     if ($action_type === "empty-entries") {
-        $wpdb->query("TRUNCATE TABLE $table");
+        $wpdb->query($wpdb->prepare("TRUNCATE TABLE %i", $table));
         wp_send_json_success( array( 
             'success' => true
         ), 200 );
@@ -62,8 +62,19 @@ function export_ham_entries(){
         
         global $wpdb; 
         $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
-        $column_names = $wpdb->get_col("DESC $table");
-        $rows = $wpdb->get_results("SELECT * FROM $table", ARRAY_A);
+        
+        // Get column names securely
+        $column_names = $wpdb->get_col($wpdb->prepare(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
+            DB_NAME,
+            $table
+        ));
+
+        // Get rows securely
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM %i",
+            $table
+        ), ARRAY_A);
 
         // Filter out columns to ignore (e.g., 'id')
         $columns_to_ignore = array('id', 'reported');
@@ -142,48 +153,38 @@ class Ham_Entries extends \WP_List_Table {
 		global $wpdb;
 		$table = $wpdb->prefix . 'oopspam_frm_ham_entries';
 	
-		// If search term is provided, construct the search query
-		if (!empty($search)) {
-			$likeQ = '%';
-			$search = $likeQ . $wpdb->esc_like($search) . $likeQ;
-			return $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT * FROM $table
-					WHERE form_id LIKE %s OR 
-					message LIKE %s OR 
-					ip LIKE %s OR 
-					email LIKE %s OR
-					raw_entry LIKE %s",
-					$search,
-					$search,
-					$search,
-					$search,
-					$search
-				),
-				'ARRAY_A'
-			);
-		}
-	
-		// Build the base query
-		$sql = "SELECT * FROM $table";
-	
-		// Check and sanitize orderby parameter
-		if (!empty($_GET['orderby'])) {
-			$orderby = sanitize_sql_orderby($_GET['orderby']); 
-			$order = !empty($_GET['order']) ? sanitize_sql_orderby($_GET['order']) : 'ASC'; 
-			$sql .= " ORDER BY $orderby $order";
-		} else {
-			$sql .= ' ORDER BY date DESC'; // Default ordering by date
-		}
-	
-		// Add LIMIT and OFFSET for pagination
-		$sql .= " LIMIT $per_page";
-		$sql .= ' OFFSET ' . ($page_number - 1) * $per_page;
-	
-		// Run the query
-		$result = $wpdb->get_results($sql, 'ARRAY_A');
-	
-		return $result;
+		 // Start building the query
+		 $where = array();
+		 $values = array();
+		 
+		 // Add search condition if search term is provided
+		 if (!empty($search)) {
+			 $search_term = '%' . $wpdb->esc_like($search) . '%';
+			 $where[] = "(form_id LIKE %s OR message LIKE %s OR ip LIKE %s OR email LIKE %s OR raw_entry LIKE %s)";
+			 $values = array_merge($values, array($search_term, $search_term, $search_term, $search_term, $search_term));
+		 }
+	 
+		 // Combine WHERE clauses
+		 $where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
+	 
+		 // Add ordering
+		 $orderby = !empty($_GET['orderby']) ? sanitize_sql_orderby($_GET['orderby']) : 'date';
+		 $order = !empty($_GET['order']) ? sanitize_sql_orderby($_GET['order']) : 'DESC';
+		 
+		 // Calculate offset
+		 $offset = ($page_number - 1) * $per_page;
+	 
+		 // Prepare the complete query
+		 $query = $wpdb->prepare(
+			 "SELECT * FROM %i $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d",
+			 array_merge(
+				 array($table),
+				 $values,
+				 array($per_page, $offset)
+			 )
+		 );
+	 
+		 return $wpdb->get_results($query, 'ARRAY_A');
 	}
 
 
@@ -277,9 +278,7 @@ class Ham_Entries extends \WP_List_Table {
 		global $wpdb;
         $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
 
-		$sql = "SELECT COUNT(*) FROM $table";
-
-		return $wpdb->get_var( $sql );
+		return $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i", $table));
 	}
 
 
@@ -638,11 +637,13 @@ class OOPSpam_Ham {
 				<div id="post-body" class="metabox-holder columns-2">
 					<div id="post-body-content">
 						<div class="meta-box-sortables ui-sortable">
-							<form method="post">
-								<?php $this->entries_obj->prepare_items(); ?>
-									<input type="hidden" name="page" value="wp_oopspam_frm_ham_entries" />
-									<?php $this->entries_obj->search_box('search', 'search_id'); ?>
-								<?php $this->entries_obj->display(); ?>
+							<form method="get"> <!-- Changed from post to get -->
+								<input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']) ?>" />
+								<?php 
+								$this->entries_obj->prepare_items();
+								$this->entries_obj->search_box('search', 'search_id');
+								$this->entries_obj->display(); 
+								?>
 							</form>
 						</div>
 					</div>

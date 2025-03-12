@@ -12,7 +12,7 @@ function oopspam_contact_form_is_spam_jetpack($_is_spam, $form) {
     $email = "";
     $userIP = "";
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_jform_activated'])) { 
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('jform')) { 
 
         // Capture the content
         $message = isset($form['comment_content']) ? sanitize_textarea_field($form['comment_content']) : "";

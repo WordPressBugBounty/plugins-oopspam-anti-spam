@@ -9,7 +9,7 @@ function oopspam_wpdis_pre_submission()
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_wpdis_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('wpdis')) {
         // Capture the content
         $message = "";
         $email = "";
@@ -49,7 +49,7 @@ function oopspam_wpdis_pre_submission()
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_wpdis_spam_message'];
+            $error_to_show = isset($options['oopspam_wpdis_spam_message']) ? $options['oopspam_wpdis_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
             wp_die( __( $error_to_show, 'oopspam' ) );
         } else {
             // It's ham

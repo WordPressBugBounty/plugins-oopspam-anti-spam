@@ -567,7 +567,7 @@ function oopspamantispam_settings_init()
     $options = get_option('oopspamantispam_settings');
 
     // Forminator settings section
-    if (oopspamantispam_plugin_check('forminator') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('forminator') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_forminator_settings_section',
             __('Forminator', 'oopspam'),
@@ -596,7 +596,7 @@ function oopspamantispam_settings_init()
         );
     }
     // Mailpoet settings section
-    if (oopspamantispam_plugin_check('mpoet') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('mpoet') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_mpoet_settings_section',
             __('MailPoet', 'oopspam'),
@@ -619,7 +619,7 @@ function oopspamantispam_settings_init()
     }
 
     // MC4WP settings section
-    if (oopspamantispam_plugin_check('mc4wp') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('mc4wp') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_mc4wp_settings_section',
             __('MC4WP: Mailchimp for WordPress', 'oopspam'),
@@ -642,7 +642,7 @@ function oopspamantispam_settings_init()
     }
 
     // WPDiscuz settings section
-    if (oopspamantispam_plugin_check('wpdis') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('wpdis') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_wpdis_settings_section',
             __('WPDiscuz', 'oopspam'),
@@ -664,7 +664,7 @@ function oopspamantispam_settings_init()
         );
     }
     // Kadence Form Block settings section
-    if (oopspamantispam_plugin_check('kb') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('kb') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_kb_settings_section',
             __('Kadence Form Block', 'oopspam'),
@@ -687,7 +687,7 @@ function oopspamantispam_settings_init()
     }
 
     // Ninja Forms settings section
-    if (oopspamantispam_plugin_check('nf') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('nf') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_nj_settings_section',
             __('Ninja Forms', 'oopspam'),
@@ -724,14 +724,14 @@ function oopspamantispam_settings_init()
     }
 
      // Piotnet Forms settings section
-     if (oopspamantispam_plugin_check('pionet') && !empty($options['oopspam_api_key'])) {
+     if (oopspamantispam_plugin_check('pionet') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_pionet_settings_section',
             __('Piotnet Forms', 'oopspam'),
             false,
             'oopspamantispam-pionet-settings-group'
         );
-        add_settings_field('oopspam_is_nj_activated',
+        add_settings_field('oopspam_is_pionet_activated',
             __('Activate Spam Protection', 'oopspam'),
             'oopspam_is_pionet_activated_render',
             'oopspamantispam-pionet-settings-group',
@@ -761,7 +761,7 @@ function oopspamantispam_settings_init()
     }
 
     // Toolset Forms settings section
-    if (oopspamantispam_plugin_check('ts') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('ts') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_ts_settings_section',
             __('Toolset Forms', 'oopspam'),
@@ -784,7 +784,7 @@ function oopspamantispam_settings_init()
     }
 
     // Formidable Forms settings section
-    if (oopspamantispam_plugin_check('fable') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('fable') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_fable_settings_section',
             __('Formidable Forms', 'oopspam'),
@@ -822,7 +822,7 @@ function oopspamantispam_settings_init()
     }
 
     // Gravity Forms settings section
-    if (oopspamantispam_plugin_check('gf') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('gf') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_gf_settings_section',
             __('Gravity Forms', 'oopspam'),
@@ -858,7 +858,7 @@ function oopspamantispam_settings_init()
     }
 
     // Elementor Forms settings section
-    if (oopspamantispam_plugin_check('el') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('el') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_el_settings_section',
             __('Elementor Forms', 'oopspam'),
@@ -895,7 +895,7 @@ function oopspamantispam_settings_init()
     }
 
     // Brick Forms settings section
-    if (oopspamantispam_plugin_check('br') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('br') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_br_settings_section',
             __('Bricks Forms', 'oopspam'),
@@ -932,7 +932,7 @@ function oopspamantispam_settings_init()
     }
 
     // WS Form settings section
-    if (oopspamantispam_plugin_check('ws') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('ws') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_ws_settings_section',
             __('WS Form', 'oopspam'),
@@ -971,7 +971,7 @@ function oopspamantispam_settings_init()
     }
 
     // WPForms settings section
-    if (oopspamantispam_plugin_check('wpf') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('wpf') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_wpf_settings_section',
             __('WPForms', 'oopspam'),
@@ -1044,7 +1044,7 @@ function oopspam_jform_spam_message_render()
 /* Jetpack Form settings section ends */
 
     // Contact Form 7 settings section
-    if (oopspamantispam_plugin_check('cf7') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('cf7') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_cf7_settings_section',
             __('Contact Form 7', 'oopspam'),
@@ -1074,7 +1074,7 @@ function oopspam_jform_spam_message_render()
     }
 
     // Jetpack Forms settings section
-    if (oopspamantispam_plugin_check('jform') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('jform') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_jform_settings_section',
             __('Jetpack Form', 'oopspam'),
@@ -1097,7 +1097,7 @@ function oopspam_jform_spam_message_render()
     }
     
     // Fluent Forms settings section
-    if (oopspamantispam_plugin_check('ff') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('ff') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_ff_settings_section',
             __('Fluent Forms', 'oopspam'),
@@ -1134,7 +1134,7 @@ function oopspam_jform_spam_message_render()
     }
 
      // Breakdance form settings section
-     if (oopspamantispam_plugin_check('bd') && !empty($options['oopspam_api_key'])) {
+     if (oopspamantispam_plugin_check('bd') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_bd_settings_section',
             __('Breakdance Forms', 'oopspam'),
@@ -1164,7 +1164,7 @@ function oopspam_jform_spam_message_render()
     }
 
      // Beaver Builder contact form settings section
-     if (oopspamantispam_plugin_check('bb') && !empty($options['oopspam_api_key'])) {
+     if (oopspamantispam_plugin_check('bb') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_bb_settings_section',
             __('Beaver Builder Forms', 'oopspam'),
@@ -1181,7 +1181,7 @@ function oopspam_jform_spam_message_render()
     }
 
     // GiveWP settings section
-    if (oopspamantispam_plugin_check('give') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('give') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_give_settings_section',
             __('GiveWP', 'oopspam'),
@@ -1204,7 +1204,7 @@ function oopspam_jform_spam_message_render()
     }
 
     // WP registration settings section
-    if (oopspamantispam_plugin_check('wp-register') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('wp-register') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_wpregister_settings_section',
             __('WordPress Registration', 'oopspam'),
@@ -1228,7 +1228,7 @@ function oopspam_jform_spam_message_render()
 
 
     // Ultimate Member settings section 
-    if (oopspamantispam_plugin_check('umember') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('umember') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_umember_settings_section',
             __('Ultimate Member Form', 'oopspam'),
@@ -1251,7 +1251,7 @@ function oopspam_jform_spam_message_render()
     }
 
      // Pro Membership Pro settings section 
-     if (oopspamantispam_plugin_check('pmp') && !empty($options['oopspam_api_key'])) {
+     if (oopspamantispam_plugin_check('pmp') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_pmp_settings_section',
             __('Paid Memberships Pro', 'oopspam'),
@@ -1274,7 +1274,7 @@ function oopspam_jform_spam_message_render()
     }
 
     // Member Press settings section 
-    if (oopspamantispam_plugin_check('mpress') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('mpress') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_mpress_settings_section',
             __('MemberPress', 'oopspam'),
@@ -1304,7 +1304,7 @@ function oopspam_jform_spam_message_render()
     }
 
     // WooCommerce settings section
-    if (oopspamantispam_plugin_check('woo') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('woo') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_woo_settings_section',
             __('WooCommerce', 'oopspam'),
@@ -1342,7 +1342,7 @@ function oopspam_jform_spam_message_render()
     }
 
     // SureForms settings section
-    if (oopspamantispam_plugin_check('sure') && !empty($options['oopspam_api_key'])) {
+    if (oopspamantispam_plugin_check('sure') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_sure_settings_section',
             __('SureForms', 'oopspam'),
@@ -1384,14 +1384,16 @@ function oopspam_jform_spam_message_render()
 function oopspam_api_key_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $api_key = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
+    $is_constant = defined('OOPSPAM_API_KEY');
     ?>
         <div class="api_key_section">
             <label for="oopspam_api_key">
-                <input id="oopspam_api_key" type="password" name="oopspamantispam_settings[oopspam_api_key]" class="regular-text" value="<?php if (isset($options['oopspam_api_key'])) {
-                    echo esc_html($options['oopspam_api_key']);
-                }
-                ?>" />
+                <input id="oopspam_api_key" type="password" name="oopspamantispam_settings[oopspam_api_key]" class="regular-text" value="<?php echo esc_attr($api_key); ?>" <?php echo $is_constant ? 'disabled' : ''; ?> />
                 <button class="button button-secondary" type="button" id="toggleApiKey" style="margin-left: 5px;">Show</button>
+                <?php if ($is_constant): ?>
+                    <p class="description"><?php echo __('API key is defined in wp-config.php'); ?></p>
+                <?php endif; ?>
             </label>
         </div>
         <script>
@@ -1850,19 +1852,23 @@ foreach ($languagelist as $key => $value) {
 
 /* Forminator UI settings section starts */
 
-function oopspam_is_forminator_activated_render()
-{
+function oopspam_is_forminator_activated_render() {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_FORMINATOR_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_FORMINATOR_ACTIVATED : (isset($options['oopspam_is_forminator_activated']) && 1 == $options['oopspam_is_forminator_activated']);
     ?>
-                <div>
-                    <label for="forminator_support">
-                    <input class="oopspam-toggle" type="checkbox" id="forminator_support" name="oopspamantispam_settings[oopspam_is_forminator_activated]" value="1" <?php if (isset($options['oopspam_is_forminator_activated']) && 1 == $options['oopspam_is_forminator_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="forminator_support">
+            <input class="oopspam-toggle" type="checkbox" id="forminator_support" 
+                   name="oopspamantispam_settings[oopspam_is_forminator_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_forminator_spam_message_render()
@@ -1927,16 +1933,21 @@ function oopspam_forminator_content_field_render() {
 function oopspam_is_mc4wp_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_MC4WP_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_MC4WP_ACTIVATED : (isset($options['oopspam_is_mc4wp_activated']) && 1 == $options['oopspam_is_mc4wp_activated']);
     ?>
-                <div>
-                    <label for="mc4wp_support">
-                    <input class="oopspam-toggle" type="checkbox" id="mc4wp_support" name="oopspamantispam_settings[oopspam_is_mc4wp_activated]" value="1" <?php if (isset($options['oopspam_is_mc4wp_activated']) && 1 == $options['oopspam_is_mc4wp_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="mc4wp_support">
+            <input class="oopspam-toggle" type="checkbox" id="mc4wp_support" 
+                   name="oopspamantispam_settings[oopspam_is_mc4wp_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_mc4wp_spam_message_render()
@@ -1962,16 +1973,21 @@ function oopspam_mc4wp_spam_message_render()
 function oopspam_is_mpoet_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_MPOET_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_MPOET_ACTIVATED : (isset($options['oopspam_is_mpoet_activated']) && 1 == $options['oopspam_is_mpoet_activated']);
     ?>
-                <div>
-                    <label for="mpoet_support">
-                    <input class="oopspam-toggle" type="checkbox" id="mpoet_support" name="oopspamantispam_settings[oopspam_is_mpoet_activated]" value="1" <?php if (isset($options['oopspam_is_mpoet_activated']) && 1 == $options['oopspam_is_mpoet_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="mpoet_support">
+            <input class="oopspam-toggle" type="checkbox" id="mpoet_support" 
+                   name="oopspamantispam_settings[oopspam_is_mpoet_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_mpoet_spam_message_render()
@@ -1997,16 +2013,21 @@ function oopspam_mpoet_spam_message_render()
 function oopspam_is_wpdis_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WPDIS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WPDIS_ACTIVATED : (isset($options['oopspam_is_wpdis_activated']) && 1 == $options['oopspam_is_wpdis_activated']);
     ?>
-                <div>
-                    <label for="wpdis_support">
-                    <input class="oopspam-toggle" type="checkbox" id="wpdis_support" name="oopspamantispam_settings[oopspam_is_wpdis_activated]" value="1" <?php if (isset($options['oopspam_is_wpdis_activated']) && 1 == $options['oopspam_is_wpdis_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="wpdis_support">
+            <input class="oopspam-toggle" type="checkbox" id="wpdis_support" 
+                   name="oopspamantispam_settings[oopspam_is_wpdis_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_wpdis_spam_message_render()
@@ -2032,16 +2053,21 @@ function oopspam_wpdis_spam_message_render()
 function oopspam_is_kb_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_KB_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_KB_ACTIVATED : (isset($options['oopspam_is_kb_activated']) && 1 == $options['oopspam_is_kb_activated']);
     ?>
-                <div>
-                    <label for="kb_support">
-                    <input class="oopspam-toggle" type="checkbox" id="kb_support" name="oopspamantispam_settings[oopspam_is_kb_activated]" value="1" <?php if (isset($options['oopspam_is_kb_activated']) && 1 == $options['oopspam_is_kb_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="kb_support">
+            <input class="oopspam-toggle" type="checkbox" id="kb_support" 
+                   name="oopspamantispam_settings[oopspam_is_kb_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_kb_spam_message_render()
@@ -2067,16 +2093,21 @@ function oopspam_kb_spam_message_render()
 function oopspam_is_nj_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_NJ_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_NJ_ACTIVATED : (isset($options['oopspam_is_nj_activated']) && 1 == $options['oopspam_is_nj_activated']);
     ?>
-                <div>
-                    <label for="nf_support">
-                    <input class="oopspam-toggle" type="checkbox" id="nf_support" name="oopspamantispam_settings[oopspam_is_nj_activated]" value="1" <?php if (isset($options['oopspam_is_nj_activated']) && 1 == $options['oopspam_is_nj_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="nf_support">
+            <input class="oopspam-toggle" type="checkbox" id="nf_support" 
+                   name="oopspamantispam_settings[oopspam_is_nj_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_nj_spam_message_render()
@@ -2135,16 +2166,21 @@ function oopspam_nj_exclude_form_render()
 function oopspam_is_pionet_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_PIONET_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_PIONET_ACTIVATED : (isset($options['oopspam_is_pionet_activated']) && 1 == $options['oopspam_is_pionet_activated']);
     ?>
-                <div>
-                    <label for="pionet_support">
-                    <input class="oopspam-toggle" type="checkbox" id="pionet_support" name="oopspamantispam_settings[oopspam_is_pionet_activated]" value="1" <?php if (isset($options['oopspam_is_pionet_activated']) && 1 == $options['oopspam_is_pionet_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="pionet_support">
+            <input class="oopspam-toggle" type="checkbox" id="pionet_support" 
+                   name="oopspamantispam_settings[oopspam_is_pionet_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_pionet_spam_message_render()
@@ -2201,16 +2237,21 @@ function oopspam_pionet_exclude_form_render()
 function oopspam_is_ts_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_TS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_TS_ACTIVATED : (isset($options['oopspam_is_ts_activated']) && 1 == $options['oopspam_is_ts_activated']);
     ?>
-                <div>
-                    <label for="ts_support">
-                    <input class="oopspam-toggle" type="checkbox" id="ts_support" name="oopspamantispam_settings[oopspam_is_ts_activated]" value="1" <?php if (isset($options['oopspam_is_ts_activated']) && 1 == $options['oopspam_is_ts_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="ts_support">
+            <input class="oopspam-toggle" type="checkbox" id="ts_support" 
+                   name="oopspamantispam_settings[oopspam_is_ts_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_ts_spam_message_render()
@@ -2236,16 +2277,21 @@ function oopspam_ts_spam_message_render()
 function oopspam_is_fable_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_FABLE_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_FABLE_ACTIVATED : (isset($options['oopspam_is_fable_activated']) && 1 == $options['oopspam_is_fable_activated']);
     ?>
-                <div>
-                    <label for="fable_support">
-                    <input class="oopspam-toggle" type="checkbox" id="fable_support" name="oopspamantispam_settings[oopspam_is_fable_activated]" value="1" <?php if (isset($options['oopspam_is_fable_activated']) && 1 == $options['oopspam_is_fable_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="fable_support">
+            <input class="oopspam-toggle" type="checkbox" id="fable_support" 
+                   name="oopspamantispam_settings[oopspam_is_fable_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_fable_spam_message_render()
@@ -2303,16 +2349,21 @@ function oopspam_fable_exclude_form_render()
 function oopspam_is_gf_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_GF_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_GF_ACTIVATED : (isset($options['oopspam_is_gf_activated']) && 1 == $options['oopspam_is_gf_activated']);
     ?>
-                <div>
-                    <label for="gf_support">
-                    <input class="oopspam-toggle" type="checkbox" id="gf_support" name="oopspamantispam_settings[oopspam_is_gf_activated]" value="1" <?php if (isset($options['oopspam_is_gf_activated']) && 1 == $options['oopspam_is_gf_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="gf_support">
+            <input class="oopspam-toggle" type="checkbox" id="gf_support" 
+                   name="oopspamantispam_settings[oopspam_is_gf_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_gf_spam_message_render()
@@ -2392,16 +2443,21 @@ function oopspam_gf_exclude_form_render()
 function oopspam_is_el_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_EL_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_EL_ACTIVATED : (isset($options['oopspam_is_el_activated']) && 1 == $options['oopspam_is_el_activated']);
     ?>
-                <div>
-                    <label for="el_support">
-                    <input class="oopspam-toggle" type="checkbox" id="el_support" name="oopspamantispam_settings[oopspam_is_el_activated]" value="1" <?php if (isset($options['oopspam_is_el_activated']) && 1 == $options['oopspam_is_el_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="el_support">
+            <input class="oopspam-toggle" type="checkbox" id="el_support" 
+                   name="oopspamantispam_settings[oopspam_is_el_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_el_spam_message_render()
@@ -2482,16 +2538,21 @@ function oopspam_el_exclude_form_render()
 function oopspam_is_br_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_BR_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_BR_ACTIVATED : (isset($options['oopspam_is_br_activated']) && 1 == $options['oopspam_is_br_activated']);
     ?>
-              <div>
-                  <label for="br_support">
-                  <input class="oopspam-toggle" type="checkbox" id="br_support" name="oopspamantispam_settings[oopspam_is_br_activated]" value="1" <?php if (isset($options['oopspam_is_br_activated']) && 1 == $options['oopspam_is_br_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                  </label>
-              </div>
-          <?php
+    <div>
+        <label for="br_support">
+            <input class="oopspam-toggle" type="checkbox" id="br_support" 
+                   name="oopspamantispam_settings[oopspam_is_br_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_br_spam_message_render()
@@ -2549,16 +2610,21 @@ function oopspam_br_exclude_form_render()
 function oopspam_is_ws_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WS_ACTIVATED : (isset($options['oopspam_is_ws_activated']) && 1 == $options['oopspam_is_ws_activated']);
     ?>
-           <div>
-               <label for="ws_support">
-               <input class="oopspam-toggle" type="checkbox" id="ws_support" name="oopspamantispam_settings[oopspam_is_ws_activated]" value="1" <?php if (isset($options['oopspam_is_ws_activated']) && 1 == $options['oopspam_is_ws_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-               </label>
-           </div>
-       <?php
+    <div>
+        <label for="ws_support">
+            <input class="oopspam-toggle" type="checkbox" id="ws_support" 
+                   name="oopspamantispam_settings[oopspam_is_ws_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_ws_content_field_render() {
@@ -2638,16 +2704,21 @@ function oopspam_ws_spam_message_render()
 function oopspam_is_sure_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_SURE_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_SURE_ACTIVATED : (isset($options['oopspam_is_sure_activated']) && 1 == $options['oopspam_is_sure_activated']);
     ?>
-           <div>
-               <label for="sure_support">
-               <input class="oopspam-toggle" type="checkbox" id="sure_support" name="oopspamantispam_settings[oopspam_is_sure_activated]" value="1" <?php if (isset($options['oopspam_is_sure_activated']) && 1 == $options['oopspam_is_sure_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-               </label>
-           </div>
-       <?php
+    <div>
+        <label for="sure_support">
+            <input class="oopspam-toggle" type="checkbox" id="sure_support" 
+                   name="oopspamantispam_settings[oopspam_is_sure_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_sure_content_field_render()
@@ -2706,16 +2777,21 @@ function oopspam_sure_spam_message_render()
 function oopspam_is_wpf_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WPF_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WPF_ACTIVATED : (isset($options['oopspam_is_wpf_activated']) && 1 == $options['oopspam_is_wpf_activated']);
     ?>
-              <div>
-                  <label for="wpf_support">
-                  <input class="oopspam-toggle" type="checkbox" id="wpf_support" name="oopspamantispam_settings[oopspam_is_wpf_activated]" value="1" <?php if (isset($options['oopspam_is_wpf_activated']) && 1 == $options['oopspam_is_wpf_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                  </label>
-              </div>
-          <?php
+    <div>
+        <label for="wpf_support">
+            <input class="oopspam-toggle" type="checkbox" id="wpf_support" 
+                   name="oopspamantispam_settings[oopspam_is_wpf_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_wpf_spam_message_render()
@@ -2796,16 +2872,21 @@ function oopspam_wpf_exclude_form_render()
 function oopspam_is_ff_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_FF_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_FF_ACTIVATED : (isset($options['oopspam_is_ff_activated']) && 1 == $options['oopspam_is_ff_activated']);
     ?>
-                <div>
-                    <label for="ff_support">
-                    <input class="oopspam-toggle" type="checkbox" id="ff_support" name="oopspamantispam_settings[oopspam_is_ff_activated]" value="1" <?php if (isset($options['oopspam_is_ff_activated']) && 1 == $options['oopspam_is_ff_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="ff_support">
+            <input class="oopspam-toggle" type="checkbox" id="ff_support" 
+                   name="oopspamantispam_settings[oopspam_is_ff_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_ff_spam_message_render()
@@ -2940,16 +3021,21 @@ function oopspam_bd_exclude_form_render()
 function oopspam_is_bb_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_BB_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_BB_ACTIVATED : (isset($options['oopspam_is_bb_activated']) && 1 == $options['oopspam_is_bb_activated']);
     ?>
-                <div>
-                    <label for="bb_support">
-                    <input class="oopspam-toggle" type="checkbox" id="bb_support" name="oopspamantispam_settings[oopspam_is_bb_activated]" value="1" <?php if (isset($options['oopspam_is_bb_activated']) && 1 == $options['oopspam_is_bb_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="bb_support">
+            <input class="oopspam-toggle" type="checkbox" id="bb_support" 
+                   name="oopspamantispam_settings[oopspam_is_bb_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 /* Beaver Builder Forms settings section ends */
@@ -2959,16 +3045,21 @@ function oopspam_is_bb_activated_render()
 function oopspam_is_cf7_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_CF7_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_CF7_ACTIVATED : (isset($options['oopspam_is_cf7_activated']) && 1 == $options['oopspam_is_cf7_activated']);
     ?>
-                <div>
-                    <label for="cf7_support">
-                    <input class="oopspam-toggle" type="checkbox" id="cf7_support" name="oopspamantispam_settings[oopspam_is_cf7_activated]" value="1" <?php if (isset($options['oopspam_is_cf7_activated']) && 1 == $options['oopspam_is_cf7_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="cf7_support">
+            <input class="oopspam-toggle" type="checkbox" id="cf7_support" 
+                   name="oopspamantispam_settings[oopspam_is_cf7_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_cf7_spam_message_render()
@@ -3012,16 +3103,21 @@ function oopspam_cf7_content_field_render()
 function oopspam_is_give_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_GIVE_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_GIVE_ACTIVATED : (isset($options['oopspam_is_give_activated']) && 1 == $options['oopspam_is_give_activated']);
     ?>
-                <div>
-                    <label for="give_support">
-                    <input class="oopspam-toggle" type="checkbox" id="give_support" name="oopspamantispam_settings[oopspam_is_give_activated]" value="1" <?php if (isset($options['oopspam_is_give_activated']) && 1 == $options['oopspam_is_give_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="give_support">
+            <input class="oopspam-toggle" type="checkbox" id="give_support" 
+                   name="oopspamantispam_settings[oopspam_is_give_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_give_spam_message_render()
@@ -3047,16 +3143,21 @@ function oopspam_give_spam_message_render()
 function oopspam_is_woo_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WOO_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WOO_ACTIVATED : (isset($options['oopspam_is_woo_activated']) && 1 == $options['oopspam_is_woo_activated']);
     ?>
-                <div>
-                    <label for="woo_support">
-                    <input class="oopspam-toggle" type="checkbox" id="woo_support" name="oopspamantispam_settings[oopspam_is_woo_activated]" value="1" <?php if (isset($options['oopspam_is_woo_activated']) && 1 == $options['oopspam_is_woo_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="woo_support">
+            <input class="oopspam-toggle" type="checkbox" id="woo_support" 
+                   name="oopspamantispam_settings[oopspam_is_woo_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_woo_check_origin_render()
@@ -3113,16 +3214,21 @@ function oopspam_woo_check_honeypot_render()
 function oopspam_is_wpregister_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WPREGISTER_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WPREGISTER_ACTIVATED : (isset($options['oopspam_is_wpregister_activated']) && 1 == $options['oopspam_is_wpregister_activated']);
     ?>
-                <div>
-                    <label for="wpregister_support">
-                    <input class="oopspam-toggle" type="checkbox" id="wpregister_support" name="oopspamantispam_settings[oopspam_is_wpregister_activated]" value="1" <?php if (isset($options['oopspam_is_wpregister_activated']) && 1 == $options['oopspam_is_wpregister_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="wpregister_support">
+            <input class="oopspam-toggle" type="checkbox" id="wpregister_support" 
+                   name="oopspamantispam_settings[oopspam_is_wpregister_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_wpregister_spam_message_render()
@@ -3148,16 +3254,21 @@ function oopspam_wpregister_spam_message_render()
 function oopspam_is_umember_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_UMEMBER_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_UMEMBER_ACTIVATED : (isset($options['oopspam_is_umember_activated']) && 1 == $options['oopspam_is_umember_activated']);
     ?>
-                <div>
-                    <label for="umember_support">
-                    <input class="oopspam-toggle" type="checkbox" id="umember_support" name="oopspamantispam_settings[oopspam_is_umember_activated]" value="1" <?php if (isset($options['oopspam_is_umember_activated']) && 1 == $options['oopspam_is_umember_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="umember_support">
+            <input class="oopspam-toggle" type="checkbox" id="umember_support" 
+                   name="oopspamantispam_settings[oopspam_is_umember_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_umember_spam_message_render()
@@ -3183,16 +3294,21 @@ function oopspam_umember_spam_message_render()
 function oopspam_is_pmp_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_PMP_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_PMP_ACTIVATED : (isset($options['oopspam_is_pmp_activated']) && 1 == $options['oopspam_is_pmp_activated']);
     ?>
-                <div>
-                    <label for="pmp_support">
-                    <input class="oopspam-toggle" type="checkbox" id="pmp_support" name="oopspamantispam_settings[oopspam_is_pmp_activated]" value="1" <?php if (isset($options['oopspam_is_pmp_activated']) && 1 == $options['oopspam_is_pmp_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="pmp_support">
+            <input class="oopspam-toggle" type="checkbox" id="pmp_support" 
+                   name="oopspamantispam_settings[oopspam_is_pmp_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_pmp_spam_message_render()
@@ -3219,16 +3335,21 @@ function oopspam_pmp_spam_message_render()
 function oopspam_is_mpress_activated_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_MPRESS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_MPRESS_ACTIVATED : (isset($options['oopspam_is_mpress_activated']) && 1 == $options['oopspam_is_mpress_activated']);
     ?>
-                <div>
-                    <label for="mpress_support">
-                    <input class="oopspam-toggle" type="checkbox" id="mpress_support" name="oopspamantispam_settings[oopspam_is_mpress_activated]" value="1" <?php if (isset($options['oopspam_is_mpress_activated']) && 1 == $options['oopspam_is_mpress_activated']) {
-        echo 'checked="checked"';
-    }
-    ?>/>
-                    </label>
-                </div>
-            <?php
+    <div>
+        <label for="mpress_support">
+            <input class="oopspam-toggle" type="checkbox" id="mpress_support" 
+                   name="oopspamantispam_settings[oopspam_is_mpress_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
 }
 
 function oopspam_mpress_spam_message_render()
@@ -3275,8 +3396,9 @@ function oopspamantispam_options_page()
                 </div>
         <?php
 $options = get_option('oopspamantispam_settings');
+$api_key = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
 
-    if (empty($options['oopspam_api_key']) || !isset($options['oopspam_api_key'])) {
+    if (empty($api_key)) {
         ?>
             <h3><b><?php echo __('To use the OOPSpam Anti-Spam plugin, you need an OOPSpam Anti-Spam API key.'); ?></b></h3>
             <h3><b><?php echo __('Register for an account on the OOPSpam dashboard to get your API key:'); ?></b></h3>
@@ -3285,10 +3407,14 @@ $options = get_option('oopspamantispam_settings');
             <h4><b><?php echo __('Need help?'); ?></b></h4>
             <p>If you have any questions or need assistance, please feel free to reach out to us at <a href="mailto:contact@oopspam.com">contact@oopspam.com</a>. We're here to help!</p>
             <h4><b><?php echo __('How to get started:'); ?></b></h4>
-            <p>After obtaining your API key, just paste it into the "My API Key" field below to activate the service.</p>
+            <p>After obtaining your API key, you can either:</p>
+            <ul>
+                <li>1. Add <code>define('OOPSPAM_API_KEY', 'YOUR_KEY');</code> to your wp-config.php file, or</li>
+                <li>2. Paste it into the "My API Key" field below</li>
+            </ul>
             <hr/><br/>
         <?php
-}
+    }
     ?>
 <?php
 $active_tab = isset( $_GET[ 'tab' ] ) ? $_GET[ 'tab' ] : 'general';

@@ -9,7 +9,7 @@ function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $header
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_bb_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('bb')) {
 
         // Capture the content
         $message = "";

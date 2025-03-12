@@ -64,7 +64,7 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         }
     }
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_forminator_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('forminator')) {
         $escapedMsg = sanitize_textarea_field($message);
 
         // Capture message and email
@@ -100,7 +100,7 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         if (!$detectionResult['isItHam']) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_forminator_spam_message'];
+            $error_to_show = isset($options['oopspam_forminator_spam_message']) ? $options['oopspam_forminator_spam_message'] : "Your submission has been flagged as spam.";
             wp_send_json_error($error_to_show);
         } else {
             // It's ham

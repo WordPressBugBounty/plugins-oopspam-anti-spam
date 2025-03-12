@@ -79,7 +79,7 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
                 } 
             }
 
-            if (!empty($options['oopspam_api_key'])) { 
+            if (!empty(oopspamantispam_get_key())) { 
                 
                 $userIP = "";
                 if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
@@ -107,7 +107,7 @@ class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
                     // It's spam, store the submission and show error
                     oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-                    $error_to_show = $options['oopspam_bd_spam_message'];
+                    $error_to_show = isset($options['oopspam_bd_spam_message']) ? $options['oopspam_bd_spam_message'] : 'Your submission has been flagged as spam.';
                     
                     return ['type' => 'error', 'message' => $error_to_show];
                 } else {

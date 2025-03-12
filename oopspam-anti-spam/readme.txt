@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.28
+Stable tag: 1.2.29
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,7 @@ It uses the [OOPSpam API](https://www.oopspam.com/), which protects over 3.5M we
 - **Form Spam Entries Management**: View, delete, send submissions to website admins, or report them.  
 - **Form Ham Entries Management**: View non-spam entries, delete, or report them.  
 - **Rate Limiting**: Control submission rates to prevent abuse and click frauds.
+- **IP Filtering**: Block submissions from Cloud Providers and VPNs.
 
 
 The value we bring:
@@ -104,6 +105,11 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.29 =
+* **NEW:** Added support for Multi-site/Network installations
+* **NEW:** Added the ability to filter Form Spam Entries by detection reason
+* **IMPROVEMENT:** Manually blocked IPs and emails now take precedence over manually allowed ones
+* **FIX:** Prevented storing password field values in logs during WooCommerce registration
 = 1.2.28 =
 * **NEW:** Added IP Filtering options to block VPNs and Cloud Providers
 * **NEW:** Ability to define the global API key in wp-config.php using `define( 'OOPSPAM_API_KEY', 'YOUR_KEY' )`

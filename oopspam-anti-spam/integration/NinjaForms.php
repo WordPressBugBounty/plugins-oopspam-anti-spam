@@ -8,7 +8,7 @@ function oopspamantispam_forms_after_submission($form_data)
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
-    if (!empty($options['oopspam_api_key']) && !empty($options['oopspam_is_nj_activated'])) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('nj')) {
         $message = "";
         $field_id = "";
         $email = "";
@@ -93,7 +93,7 @@ function oopspamantispam_forms_after_submission($form_data)
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-            $error_to_show = $options['oopspam_nj_spam_message'];
+            $error_to_show = isset($options['oopspam_nj_spam_message']) && !empty($options['oopspam_nj_spam_message']) ? $options['oopspam_nj_spam_message'] : "Your submission has been flagged as spam.";
 
             // Content field isn't available. Capture first item's ID from the array to show the error.
             if (empty($field_id)) {
