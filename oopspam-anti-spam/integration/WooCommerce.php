@@ -120,21 +120,25 @@ class WooSpamProtection
                 $error_to_show = $this->get_error_message();
                 wp_die($error_to_show);
             }
-
+        }
             // Now check with OOPSpam API
-            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']));
+            $message = isset($post['order_comments']) ? sanitize_text_field($post['order_comments']) : '';
+            if (empty($message) && isset($data['customer_note'])) {
+                $message = sanitize_text_field($data['customer_note']);
+            }
+            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
             if ($showError) {
                 $error_to_show = $this->get_error_message();
                 wc_add_notice( esc_html__( $error_to_show ), 'error' );
             }
-        }
+        
     }    
     
 
     function oopspam_checkout_store_api_processed($order) {
         
         $data = json_decode($order, true);
-
+        
         // Check for allowed email/IP
         $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
 
@@ -180,14 +184,18 @@ class WooSpamProtection
                 $error_to_show = $this->get_error_message();
                 wp_die($error_to_show);
             }
-
+        }
             // Now check with OOPSpam API
-            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']));
+            $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
+            if (empty($message) && isset($data['order_comments'])) {
+                $message = sanitize_text_field($data['order_comments']);
+            }
+            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
             if ($showError) {
                 $error_to_show = $this->get_error_message();
                 wc_add_notice( esc_html__( $error_to_show ), 'error' );
             }
-        }
+        
     }    
 
     function oopspam_checkout_classic_processed($order_id, $posted_data, $order) {
@@ -238,7 +246,11 @@ class WooSpamProtection
             }
 
             // Now check with OOPSpam API
-            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']));
+            $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
+            if (empty($message) && isset($posted_data['order_comments'])) {
+                $message = sanitize_text_field($posted_data['order_comments']);
+            }
+            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
             if ($showError) {
                 $error_to_show = $this->get_error_message();
                 wc_add_notice( esc_html__( $error_to_show ), 'error' );
@@ -248,11 +260,15 @@ class WooSpamProtection
 
     function oopspam_checkout_process() {
 
-        $email = "";
+        $email = ""; $message = "";
+        $message = isset($_POST['order_comments']) ? sanitize_text_field($_POST['order_comments']) : '';
+        if (empty($message) && isset($_POST['customer_note'])) {
+            $message = sanitize_text_field($_POST['customer_note']);
+        }
         if (isset($_POST["billing_email"]) && is_email($_POST["billing_email"])) {
             $email = $_POST["billing_email"];
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email));
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), sanitize_text_field($message));
         if ($showError) {
             $error_to_show = $this->get_error_message();
             wc_add_notice( esc_html__( $error_to_show ), 'error' );
@@ -400,7 +416,11 @@ class WooSpamProtection
         }
 
         // OOPSpam check
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email));
+        $message = isset($_POST['order_comments']) ? sanitize_text_field($_POST['order_comments']) : '';
+        if (empty($message) && isset($_POST['customer_note'])) {
+            $message = sanitize_text_field($_POST['customer_note']);
+        }
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
         if ($showError) {
             $error_to_show = $this->get_error_message();
             $errors->add('oopspam_error', $error_to_show);
@@ -452,7 +472,11 @@ class WooSpamProtection
         }
 
         // OOPSpam check
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email));
+        $message = isset($_POST['order_comments']) ? sanitize_text_field($_POST['order_comments']) : '';
+        if (empty($message) && isset($_POST['customer_note'])) {
+            $message = sanitize_text_field($_POST['customer_note']);
+        }
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
 
         if ($showError) {
             $error_to_show = $this->get_error_message();
@@ -463,7 +487,7 @@ class WooSpamProtection
         return $errors;
     }
 
-    public function checkEmailAndIPInOOPSpam($email)
+    public function checkEmailAndIPInOOPSpam($email, $message)
     {
 
         $options = get_option('oopspamantispam_settings');
@@ -477,14 +501,14 @@ class WooSpamProtection
         }
 
         if (!empty($userIP) || !empty($email)) {
-            $detectionResult = oopspamantispam_call_OOPSpam("", $userIP, $email, true, "woo");
+            $detectionResult = oopspamantispam_call_OOPSpam($message, $userIP, $email, true, "woo");
             if (!isset($detectionResult["isItHam"])) {
                 return false;
             }
             $rawEntry = (object) array("IP" => $userIP, "email" => $email);
             $frmEntry = [
                 "Score" => $detectionResult["Score"],
-                "Message" => "",
+                "Message" => $message,
                 "IP" => $userIP,
                 "Email" => $email,
                 "RawEntry" => json_encode($rawEntry),

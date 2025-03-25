@@ -21,8 +21,17 @@ function oopspamantispam_cf7_pre_submission($spam)
             $userIP = oopspamantispam_get_ip();
         }
 
+        // Check for default email field first
         if (isset($_POST["your-email"])) {
             $email = sanitize_email($_POST["your-email"]);
+        } else {
+            // If default email field not found, look for any field containing 'email'
+            foreach ($_POST as $field_name => $field_value) {
+                if (is_string($field_name) && stripos($field_name, 'email') !== false) {
+                    $email = sanitize_email($field_value);
+                    break;
+                }
+            }
         }
 
         // This is default ID, set by CF7

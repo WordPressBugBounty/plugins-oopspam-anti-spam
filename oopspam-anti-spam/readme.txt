@@ -4,9 +4,9 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.29
+Stable tag: 1.2.30
 License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy. 
 
@@ -105,6 +105,14 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.30 =
+* **IMPROVEMENT:** Bulk actions are now processed asynchronously with a progress bar in the Form Spam and Form Ham Entries tables
+* **IMPROVEMENT:** [Contact Form 7] Enhanced extraction method for email field value if the default is missing
+* **IMPROVEMENT:** [WooCommerce] "Block URLs in message" setting now applies to Order Notes as well
+* **IMPROVEMENT:** "Block Cloud Providers" is now automatically enabled for any sensitivity level above Moderate
+* **FIX:** [WooCommerce] Resolved issue where spam protection didn't work in the Block Checkout
+* **FIX:** Resolved issue with bulk actions not running in the Form Spam and Form Ham Entries tables
+* **FIX:** Resolved search functionality issue in the Form Spam and Form Ham Entries tables
 = 1.2.29 =
 * **NEW:** Added support for Multi-site/Network installations
 * **NEW:** Added the ability to filter Form Spam Entries by detection reason

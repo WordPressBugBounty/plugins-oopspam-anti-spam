@@ -158,6 +158,12 @@ class Spam_Entries extends \WP_List_Table {
 	 */
 	public static function get_spam_entries($per_page = 5, $page_number = 1, $search = "") {
 		global $wpdb;
+		
+		// Validate and sanitize input parameters
+		$per_page = absint($per_page);
+		$page_number = absint($page_number);
+		$search = sanitize_text_field($search);
+		
 		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
 		
 		// Start building the query
@@ -166,9 +172,10 @@ class Spam_Entries extends \WP_List_Table {
 		
 		// Add search condition if search term is provided
 		if (!empty($search)) {
+			// Use separate placeholders for each LIKE condition
 			$search_term = '%' . $wpdb->esc_like($search) . '%';
 			$where[] = "(form_id LIKE %s OR message LIKE %s OR ip LIKE %s OR email LIKE %s OR raw_entry LIKE %s)";
-			$values = array_merge($values, array($search_term, $search_term, $search_term, $search_term, $search_term));
+			$values = array_merge($values, array_fill(0, 5, $search_term));
 		}
 
 		// Add reason filter if selected
@@ -570,23 +577,34 @@ private static function process_form_fields($raw_entry) {
 	 */
 	public static function record_count() {
 		global $wpdb;
-        $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
-
-		$sql = $wpdb->prepare("SELECT COUNT(*) FROM %i WHERE 1=1", $table);
-		$values = array();
+		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+		
+		$where = array();
+		$values = array($table);
+		
+		$sql = "SELECT COUNT(*) FROM %i";
+		
+		// Add search condition if search term is provided
+		if (!empty($_REQUEST['s'])) {
+			$search = sanitize_text_field($_REQUEST['s']);
+			$search_term = '%' . $wpdb->esc_like($search) . '%';
+			$where[] = "(form_id LIKE %s OR message LIKE %s OR ip LIKE %s OR email LIKE %s OR raw_entry LIKE %s)";
+			$values = array_merge($values, array_fill(0, 5, $search_term));
+		}
 		
 		// Add reason filter if selected
 		if (isset($_GET['filter_reason']) && !empty($_GET['filter_reason'])) {
-			$sql = $wpdb->prepare(
-				"SELECT COUNT(*) FROM %i WHERE reason = %s",
-				$table,
-				sanitize_text_field($_GET['filter_reason'])
-			);
+			$where[] = "reason = %s";
+			$values[] = sanitize_text_field($_GET['filter_reason']);
 		}
 		
-		return $wpdb->get_var($sql);
+		// Combine WHERE clauses
+		if (!empty($where)) {
+			$sql .= " WHERE " . implode(" AND ", $where);
+		}
+		
+		return $wpdb->get_var($wpdb->prepare($sql, $values));
 	}
-
 
 	/** Text displayed when no spam entry is available */
 	public function no_items() {
@@ -759,106 +777,137 @@ private static function process_form_fields($raw_entry) {
 	 * Handles data query and filter, sorting, and pagination.
 	 */
 	public function prepare_items() {
-
 		$this->_column_headers = $this->get_column_info();
+
+		// Handle individual actions
+        $action = $this->current_action();
+        if ($action === 'report') {
+            if (isset($_GET['spam']) && isset($_GET['_wpnonce'])) {
+                $entry_id = absint($_GET['spam']);
+                if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_spam')) {
+                    self::report_spam_entry($entry_id);
+                    wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                    exit;
+                }
+            }
+        }
 
 		/** Process bulk action */
 		$this->process_bulk_action();
 
-		$per_page     = $this->get_items_per_page( 'entries_per_page', 10 );
+		$per_page = $this->get_items_per_page('entries_per_page', 10);
 		$current_page = $this->get_pagenum();
-		$total_items  = self::record_count();
-
-		$this->set_pagination_args( [
-			'total_items' => $total_items, //We have to calculate the total number of items
-			'per_page'    => $per_page //We have to determine how many items to show on a page
-		] );
-
-		if (isset($_POST['page']) && isset($_POST['s'])) {
-			$this->items = self::get_spam_entries($per_page, $current_page, $_POST['s']);
-		} else {
-			$this->items = self::get_spam_entries( $per_page, $current_page, "" );
+		
+		// Sanitize search input
+		$search = '';
+		if (!empty($_REQUEST['s'])) {
+			$search = sanitize_text_field($_REQUEST['s']);
+			// Limit search term length to prevent excessive long queries
+			$search = substr($search, 0, 100);
 		}
+		
+		$total_items = self::record_count();
+		
+		$this->set_pagination_args([
+			'total_items' => $total_items,
+			'per_page'    => $per_page
+		]);
+
+		$this->items = self::get_spam_entries($per_page, $current_page, $search);
 	}
 
 	public function process_bulk_action() {
+    // Security check
+    if (isset($_POST['_wpnonce']) && !empty($_POST['_wpnonce'])) {
+        $nonce = filter_input(INPUT_POST, '_wpnonce', FILTER_UNSAFE_RAW);
+        $nonce = sanitize_text_field($nonce);
+        if (!wp_verify_nonce($nonce, 'bulk-' . $this->_args['plural'])) {
+            wp_die('Security check failed!');
+        }
+    }
 
-		//Detect when a bulk action is being triggered...
-		if ('bulk-report' === $this->current_action()) {
-			
-			$report_ids = isset($_POST['bulk-delete']) ? array_map('intval', $_POST['bulk-delete']) : [];
-	
-			if (!empty($report_ids)) {
-				foreach ($report_ids as $id) {
-					// Report each selected entry as ham
-					self::report_spam_entry($id);
-				}
-				// Add a message to notify the user of success
-				echo '<div class="updated"><p>Selected entries have been reported as ham.</p></div>';
-			}
-		}
-		if ( 'report' === $this->current_action() ) {
-
-			// Verify the nonce.
-			$nonce = esc_attr( $_GET['_wpnonce'] );
-
-			if (!isset( $_GET['_wpnonce'] ) ||  !wp_verify_nonce( $nonce, 'sp_report_spam' ) ) {
-				die( 'Not allowed!' );
-			}
-			else {
-				self::report_spam_entry( absint( $_GET['spam'] ) );
-				wp_redirect( admin_url( 'admin.php?page=wp_oopspam_frm_spam_entries' ) );
-				exit;
-			}
-
-		}
-		if ( 'delete' === $this->current_action() ) {
-
-			// Verify the nonce.
-			$nonce = esc_attr( $_GET['_wpnonce'] );
-
-			if (!isset( $_GET['_wpnonce'] ) ||  !wp_verify_nonce( $nonce, 'sp_delete_spam' ) ) {
-				die( 'Not allowed!' );
-			}
-			else {
-				self::delete_spam_entry( absint( $_GET['spam'] ) );
-                        wp_redirect( admin_url( 'admin.php?page=wp_oopspam_frm_spam_entries' ) );
-				exit;
-			}
-
-		}
-		if ( 'notify' === $this->current_action() ) {
-
-			// Verify the nonce.
-			$nonce = esc_attr( $_GET['_wpnonce'] );
-
-			if (!isset( $_GET['_wpnonce'] ) ||  !wp_verify_nonce( $nonce, 'sp_notify_spam' ) ) {
-				die( 'Not allowed!' );
-			}
-			else {
-				self::notify_spam_entry( absint( $_GET['spam'] ) );
-			}
-
-		}
-
-		// If the delete bulk action is triggered
-		if ( ( isset( $_POST['action'] ) && $_POST['action'] == 'bulk-delete' )
-		     || ( isset( $_POST['action2'] ) && $_POST['action2'] == 'bulk-delete' )
-		) {
-
-			$delete_ids = esc_sql( $_POST['bulk-delete'] );
-
-			// loop over the array of record IDs and delete them
-			foreach ( $delete_ids as $id ) {
-				self::delete_spam_entry( $id );
-			}
-
-			// esc_url_raw() is used to prevent converting ampersand in url to "#038;"
-		        // add_query_arg() return the current url
-		        wp_redirect( esc_url_raw(add_query_arg()) );
-			exit;
-		}
-	}
+    $action = $this->current_action();
+    if (in_array($action, ['bulk-delete', 'bulk-report'])) {
+        $entry_ids = isset($_POST['bulk-delete']) ? array_map('absint', $_POST['bulk-delete']) : array();
+        if (!empty($entry_ids)) {
+            // Add JavaScript for async processing
+            add_action('admin_footer', function() use ($entry_ids, $action) {
+                ?>
+                <style>
+                    .oopspam-progress {
+                        background: #f0f0f1;
+                        border: 1px solid #c3c4c7;
+                        padding: 10px;
+                        margin: 10px 0;
+                        border-radius: 4px;
+                        display: none;
+                    }
+                    .oopspam-progress.active {
+                        display: block;
+                    }
+                </style>
+                <script type="text/javascript">
+                jQuery(document).ready(function($) {
+                    let remainingIds = <?php echo json_encode($entry_ids); ?>;
+                    let processed = 0;
+                    let total = remainingIds.length;
+                    
+                    // Add progress div after the description and before the table
+                    $('<div id="oopspam-progress" class="oopspam-progress"><div class="progress-text"></div></div>')
+                        .insertBefore('.wp-list-table');
+                    
+                    let $progress = $('#oopspam-progress');
+                    let $progressText = $progress.find('.progress-text');
+                    
+                    function updateProgress(processed, total) {
+                        $progress.addClass('active');
+                        $progressText.html('Processing: ' + processed + ' of ' + total + ' entries... (' + Math.round((processed/total) * 100) + '%)');
+                    }
+                    
+                    function processNextEntry() {
+                        updateProgress(processed, total);
+                        
+                        $.ajax({
+                            url: ajaxurl,
+                            type: 'POST',
+                            data: {
+                                action: 'process_bulk_entries',
+                                nonce: '<?php echo wp_create_nonce('bulk-entries'); ?>',
+                                entry_ids: remainingIds,
+                                bulk_action: '<?php echo $action; ?>',
+                                entry_type: 'spam'
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    processed++;
+                                    remainingIds = response.data.remaining;
+                                    
+                                    if (response.data.complete) {
+                                        $progressText.html('Processing complete! Reloading page...');
+                                        setTimeout(function() {
+                                            location.reload();
+                                        }, 1000);
+                                    } else {
+                                        processNextEntry();
+                                    }
+                                } else {
+                                    $progressText.html('Error occurred during processing.');
+                                }
+                            },
+                            error: function() {
+                                $progressText.html('Error occurred during processing.');
+                            }
+                        });
+                    }
+                    
+                    processNextEntry();
+                });
+                </script>
+                <?php
+            });
+        }
+    }
+}
 
 	function column_ip($item) {
         $ip = esc_html($item['ip']);
@@ -872,12 +921,31 @@ private static function process_form_fields($raw_entry) {
 			return 'Local IP';
 		}
 
-		$response = wp_remote_get("https://reallyfreegeoip.org/json/{$ip}");
+		$args = array(
+			'timeout' => 5,
+			'redirection' => 5,
+			'httpversion' => '1.1',
+			'blocking' => true,
+			'sslverify' => true
+		);
+
+		$response = wp_remote_get("https://reallyfreegeoip.org/json/{$ip}", $args);
+		
 		if (is_wp_error($response)) {
+			error_log('IP Geolocation Error: ' . $response->get_error_message());
+			return '';
+		}
+
+		if (wp_remote_retrieve_response_code($response) !== 200) {
+			error_log('IP Geolocation Error: Non-200 response code');
 			return '';
 		}
 
 		$body = wp_remote_retrieve_body($response);
+		if (empty($body)) {
+			return '';
+		}
+
 		$data = json_decode($body, true);
 		if (isset($data['country_code'])) {
 			$country_code = strtolower($data['country_code']);
@@ -951,11 +1019,11 @@ class OOPSpam_Spam {
 				<div id="post-body" class="metabox-holder columns-2">
 					<div id="post-body-content">
 						<div class="meta-box-sortables ui-sortable">
-							<form method="get"> <!-- Changed from post to get -->
-								<input type="hidden" name="page" value="<?php echo esc_attr($_REQUEST['page']) ?>" />
+							<form method="post">
 								<?php 
 								$this->entries_obj->prepare_items();
-								$this->entries_obj->search_box('search', 'search_id');
+								$this->entries_obj->search_box('Search Entries', 'search_id');
+								wp_nonce_field('bulk-' . $this->entries_obj->_args['plural']);
 								$this->entries_obj->display(); 
 								?>
 							</form>

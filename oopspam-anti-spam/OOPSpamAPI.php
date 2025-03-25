@@ -192,10 +192,7 @@ class OOPSpamAPI {
             'blockVPN' => $this->oopspam_block_vpns,
             "shouldBeSpam" => $isSpam,
             "sensitivityLevel" => $currentSensitivityLevel
-        );
-
-        error_log("OOPSpamAPI: Report parameters: " . json_encode($parameters));
-        
+        );        
         $jsonreply=$this->RequestToOOPSpamReportingAPI(json_encode($parameters));
         
         return $jsonreply;

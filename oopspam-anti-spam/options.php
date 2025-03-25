@@ -25,6 +25,38 @@ function oopspamantispam_admin_menu()
 
 }
 
+add_action('wp_ajax_update_cloud_providers_setting', 'oopspam_update_cloud_providers_setting');
+
+function oopspam_update_cloud_providers_setting() {
+    // Verify nonce
+    if (!check_ajax_referer('oopspam_update_cloud_providers', 'nonce', false)) {
+        wp_send_json_error('Invalid security token');
+        return;
+    }
+
+    // Get current settings
+    $options = get_option('oopspamantispam_ipfiltering_settings', array());
+    
+    // Update based on enable parameter
+    $enable = isset($_POST['enable']) && filter_var($_POST['enable'], FILTER_VALIDATE_BOOLEAN);
+    if (!is_array($options)) {
+        $options = array();
+    }
+    
+    if ($enable) {
+        $options['oopspam_block_cloud_providers'] = "1";
+    } else {
+        unset($options['oopspam_block_cloud_providers']);
+    }
+    
+    // Save the updated settings
+    if (update_option('oopspamantispam_ipfiltering_settings', $options)) {
+        wp_send_json_success('Setting updated successfully');
+    } else {
+        wp_send_json_error('Failed to update setting');
+    }
+}
+
 add_action('updated_option', 'oopspam_schedule_cron_job', 10, 3);
 function oopspam_schedule_cron_job($option, $old_value, $new_value)
 {
@@ -1485,6 +1517,16 @@ function oopspam_spam_score_threshold_render()
         function updateRangeText(rangeInput) {
             var rangeTextOutput = document.getElementById('range_text');
             rangeTextOutput.value = thresholdDescriptions[rangeInput.value];
+
+            // Send AJAX request to update cloud providers setting
+            var value = parseInt(rangeInput.value);
+            var enableCloudProviders = value >= 4;
+            
+            jQuery.post(ajaxurl, {
+                action: 'update_cloud_providers_setting',
+                nonce: '<?php echo wp_create_nonce("oopspam_update_cloud_providers"); ?>',
+                enable: enableCloudProviders
+            });
         }
 
         function updateRangeColor(rangeInput) {
