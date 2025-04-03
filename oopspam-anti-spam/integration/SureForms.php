@@ -84,7 +84,12 @@ function oopspamantispam_sure_pre_submission($submission_data) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = isset($options['oopspam_sure_spam_message']) ? $options['oopspam_sure_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
-            wp_die(__($error_to_show, 'oopspam'));
+            
+            wp_send_json_error([
+                'message'  => $error_to_show,
+                'position' => 'header'
+            ]);
+    
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

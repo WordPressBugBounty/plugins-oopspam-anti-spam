@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.30
+Stable tag: 1.2.31
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -105,14 +105,17 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
-= 1.2.30 =
-* **IMPROVEMENT:** Bulk actions are now processed asynchronously with a progress bar in the Form Spam and Form Ham Entries tables
-* **IMPROVEMENT:** [Contact Form 7] Enhanced extraction method for email field value if the default is missing
-* **IMPROVEMENT:** [WooCommerce] "Block URLs in message" setting now applies to Order Notes as well
-* **IMPROVEMENT:** "Block Cloud Providers" is now automatically enabled for any sensitivity level above Moderate
-* **FIX:** [WooCommerce] Resolved issue where spam protection didn't work in the Block Checkout
-* **FIX:** Resolved issue with bulk actions not running in the Form Spam and Form Ham Entries tables
-* **FIX:** Resolved search functionality issue in the Form Spam and Form Ham Entries tables
+= 1.2.31 =
+* **NEW:** [WooCommerce] Added "Payment methods to check origin" setting to restrict origin checks to selected payment methods.
+* **NEW:** Automatically report comments as spam or ham to OOPSpam when flagged within the WordPress comment system.
+* **NEW:** Introduced "Disable local logging" setting to disable logging in the Form Spam and Form Ham Entries tables.
+* **NEW:** Added global settings for "Log submissions to OOPSpam" and "Disable local logging" using constants:
+  - `define('OOPSPAM_DISABLE_LOCAL_LOGGING', true);`
+  - `define('OOPSPAM_ENABLE_REMOTE_LOGGING', true);`
+* **IMPROVEMENT:** Enhanced Form Spam Entries table to display submissions not analyzed due to rate limiting or API errors.
+* **IMPROVEMENT:** Removed the review request notice for a cleaner user experience. (But please consider leaving a review <3)
+* **IMPROVEMENT:** [SureForms] Added support for custom messages.
+* **IMPROVEMENT:** [Gravity Forms] Replaced anonymous functions with named functions for better integration support.
 = 1.2.29 =
 * **NEW:** Added support for Multi-site/Network installations
 * **NEW:** Added the ability to filter Form Spam Entries by detection reason
@@ -289,10 +292,3 @@ Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam
 3. Manual moderation settings
 4. Rate Limiting settings
 5. Privacy settings
-
-
-== Frequently Asked Questions ==
-
-= Where do I report security bugs found in this plugin? =
-
-Please report security bugs found in the source code of this plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/oopspam-anti-spam). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.

@@ -368,7 +368,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-fable-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-give-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-wpregister-settings-group', 'oopspamantispam_settings');
-    register_setting('oopspamantispam-woo-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-woo-settings-group', 'oopspamantispam_settings', 'sanitize_oopspam_settings');
     register_setting('oopspamantispam-br-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ws-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ts-settings-group', 'oopspamantispam_settings');
@@ -499,6 +499,13 @@ function oopspamantispam_settings_init()
     add_settings_field('oopspam_is_loggable',
     __('Log submissions to OOPSpam', 'oopspam'),
     'oopspam_is_loggable_render',
+    'oopspamantispam-settings-group',
+    'oopspam_settings_section'
+    );
+
+    add_settings_field('oopspam_disable_local_logging',
+    __('Disable local logging', 'oopspam'),
+    'oopspam_disable_local_logging_render',
     'oopspamantispam-settings-group',
     'oopspam_settings_section'
     );
@@ -1365,6 +1372,14 @@ function oopspam_jform_spam_message_render()
         );
 
         add_settings_field(
+            'oopspam_woo_payment_methods',
+            __('Payment methods to check origin', 'oopspam'),
+            'oopspam_woo_payment_methods_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+
+        add_settings_field(
             'oopspam_woo_check_honeypot',
             __('Enable honeypot protection', 'oopspam'),
             'oopspam_woo_check_honeypot_render',
@@ -1653,12 +1668,39 @@ function oopspam_is_rt_enabled_render()
 function oopspam_is_loggable_render()
 {
     $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_ENABLE_REMOTE_LOGGING');
+    $is_enabled = $is_constant ? OOPSPAM_ENABLE_REMOTE_LOGGING : (isset($options['oopspam_is_loggable']) && 1 == $options['oopspam_is_loggable']);
+    ?>
+    <div>
+        <label for="loggable">
+            <input class="oopspam-toggle" type="checkbox" id="loggable" 
+                   name="oopspamantispam_settings[oopspam_is_loggable]" 
+                   value="1" <?php echo $is_enabled ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <p class="description"><?php echo __('Allows you to view logs in the OOPSpam Dashboard', 'oopspam'); ?></p>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_disable_local_logging_render() {
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_DISABLE_LOCAL_LOGGING');
+    $is_disabled = $is_constant ? OOPSPAM_DISABLE_LOCAL_LOGGING : (isset($options['oopspam_disable_local_logging']) && 1 == $options['oopspam_disable_local_logging']);
     ?>
             <div>
-                <label for="loggable">
-                <input class="oopspam-toggle" type="checkbox" id="loggable" name="oopspamantispam_settings[oopspam_is_loggable]"  <?php checked(!isset($options['oopspam_is_loggable']), false, true);?>/>
-                <p class="description"><?php echo __('Allows you to view logs in the OOPSpam Dashboard', 'oopspam'); ?></p>
-
+                <label for="local-loggable">
+                <input class="oopspam-toggle" type="checkbox" id="local-loggable" 
+                       name="oopspamantispam_settings[oopspam_disable_local_logging]" 
+                       value="1" <?php echo $is_disabled ? 'checked="checked"' : ''; ?>
+                       <?php echo $is_constant ? 'disabled' : ''; ?>/>
+                <p class="description"><?php echo __('Disables storing submissions in the Form Spam Entries and Form Ham Entries tables.', 'oopspam'); ?></p>
+                <?php if ($is_constant): ?>
+                    <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+                <?php endif; ?>
                 </label>
             </div>
         <?php
@@ -2806,7 +2848,6 @@ function oopspam_sure_spam_message_render()
     }
     ?>">
                       <p class="description"><?php echo __('Enter a short message to display when a spam SureForms entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
-                      <p class="description" style="color: red;"><?php echo __('Note: This feature is not currently supported due to a limitation in SureForms.', 'oopspam'); ?></p>
                       </label>
               </div>
           <?php
@@ -3202,6 +3243,34 @@ function oopspam_is_woo_activated_render()
     <?php
 }
 
+function oopspam_woo_payment_methods_render() {
+    $options = get_option('oopspamantispam_settings');
+    $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
+    ?>
+    <details>
+        <summary><?php echo __('Specify payment methods', 'oopspam'); ?></summary>
+        <div style="margin-top: 10px;">
+            <textarea name="oopspamantispam_settings[oopspam_woo_payment_methods]" 
+                    placeholder="paypal&#10;stripe&#10;credit"  
+                    rows="5" 
+                    cols="50" 
+                    class="large-text code"><?php echo esc_textarea($payment_methods); ?></textarea>
+            <p class="description">
+                <?php echo __('One payment method per line. Origin check will only apply to orders using these payment methods. Leave empty to check all methods.', 'oopspam'); ?>
+            </p>
+        </div>
+    </details>
+    <?php
+}
+
+function sanitize_oopspam_settings($input) {
+    if (isset($input['oopspam_woo_payment_methods'])) {
+        // Sanitize textarea - remove any HTML tags and preserve line breaks
+        $input['oopspam_woo_payment_methods'] = sanitize_textarea_field($input['oopspam_woo_payment_methods']);
+    }
+    return $input;
+}
+
 function oopspam_woo_check_origin_render()
 {
     $options = get_option('oopspamantispam_settings');
@@ -3433,8 +3502,8 @@ function oopspamantispam_options_page()
     ?>
          <div style="display:flex; flex-direction:row; justify-content:space-around;">
                     <p>Contact support via <a href="mailto:contact@oopspam.com">contact@oopspam.com</a> </p>
-                    <p> Do you need help with the plugin? <a href="https://wordpress.org/support/plugin/oopspam-anti-spam/">WordPress plugin support forum</a> </p>
-                    <p><a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/#new-post">Support us by leaving a review ♥️</a></p>
+                    <p>Need help with the plugin? <a href="https://wordpress.org/support/plugin/oopspam-anti-spam/">WordPress Plugin Support Forum</a> </p>
+                    <p><a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/#new-post">Support us with a review ♥️</a></p>
                 </div>
         <?php
 $options = get_option('oopspamantispam_settings');

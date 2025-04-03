@@ -219,6 +219,21 @@ jQuery(document).ready(function($) {
         }
     }
 
+    // Hide payment methods field initially and toggle based on checkbox
+    hidePaymentMethods();
+    
+    $("#woo_order_origin").click(function () {
+        hidePaymentMethods();
+    });
+
+    function hidePaymentMethods() {
+        if ($("#woo_order_origin").is(":checked")) {
+            $('tr:has([name="oopspamantispam_settings[oopspam_woo_payment_methods]"])').show();
+        } else {
+            $('tr:has([name="oopspamantispam_settings[oopspam_woo_payment_methods]"])').hide();
+        }
+    }
+
     // Define African countries ISO codes
     const africanCountries = [
         "dz", "ao", "bj", "bw", "bf", "bi", "cm", "cv", "cf", "td", 

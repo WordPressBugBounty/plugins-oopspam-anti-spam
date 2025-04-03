@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.30
+ * Version: 1.2.31
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -20,16 +20,6 @@ use OOPSPAM\RateLimiting\OOPSpam_RateLimiter;
 
 if (is_admin()) { //if admin include the admin specific functions
     require_once dirname(__FILE__) . '/options.php';
-
-    // Loading oopspam plugin review code
-    require 'include/libs/class-plugin-review.php';
-    new OOPSpam_Plugin_Review(
-        array(
-            'slug' => 'oopspam', // The plugin slug
-            'name' => 'OOPSpam Anti-Spam', // The plugin name
-            'time_limit' => WEEK_IN_SECONDS, // The time limit at which notice is shown
-        )
-    );
 }
 
 // Include the plugin helpers.
@@ -670,7 +660,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     $countryblocklistSetting = (get_option('oopspam_countryblocklist') != null ? get_option('oopspam_countryblocklist') : [""]);
     $languageallowlistSetting = (get_option('oopspam_languageallowlist') != null ? get_option('oopspam_languageallowlist') : [""]);
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
-    $isLoggable = (isset($options['oopspam_is_loggable']) ? $options['oopspam_is_loggable'] : false);
+    $isLoggable = defined('OOPSPAM_ENABLE_REMOTE_LOGGING') ? OOPSPAM_ENABLE_REMOTE_LOGGING : (isset($options['oopspam_is_loggable']) ? $options['oopspam_is_loggable'] : false);
+
     $blockTempEmail = (isset($options['oopspam_block_temp_email']) ? $options['oopspam_block_temp_email'] : false);
     $blockVPNs = (isset($ipFilteringOptions['oopspam_block_vpns']) ? $ipFilteringOptions['oopspam_block_vpns'] : false);
     $blockDC = (isset($ipFilteringOptions['oopspam_block_cloud_providers']) ? $ipFilteringOptions['oopspam_block_cloud_providers'] : false);
@@ -781,12 +772,14 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         } else if (!is_wp_error($response) && $response_code == "429") {
             // The API limit is reached or some other errors
             update_option('over_rate_limit', true);
+            // Return special score -1 to indicate rate limit
+            return $returnReason ? ["Score" => -1, "isItHam" => true, "Reason" => "Rate limit reached"] : true;
         } else {
-            // Allow all submission as no analyses are done.
-            return $returnReason ? ["Score" => 0, "isItHam" => true] : true;
+            // Allow all submission as no analyses are done but mark with special score -2
             if (is_wp_error($response)) {
-                echo $response->get_error_message();
+                error_log($response->get_error_message());
             }
+            return $returnReason ? ["Score" => -2, "isItHam" => true, "Reason" => "API error occurred"] : true;
         }
         unset($OOPSpamAPI);
     }
@@ -1025,13 +1018,22 @@ add_action('pre_get_posts', 'oopspam_check_search_for_spam');
 add_action('transition_comment_status', 'oopspam_comment_spam_transition', 10, 3);
 function oopspam_comment_spam_transition($new_status, $old_status, $comment) {
     if ($new_status === 'spam' && $old_status !== 'spam') {
-         
+         // Report as spam
          $commentText = $comment->comment_content; 
          $commentIP = $comment->comment_author_IP;
          $email = $comment->comment_author_email;  
          $isSpam = true;  
         
          oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpam);
+    }
+    else if ($old_status === 'spam' && ($new_status === 'approved' || $new_status === 'unapproved')) {
+         // Report as ham
+         $commentText = $comment->comment_content;
+         $commentIP = $comment->comment_author_IP; 
+         $email = $comment->comment_author_email;
+         $isSpam = false;
+
+         oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpam); 
     }
 }
 

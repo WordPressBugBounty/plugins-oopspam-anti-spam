@@ -326,15 +326,28 @@ class Ham_Entries extends \WP_List_Table {
 			case 'message':
 			case 'ip':
 			case 'email':
-            case 'score':
             case 'raw_entry':
             case 'form_id':
             case 'date':
 				return $item[ $column_name ];
+			case 'score':
+				return $this->column_score($item);
 			default:
 				return print_r( $item, true ); //Show the whole array for troubleshooting purposes
 		}
 	}
+
+	function column_score( $item ) {
+        $score = intval($item['score']);
+        
+        if ($score === -1) {
+            return '<span title="This entry was automatically allowed because the API rate limit was reached" style="color: #856404; background-color: #fff3cd; padding: 3px 8px; border-radius: 3px;">Rate Limited</span>';
+        } else if ($score === -2) {
+            return '<span title="This entry was automatically allowed because an API error occurred" style="color: #721c24; background-color: #f8d7da; padding: 3px 8px; border-radius: 3px;">API Error</span>';
+        }
+        
+        return esc_html($score);
+    }
 
 	/**
 	 * Render the bulk edit checkbox

@@ -3,7 +3,9 @@
 namespace OOPSPAM\Integrations;
 
 add_filter('gform_entry_is_spam', 'OOPSPAM\Integrations\oopspamantispam_gform_check_spam', 999, 3);
-add_filter('gform_confirmation', function ($confirmation, $form, $entry) {
+add_filter('gform_confirmation', 'OOPSPAM\Integrations\oopspamantispam_gform_confirmation', 11, 3);
+
+function oopspamantispam_gform_confirmation($confirmation, $form, $entry) {
     if (empty($entry) || rgar($entry, 'status') === 'spam') {
         $options = get_option('oopspamantispam_settings');
         if (isset($options['oopspam_gf_spam_message']) && !empty($options['oopspam_gf_spam_message'])) {
@@ -13,7 +15,7 @@ add_filter('gform_confirmation', function ($confirmation, $form, $entry) {
         }
     }
     return $confirmation;
-}, 11, 3);
+}
 
 // Report spam to OOPSpam when an entry is flagged as spam
 add_filter('gform_update_status', 'OOPSPAM\Integrations\marked_as_spam', 10, 3);

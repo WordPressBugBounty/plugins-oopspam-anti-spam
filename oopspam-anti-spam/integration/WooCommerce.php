@@ -79,46 +79,68 @@ class WooSpamProtection
 
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
+            $should_check_origin = false;
 
-            $sourceTypeExists = false;
-            $sourceTypeValue = null; 
-
-            if (isset($data['meta_data'])) {
-                foreach ($data['meta_data'] as $meta) {
-                    if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
-                        $sourceTypeExists = true;
-                        $sourceTypeValue = $meta['value'];
+            // If no payment methods specified, always check origin
+            if (empty($payment_methods)) {
+                $should_check_origin = true;
+            } 
+            // If payment methods are specified, only check if current method matches
+            elseif ($order instanceof \WC_Order) {
+                $current_payment_method = strtolower($order->get_payment_method_title());
+                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
+                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
+                
+                foreach ($allowed_methods as $method) {
+                    if (strpos($current_payment_method, $method) !== false) {
+                        $should_check_origin = true;
                         break;
                     }
                 }
             }
 
-            // Check legacy origin attributes
-            if (empty($sourceTypeValue) && isset($post['wc_order_attribution_source_type'])) {
-                $sourceTypeExists = true;
-                $sourceTypeValue = $post['wc_order_attribution_source_type'];
-            }
+            if ($should_check_origin) {
+                $sourceTypeExists = false;
+                $sourceTypeValue = null; 
 
-            // This is to prevent the order from being processed if the source type is not set.            
-            if (!$sourceTypeExists || empty($sourceTypeValue)) {
-                
-                $frmEntry = [
-                    "Score" => 6,
-                    "Message" => "",
-                    "IP" => $data['customer_ip_address'],
-                    "Email" => sanitize_email($data['billing']['email']),
-                    "RawEntry" => $this->cleanSensitiveData(array_merge($data, $post)),
-                    "FormId" => "WooCommerce",
-                ];
-                oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
-
-                // Trash the order
-                if ( $order ) {
-                    $order->delete( true ); // 'false' moves to trash, 'true' deletes permanently
+                if (isset($data['meta_data'])) {
+                    foreach ($data['meta_data'] as $meta) {
+                        if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
+                            $sourceTypeExists = true;
+                            $sourceTypeValue = $meta['value'];
+                            break;
+                        }
+                    }
                 }
 
-                $error_to_show = $this->get_error_message();
-                wp_die($error_to_show);
+                // Check legacy origin attributes
+                if (empty($sourceTypeValue) && isset($post['wc_order_attribution_source_type'])) {
+                    $sourceTypeExists = true;
+                    $sourceTypeValue = $post['wc_order_attribution_source_type'];
+                }
+
+                // This is to prevent the order from being processed if the source type is not set.            
+                if (!$sourceTypeExists || empty($sourceTypeValue)) {
+                    
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => "",
+                        "IP" => $data['customer_ip_address'],
+                        "Email" => sanitize_email($data['billing']['email']),
+                        "RawEntry" => $this->cleanSensitiveData(array_merge($data, $post)),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+
+                    // Trash the order
+                    if ( $order ) {
+                        $order->delete( true ); // 'false' moves to trash, 'true' deletes permanently
+                    }
+
+                    $error_to_show = $this->get_error_message();
+                    wp_die($error_to_show);
+                }
             }
         }
             // Now check with OOPSpam API
@@ -151,38 +173,61 @@ class WooSpamProtection
         
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
+            $should_check_origin = false;
 
-            $sourceTypeExists = false;
-            $sourceTypeValue = null; 
-
-            if (isset($data['meta_data'])) {
-                foreach ($data['meta_data'] as $meta) {
-                    if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
-                        $sourceTypeExists = true;
-                        $sourceTypeValue = $meta['value'];
+            // If no payment methods specified, always check origin
+            if (empty($payment_methods)) {
+                $should_check_origin = true;
+            } 
+            // If payment methods are specified, only check if current method matches
+            elseif ($order instanceof \WC_Order) {
+                $current_payment_method = strtolower($order->get_payment_method_title());
+                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
+                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
+                
+                foreach ($allowed_methods as $method) {
+                    if (strpos($current_payment_method, $method) !== false) {
+                        $should_check_origin = true;
                         break;
                     }
                 }
             }
 
-            if (isset($data['password'])) {
-                unset($data['password']);
-            }
-            // This is to prevent the order from being processed if the source type is not set.            
-            if (!$sourceTypeExists || empty($sourceTypeValue)) {
-                
-                $frmEntry = [
-                    "Score" => 6,
-                    "Message" => "",
-                    "IP" => $data['customer_ip_address'],
-                    "Email" => sanitize_email($data['billing']['email']),
-                    "RawEntry" => $this->cleanSensitiveData($data),
-                    "FormId" => "WooCommerce",
-                ];
-                oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+            
+            if ($should_check_origin) {
+                $sourceTypeExists = false;
+                $sourceTypeValue = null; 
 
-                $error_to_show = $this->get_error_message();
-                wp_die($error_to_show);
+                if (isset($data['meta_data'])) {
+                    foreach ($data['meta_data'] as $meta) {
+                        if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
+                            $sourceTypeExists = true;
+                            $sourceTypeValue = $meta['value'];
+                            break;
+                        }
+                    }
+                }
+
+                if (isset($data['password'])) {
+                    unset($data['password']);
+                }
+                // This is to prevent the order from being processed if the source type is not set.            
+                if (!$sourceTypeExists || empty($sourceTypeValue)) {
+                    
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => "",
+                        "IP" => $data['customer_ip_address'],
+                        "Email" => sanitize_email($data['billing']['email']),
+                        "RawEntry" => $this->cleanSensitiveData($data),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+
+                    $error_to_show = $this->get_error_message();
+                    wp_die($error_to_show);
+                }
             }
         }
             // Now check with OOPSpam API
@@ -214,47 +259,69 @@ class WooSpamProtection
 
         // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
+            $should_check_origin = false;
 
-            $sourceTypeExists = false;
-            $sourceTypeValue = null;
-
-            if (isset($data['meta_data'])) {
-                foreach ($data['meta_data'] as $meta) {
-                    if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
-                        $sourceTypeExists = true;
-                        $sourceTypeValue = $meta['value'];
+            // If no payment methods specified, always check origin
+            if (empty($payment_methods)) {
+                $should_check_origin = true;
+            } 
+            // If payment methods are specified, only check if current method matches
+            elseif ($order instanceof \WC_Order) {
+                $current_payment_method = strtolower($order->get_payment_method_title());
+                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
+                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
+                
+                foreach ($allowed_methods as $method) {
+                    if (strpos($current_payment_method, $method) !== false) {
+                        $should_check_origin = true;
                         break;
                     }
                 }
             }
 
-            // This is to prevent the order from being processed if the source type is not set.            
-            if (!$sourceTypeExists || empty($sourceTypeValue)) {
-                
-                $frmEntry = [
-                    "Score" => 6,
-                    "Message" => "",
-                    "IP" => $data['customer_ip_address'],
-                    "Email" => sanitize_email($data['billing']['email']),
-                    "RawEntry" => $this->cleanSensitiveData($data),
-                    "FormId" => "WooCommerce",
-                ];
-                oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+            if ($should_check_origin) {
+                $sourceTypeExists = false;
+                $sourceTypeValue = null;
 
-                $error_to_show = $this->get_error_message();
-                wp_die($error_to_show);
-            }
+                if (isset($data['meta_data'])) {
+                    foreach ($data['meta_data'] as $meta) {
+                        if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
+                            $sourceTypeExists = true;
+                            $sourceTypeValue = $meta['value'];
+                            break;
+                        }
+                    }
+                }
 
-            // Now check with OOPSpam API
-            $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
-            if (empty($message) && isset($posted_data['order_comments'])) {
-                $message = sanitize_text_field($posted_data['order_comments']);
+                // This is to prevent the order from being processed if the source type is not set.            
+                if (!$sourceTypeExists || empty($sourceTypeValue)) {
+                    
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => "",
+                        "IP" => $data['customer_ip_address'],
+                        "Email" => sanitize_email($data['billing']['email']),
+                        "RawEntry" => $this->cleanSensitiveData($data),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
+
+                    $error_to_show = $this->get_error_message();
+                    wp_die($error_to_show);
+                }
             }
-            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
-            if ($showError) {
-                $error_to_show = $this->get_error_message();
-                wc_add_notice( esc_html__( $error_to_show ), 'error' );
-            }
+        }
+        
+        // Now check with OOPSpam API
+        $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
+        if (empty($message) && isset($posted_data['order_comments'])) {
+            $message = sanitize_text_field($posted_data['order_comments']);
+        }
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
+        if ($showError) {
+            $error_to_show = $this->get_error_message();
+            wc_add_notice( esc_html__( $error_to_show ), 'error' );
         }
     }    
 

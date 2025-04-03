@@ -296,6 +296,18 @@ function oopspamantispam_get_ip() {
 
 function oopspam_store_spam_submission($frmEntry, $reason)
 {
+    // Check if constant is defined in wp-config.php
+    if (defined('OOPSPAM_DISABLE_LOCAL_LOGGING')) {
+        if (OOPSPAM_DISABLE_LOCAL_LOGGING) {
+            return;
+        }
+    } else {
+        // Fallback to settings option
+        $options = get_option('oopspamantispam_settings');
+        if (isset($options['oopspam_disable_local_logging'])) {
+            return;
+        }
+    }
     global $wpdb;
     $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
     $data = array(
@@ -313,6 +325,20 @@ function oopspam_store_spam_submission($frmEntry, $reason)
 
 function oopspam_store_ham_submission($frmEntry)
 {
+    // Check if constant is defined in wp-config.php
+    if (defined('OOPSPAM_DISABLE_LOCAL_LOGGING')) {
+        if (OOPSPAM_DISABLE_LOCAL_LOGGING) {
+            return;
+        }
+    } else {
+        // Fallback to settings option
+        $options = get_option('oopspamantispam_settings');
+        if (isset($options['oopspam_disable_local_logging'])) {
+            return;
+        }
+    }
+
+
     global $wpdb;
 
     $gclid = oopspam_get_gclid_from_url();
