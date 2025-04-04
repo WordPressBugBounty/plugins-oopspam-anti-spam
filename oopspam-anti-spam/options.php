@@ -1669,13 +1669,12 @@ function oopspam_is_loggable_render()
 {
     $options = get_option('oopspamantispam_settings');
     $is_constant = defined('OOPSPAM_ENABLE_REMOTE_LOGGING');
-    $is_enabled = $is_constant ? OOPSPAM_ENABLE_REMOTE_LOGGING : (isset($options['oopspam_is_loggable']) && 1 == $options['oopspam_is_loggable']);
     ?>
     <div>
         <label for="loggable">
             <input class="oopspam-toggle" type="checkbox" id="loggable" 
-                   name="oopspamantispam_settings[oopspam_is_loggable]" 
-                   value="1" <?php echo $is_enabled ? 'checked="checked"' : ''; ?> 
+                   name="oopspamantispam_settings[oopspam_is_loggable]"
+                   <?php checked(!isset($options['oopspam_is_loggable']), false, true); ?>
                    <?php echo $is_constant ? 'disabled' : ''; ?>/>
             <p class="description"><?php echo __('Allows you to view logs in the OOPSpam Dashboard', 'oopspam'); ?></p>
             <?php if ($is_constant): ?>
@@ -1689,13 +1688,12 @@ function oopspam_is_loggable_render()
 function oopspam_disable_local_logging_render() {
     $options = get_option('oopspamantispam_settings');
     $is_constant = defined('OOPSPAM_DISABLE_LOCAL_LOGGING');
-    $is_disabled = $is_constant ? OOPSPAM_DISABLE_LOCAL_LOGGING : (isset($options['oopspam_disable_local_logging']) && 1 == $options['oopspam_disable_local_logging']);
     ?>
             <div>
                 <label for="local-loggable">
                 <input class="oopspam-toggle" type="checkbox" id="local-loggable" 
-                       name="oopspamantispam_settings[oopspam_disable_local_logging]" 
-                       value="1" <?php echo $is_disabled ? 'checked="checked"' : ''; ?>
+                       name="oopspamantispam_settings[oopspam_disable_local_logging]"  
+                       <?php checked(!isset($options['oopspam_disable_local_logging']), false, true); ?>
                        <?php echo $is_constant ? 'disabled' : ''; ?>/>
                 <p class="description"><?php echo __('Disables storing submissions in the Form Spam Entries and Form Ham Entries tables.', 'oopspam'); ?></p>
                 <?php if ($is_constant): ?>
