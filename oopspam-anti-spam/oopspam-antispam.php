@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.32
+ * Version: 1.2.33
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -13,6 +13,44 @@
 if (!function_exists('add_action')) {
     die();
 }
+
+// Start session handling before any output
+function oopspam_start_session() {
+    try {
+        // Check if session is already active
+        if (php_sapi_name() !== 'cli') {
+            if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+                $session_started = session_start([
+                    'cookie_httponly' => true,
+                    'cookie_secure' => is_ssl(),
+                    'use_only_cookies' => true,
+                    'cookie_samesite' => 'Strict'
+                ]);
+                
+                if (!$session_started) {
+                    error_log('OOPSpam: Failed to start session');
+                } else {
+                    // Initialize entry time if not set
+                    if (!isset($_SESSION['oopspam_entry_time'])) {
+                        $_SESSION['oopspam_entry_time'] = time();
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log('OOPSpam: Session start error - ' . $e->getMessage());
+    }
+}
+
+// Initialize session very early
+add_action('init', 'oopspam_start_session', 1);
+
+// Output buffering
+function oopspam_do_output_buffer() {
+    ob_start();
+}
+add_action('init', 'oopspam_do_output_buffer', 2);
+
 // include a helper class to call the OOPSpam API
 require_once dirname(__FILE__) . '/OOPSpamAPI.php';
 use OOPSPAM\API\OOPSpamAPI;
@@ -30,12 +68,6 @@ require_once dirname(__FILE__) . '/include/UI/display-ham-entries.php';
 require_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
 require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
 require_once dirname(__FILE__) . '/include/Background/AsyncProcessor.php';
-
-add_action('init', 'oopspam_do_output_buffer');
-function oopspam_do_output_buffer()
-{
-    ob_start();
-}
 
 // Used to detect installed plugins.
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -65,20 +97,8 @@ require_once dirname(__FILE__) . '/integration/Pmpro.php';
 require_once dirname(__FILE__) . '/integration/JetpackForms.php';
 require_once dirname(__FILE__) . '/integration/MC4WP.php';
 require_once dirname(__FILE__) . '/integration/SureForms.php';
+require_once dirname(__FILE__) . '/integration/BreakdanceForm.php';
 
-
-add_action('init', function () {
-    // Check if Breakdance is available
-    if (!function_exists('\Breakdance\Forms\Actions\registerAction') || !class_exists('\Breakdance\Forms\Actions\Action')) {
-        return;
-    }
-
-    // Include the action class file
-    require_once (dirname(__FILE__) . '/integration/BreakdanceForm.php');
-
-    // Register the action
-    \Breakdance\Forms\Actions\registerAction(new \OOPSPAM\Integrations\OOPSpamBreakdanceAction());
-});
 
 require_once dirname(__FILE__) . '/integration/WooCommerce.php';
 add_action('plugins_loaded', array('\OOPSPAM\WOOCOMMERCE\WooSpamProtection', 'getInstance'));
@@ -291,6 +311,11 @@ function oopspam_plugin_deactivation()
     wp_clear_scheduled_hook('oopspam_cleanup_ham_entries_cron');
     wp_clear_scheduled_hook('oopspam_cleanup_spam_entries_cron');
     wp_clear_scheduled_hook('oopspam_cleanup_ratelimit_entries_cron');
+    
+    // Clean up session variables
+    if (session_id()) {
+        session_destroy();
+    }
 }
 
 add_filter('plugin_action_links', 'oopspam_plugin_action_links', 10, 2);
@@ -523,6 +548,31 @@ function oopspam_isRateLimitingEnabled() {
 
 function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnReason, $type)
 {
+    // Get rate limiting settings
+    $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+    
+    // Only check submission speed if min_submission_time is set
+    if (isset($rtOptions['oopspamantispam_min_submission_time'])) {
+        $submissionSpeed = 0;
+        if (isset($_SESSION['oopspam_entry_time'])) {
+            $submissionSpeed = time() - $_SESSION['oopspam_entry_time'];
+        }
+
+        // Get minimum submission time from settings
+        $minSubmissionTime = intval($rtOptions['oopspamantispam_min_submission_time']);
+
+        // If submission is too fast, mark as spam
+        if ($submissionSpeed < $minSubmissionTime && $submissionSpeed > 0) {
+            if ($returnReason) {
+                return [
+                    "Score" => 6,
+                    "isItHam" => false,
+                    "Reason" => "Submission too fast - " . $submissionSpeed . " seconds"
+                ];
+            }
+            return false;
+        }
+    }
 
     // Check blocked emails, IPs, keywords locally
     $hasBlockedKeyword = oopspam_is_keyword_blocked($commentText);
@@ -575,34 +625,36 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 
     // Run rate limiting check
     try {
-        $rtOptions = get_option('oopspamantispam_ratelimit_settings');
-        $isRateLimitEnabled = oopspam_isRateLimitingEnabled();
-        if($isRateLimitEnabled) {
-            $rate_limiter = new OOPSpam_RateLimiter();
-        
-            if (!$rate_limiter->checkLimit($commentIP, 'ip')) {
-                if ($returnReason) {
-                    $reason = [
-                        "Score" => 6,
-                        "isItHam" => false,
-                        "Reason" => "Too many submissions from the IP address"
-                    ];
-                    return $reason;
+        if($type !== "search") {
+            $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+            $isRateLimitEnabled = oopspam_isRateLimitingEnabled();
+            if($isRateLimitEnabled) {
+                $rate_limiter = new OOPSpam_RateLimiter();
+            
+                if (!$rate_limiter->checkLimit($commentIP, 'ip')) {
+                    if ($returnReason) {
+                        $reason = [
+                            "Score" => 6,
+                            "isItHam" => false,
+                            "Reason" => "Too many submissions from the IP address"
+                        ];
+                        return $reason;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        
-            if (!$rate_limiter->checkLimit($email, 'email')) {
-                if ($returnReason) {
-                    $reason = [
-                        "Score" => 6,
-                        "isItHam" => false,
-                        "Reason" => "Too many submissions from the email"
-                    ];
-                    return $reason;
+            
+                if (!$rate_limiter->checkLimit($email, 'email')) {
+                    if ($returnReason) {
+                        $reason = [
+                            "Score" => 6,
+                            "isItHam" => false,
+                            "Reason" => "Too many submissions from the email"
+                        ];
+                        return $reason;
+                    }
+                    return false;
                 }
-                return false;
-            }
+        }
         }
 
         // Check for unique Google Ads lead per submission
@@ -729,6 +781,9 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         
         // Unicode support
         $commentText = mb_convert_encoding($commentText, "UTF-8");
+
+        // Add submission speed to comment text for analysis
+        // $commentText .= " [Submission Speed: " . $submissionSpeed . "s]";
 
         $response = $OOPSpamAPI->SpamDetection($commentText, 
         $commentIP, 

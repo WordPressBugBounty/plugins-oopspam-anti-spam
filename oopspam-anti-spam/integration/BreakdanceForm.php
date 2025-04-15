@@ -2,126 +2,93 @@
 
 namespace OOPSPAM\Integrations;
 
-class OOPSpamBreakdanceAction extends \Breakdance\Forms\Actions\Action {
+add_filter('breakdance_form_run_action_email', 'OOPSPAM\Integrations\checkSpamBeforeEmail', 1, 3);
 
-    /**
-     * @return string
-     */
-    public static function name() {
-        return 'Check for spam by OOPSpam';
+function checkSpamBeforeEmail($canExecute, $action, $form) {
+    
+    $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
+    
+    // Extract message and email from form data
+    $message = '';
+    $email = '';
+
+    // Check common email field names first
+    if (isset($form['fields']['email'])) {
+        $email = sanitize_email($form['fields']['email']);
+    } else {
+        // If default email fields not found, look for any field containing 'email'
+        foreach ($form['fields'] as $field_name => $field_value) {
+            if (is_string($field_name) && stripos($field_name, 'email') !== false) {
+                $email = sanitize_email($field_value);
+                break;
+            }
+        }
     }
 
-    /**
-     * @return string
-     */
-    public static function slug() {
-        return 'oopspam_spam_check';
+    // First try to get message from default 'message' field
+    if (isset($form['fields']['message'])) {
+        $message = $form['fields']['message'];
+    } else {
+        // Look for any field value that's longer than 20 characters (excluding email fields)
+        foreach ($form['fields'] as $field_name => $field_value) {
+            if (is_string($field_value) && 
+                strlen($field_value) > 20 && 
+                stripos($field_name, 'email') === false) {
+                $message = $field_value;
+                break;
+            }
+        }
     }
 
-    /**
-     * Check for spam
-     *
-     * @param array $form
-     * @param array $settings
-     * @param array $extra
-     * @return array success or error message
-     */
-    public function run($form, $settings, $extra) {
-
-        try {
-            $options = get_option('oopspamantispam_settings');
-            $privacyOptions = get_option('oopspamantispam_privacy_settings');
-            $email = "";
-            $message = "";
-
-            foreach ($form as $field) {
-                // Capture the email
-                if ($field["type"] == "email") { $email = sanitize_email($field["value"]); }
-                
-                // Capture the message
-                if ($field["type"] == "textarea") {
-
-                    // Capture the default message field value
-                    if (empty($message)) {
-                        $message = $field["value"];
-                    }
-
-                    // Check if the form is excluded from spam protection
-                    if (isset($options['oopspam_bd_exclude_form']) && $options['oopspam_bd_exclude_form']) {
-                        $formIds = sanitize_text_field(trim($options['oopspam_bd_exclude_form']));
-                        // Split the IDs string into an array using the comma as the delimiter
-                        $excludedFormIds = array_map('trim', explode(',', $formIds));
-
-                        foreach ($excludedFormIds as $id) {
-                            // Don't check for spam for this form
-                            // Don't log under Form Ham Entries
-                            if ($extra["formId"] == $id) {
-                                return;
-                            }
-                        }
-                    }
-
-                    // unless it's custom field ID is set by the user
-                    if (isset($options['oopspam_bd_content_field']) && $options['oopspam_bd_content_field']) {
-                        $nameOfCustomTextareaField = sanitize_text_field(trim($options['oopspam_bd_content_field']));
-                        // Split the IDs string into an array using the comma as the delimiter
-                        $idsArray = array_map('trim', explode(',', $nameOfCustomTextareaField));
-
-                        // Iterate through each ID to look for message field value
-                        foreach ($idsArray as $id) {
-                            // Capture the content
-                            if ($field["advanced"]["id"] === $id) {
-                                $message = $field["value"];
-                                break;
-                            }
-                        }
-                    }
-                } 
+    // If custom content field is set, try to get message from that field
+    if (isset($options['oopspam_bd_content_field']) && !empty($options['oopspam_bd_content_field'])) {
+        $customFields = array_map('trim', explode(',', $options['oopspam_bd_content_field']));
+        foreach ($customFields as $fieldName) {
+            if (isset($form['fields'][$fieldName])) {
+                $message = $form['fields'][$fieldName];
+                break;
             }
+        }
+    }
 
-            if (!empty(oopspamantispam_get_key())) { 
-                
-                $userIP = "";
-                if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-                    $userIP = $extra["ip"];
-                }
+    // Check if form is excluded
+    if (isset($options['oopspam_bd_exclude_form'])) {
+        $excludedFormIds = array_map('trim', explode(',', $options['oopspam_bd_exclude_form']));
+        if (in_array($form['formId'], $excludedFormIds)) {
+            return $canExecute;
+        }
+    }
 
-                $escapedMsg = sanitize_textarea_field($message);
-                $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "breakdance");
-                $raw_entry = json_encode($extra["fields"]);
-
-                if (!isset($detectionResult["isItHam"])) {
-                    return;
-                }
-
-                $frmEntry = [
-                    "Score" => $detectionResult["Score"],
-                    "Message" => $escapedMsg,
-                    "IP" => $userIP,
-                    "Email" => $email,
-                    "RawEntry" => $raw_entry,
-                    "FormId" => $extra["formId"],
-                ];
-
-                if (!$detectionResult["isItHam"]) {
-                    // It's spam, store the submission and show error
-                    oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-
-                    $error_to_show = isset($options['oopspam_bd_spam_message']) ? $options['oopspam_bd_spam_message'] : 'Your submission has been flagged as spam.';
-                    
-                    return ['type' => 'error', 'message' => $error_to_show];
-                } else {
-                    // It's ham
-                    oopspam_store_ham_submission($frmEntry);
-                    return ['type' => 'success', 'message' => "ok"];
-                }
-            }
-            return ['type' => 'success', 'message' => "ok"];
-
-        } catch(Exception $e) {
-            return ['type' => 'error', 'message' => $e->getMessage()];
+    if (!empty(oopspamantispam_get_key())) {
+        $userIP = '';
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+            $userIP = $form['ip'];
         }
 
-        return ['type' => 'success', 'message' => "ok"];
+        $escapedMsg = sanitize_textarea_field($message);
+        $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "breakdance");
+
+        $frmEntry = [
+            "Score" => $detectionResult["Score"],
+            "Message" => $escapedMsg,
+            "IP" => $userIP,
+            "Email" => $email,
+            "RawEntry" => json_encode($form['fields']),
+            "FormId" => $form['formId'],
+        ];
+
+        if (isset($detectionResult["isItHam"]) && !$detectionResult["isItHam"]) {
+            // Store spam submission
+            oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
+
+            // Prevent email from being sent
+            return new \WP_Error('spam_detected', 'Email action prevented - submission was marked as spam.');
+        } else {
+            // It's ham
+            oopspam_store_ham_submission($frmEntry);
+        }
     }
+
+    return $canExecute;
 }

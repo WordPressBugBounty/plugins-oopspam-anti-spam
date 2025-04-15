@@ -375,13 +375,16 @@ class Ham_Entries extends \WP_List_Table {
 		$delete_nonce = wp_create_nonce( 'sp_delete_ham' );
 		$report_nonce = wp_create_nonce( 'sp_report_ham' );
 
+		 // Check if message is null and provide default value
+		$message = isset($item['message']) ? $item['message'] : '';
+		
 		// Limit the message to 80 characters
-		$truncated_message = substr($item['message'], 0, 80);
-		if (strlen($item['message']) > 80) {
+		$truncated_message = substr($message, 0, 80);
+		if (strlen($message) > 80) {
 			$truncated_message .= '...';
 		}
 
-		$title = '<span title="' . esc_attr($item['message']) . '">' . esc_html($truncated_message) . '</span>';
+		$title = '<span title="' . esc_attr($message) . '">' . esc_html($truncated_message) . '</span>';
 
 		$actions = [
 			'delete' => sprintf( '<a href="?page=%s&action=%s&ham=%s&_wpnonce=%s">Delete</a>', sanitize_text_field( $_GET['page'] ), 'delete', absint( $item['id'] ), $delete_nonce ),
@@ -395,8 +398,10 @@ class Ham_Entries extends \WP_List_Table {
 
 	function column_raw_entry( $item ) {
 		add_thickbox();
-		$short_raw_entry = substr( $item['raw_entry'], 0, 50 );
-		$json_string = $this->json_print( $item['raw_entry'] );
+		// Check if raw_entry is null and provide default value
+		$raw_entry = isset($item['raw_entry']) ? $item['raw_entry'] : '';
+		$short_raw_entry = substr($raw_entry, 0, 50);
+		$json_string = $this->json_print($raw_entry);
 		$dialog_id = 'my-raw-entry-' . $item['id'];
 		$actions = [
 			'seemore' => sprintf(
@@ -470,11 +475,17 @@ class Ham_Entries extends \WP_List_Table {
 	 *
 	 * @return array
 	 */
-    function json_print($json) { return '<pre style=" white-space: pre-wrap;       /* Since CSS 2.1 */
+    function json_print($json) { 
+		// Check if json is null or empty
+		if ($json === null || $json === '') {
+			return '<pre style="white-space: pre-wrap;">No data</pre>';
+		}
+		return '<pre style="white-space: pre-wrap;       /* Since CSS 2.1 */
         white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
         white-space: -pre-wrap;      /* Opera 4-6 */
         white-space: -o-pre-wrap;    /* Opera 7 */
-        word-wrap: break-word;       /* Internet Explorer 5.5+ */">' . json_encode(json_decode($json), JSON_PRETTY_PRINT) . '</pre>'; }
+        word-wrap: break-word;       /* Internet Explorer 5.5+ */">' . json_encode(json_decode($json), JSON_PRETTY_PRINT) . '</pre>'; 
+	}
  
 	
 	/**

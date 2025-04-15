@@ -282,7 +282,6 @@ function render_oopspamantispam_ratelimit_gclid_limit($args) {
     $option_name = $args['label_for'];
     $rtOptions = get_option('oopspamantispam_ratelimit_settings');
 
-    // Determine the value to display in the input field
     $value = isset($rtOptions[$option_name]) ? $rtOptions[$option_name] : '';
     ?>
     <div>
@@ -299,7 +298,25 @@ function render_oopspamantispam_ratelimit_gclid_limit($args) {
     <?php
 }
 
-
+function render_oopspam_min_submission_time_field($args) {
+    $option_name = $args['label_for'];
+    $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+    
+    $value = isset($rtOptions[$option_name]) ? $rtOptions[$option_name] : '';
+    ?>
+    <div>
+        <input type="number" min="1" step="1" 
+               id="<?php echo esc_attr($option_name); ?>" 
+               name="oopspamantispam_ratelimit_settings[<?php echo esc_attr($option_name); ?>]" 
+               value="<?php echo esc_attr($value); ?>" 
+               placeholder="Example: 2"
+               class="regular-text">
+        <p class="description">
+            <?php echo __('Submissions faster than this will be marked as spam. Most humans take at least 2-3 seconds to fill out a form.', 'oopspam'); ?>
+        </p>
+    </div>
+    <?php
+}
 
 function sanitize_positive_int($value) {
     $value = absint($value);
@@ -443,6 +460,15 @@ function oopspamantispam_settings_init()
         'oopspamantispam-ratelimit-settings-group',
         'oopspamantispam_ratelimit_section',
         ['label_for' => 'oopspamantispam_ratelimit_gclid_limit']
+    );
+
+    add_settings_field(
+        'oopspamantispam_min_submission_time',
+        'Minimum Time Between Page Load and Submission (in seconds)',
+        'render_oopspam_min_submission_time_field',
+        'oopspamantispam-ratelimit-settings-group',
+        'oopspamantispam_ratelimit_section',
+        ['label_for' => 'oopspamantispam_min_submission_time']
     );
     // End Register Rate Limit settings
 
@@ -1727,7 +1753,7 @@ function oopspam_custom_admin_notice()
             <h4>OOPSpam Anti-Spam</h4>
             <p><?php _e('Your API key exceeded your current plan\'s limit. The spam filtering functionality is disabled. Please upgrade to enable spam protection.', 'oopspam');?> </p>
             <p>
-                   <?php _e("For the API key obtained through OOPSpam Dashboard visit:", 'oopspam');?> <a href="https://app.oopspam.com/" target="_blank">https://app.oopspam.com/</a>.
+                   <?php _e("For the API key obtained through OOPSpam Dashboard visit:", 'oopspam');?> <a href="https://app.oopspam.com/" target="_blank">https://app.oopspam.com</a>.
                    </p>
                    <p>
                    <strong>
