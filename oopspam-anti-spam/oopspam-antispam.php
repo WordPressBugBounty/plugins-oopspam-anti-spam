@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.33
+ * Version: 1.2.34
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -17,24 +17,32 @@ if (!function_exists('add_action')) {
 // Start session handling before any output
 function oopspam_start_session() {
     try {
+        // Get rate limiting settings first
+        $rtOptions = get_option('oopspamantispam_ratelimit_settings');
+        
+        // Only start session if minimum submission time is set
+        if (!isset($rtOptions['oopspamantispam_min_submission_time'])) {
+            return;
+        }
+
         // Check if session is already active
-        if (php_sapi_name() !== 'cli') {
-            if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-                $session_started = session_start([
-                    'cookie_httponly' => true,
-                    'cookie_secure' => is_ssl(),
-                    'use_only_cookies' => true,
-                    'cookie_samesite' => 'Strict'
-                ]);
-                
-                if (!$session_started) {
-                    error_log('OOPSpam: Failed to start session');
-                } else {
-                    // Initialize entry time if not set
-                    if (!isset($_SESSION['oopspam_entry_time'])) {
-                        $_SESSION['oopspam_entry_time'] = time();
-                    }
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            $session_started = session_start([
+                'cookie_httponly' => true,
+                'cookie_secure' => is_ssl(),
+                'use_only_cookies' => true,
+                'cookie_samesite' => 'Strict'
+            ]);
+            
+            if (!$session_started) {
+                error_log('OOPSpam: Failed to start session');
+            } else {
+                // Initialize entry time if not set
+                if (!isset($_SESSION['oopspam_entry_time'])) {
+                    $_SESSION['oopspam_entry_time'] = time();
                 }
+                // Close session write immediately after setting values
+                session_write_close();
             }
         }
     } catch (Exception $e) {

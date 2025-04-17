@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.7
-Stable tag: 1.2.33
+Stable tag: 1.2.34
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -105,12 +105,12 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.34 =
+* **FIX:** Ensure sessions are initiated and terminated correctly only when the 'Minimum Time Between Page Load and Submission (in seconds)' setting is active.
 = 1.2.33 =
 * **NEW:** Introduced a new setting: 'Rate Limiting -> Minimum Time Between Page Load and Submission'
 * **IMPROVEMENT:** Excluded rate limiting from internal search spam protection
 * **IMPROVEMENT:** [Breakdance] Disabled email notifications for detected spam submissions
-= 1.2.32 =
-* **HOTFIX:** Resolved an issue with retaining previous settings for "Log submissions to OOPSpam" and "Disable local logging". 
 = 1.2.31 =
 * **NEW:** [WooCommerce] Added "Payment methods to check origin" setting to restrict origin checks to selected payment methods.
 * **NEW:** Automatically report comments as spam or ham to OOPSpam when flagged within the WordPress comment system.
