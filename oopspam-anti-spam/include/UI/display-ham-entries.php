@@ -551,14 +551,25 @@ class Ham_Entries extends \WP_List_Table {
 
 		// Handle individual actions
         $action = $this->current_action();
-        if ($action === 'report') {
-            if (isset($_GET['ham']) && isset($_GET['_wpnonce'])) {
-                $entry_id = absint($_GET['ham']);
-                if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_ham')) {
-                    self::report_ham_entry($entry_id);
-                    wp_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
-                    exit;
-                }
+        if (isset($_GET['ham']) && isset($_GET['_wpnonce'])) {
+            $entry_id = absint($_GET['ham']);
+            
+            switch($action) {
+                case 'report':
+                    if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_ham')) {
+                        self::report_ham_entry($entry_id);
+                        wp_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
+                        exit;
+                    }
+                    break;
+                    
+                case 'delete':
+                    if (wp_verify_nonce($_GET['_wpnonce'], 'sp_delete_ham')) {
+                        self::delete_ham_entry($entry_id);
+                        wp_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
+                        exit;
+                    }
+                    break;
             }
         }
 

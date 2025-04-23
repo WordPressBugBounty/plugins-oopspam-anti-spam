@@ -172,24 +172,33 @@ class Spam_Entries extends \WP_List_Table {
 		
 		// Add search condition if search term is provided
 		if (!empty($search)) {
-			// Use separate placeholders for each LIKE condition
 			$search_term = '%' . $wpdb->esc_like($search) . '%';
 			$where[] = "(form_id LIKE %s OR message LIKE %s OR ip LIKE %s OR email LIKE %s OR raw_entry LIKE %s)";
 			$values = array_merge($values, array_fill(0, 5, $search_term));
 		}
 
 		// Add reason filter if selected
-		if (isset($_GET['filter_reason']) && !empty($_GET['filter_reason'])) {
+		if (isset($_REQUEST['filter_reason']) && !empty($_REQUEST['filter_reason'])) {
 			$where[] = "reason = %s";
-			$values[] = sanitize_text_field($_GET['filter_reason']);
+			$values[] = sanitize_text_field($_REQUEST['filter_reason']);
+		}
+
+		 // Modify form_id filter to handle multiple values
+		if (isset($_REQUEST['filter_form_id']) && !empty($_REQUEST['filter_form_id'])) {
+			$form_ids = array_map('sanitize_text_field', (array)$_REQUEST['filter_form_id']);
+			if (!empty($form_ids)) {
+				$placeholders = array_fill(0, count($form_ids), '%s');
+				$where[] = "form_id IN (" . implode(',', $placeholders) . ")";
+				$values = array_merge($values, $form_ids);
+			}
 		}
 
 		// Combine WHERE clauses
 		$where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
 		// Add ordering
-		$orderby = !empty($_GET['orderby']) ? sanitize_sql_orderby($_GET['orderby']) : 'date';
-		$order = !empty($_GET['order']) ? sanitize_sql_orderby($_GET['order']) : 'DESC';
+		$orderby = !empty($_REQUEST['orderby']) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'date';
+		$order = !empty($_REQUEST['order']) ? sanitize_sql_orderby($_REQUEST['order']) : 'DESC';
 		
 		// Calculate offset
 		$offset = ($page_number - 1) * $per_page;
@@ -220,15 +229,29 @@ class Spam_Entries extends \WP_List_Table {
 	}
 
 	/**
+	 * Get unique form IDs for dropdown filter
+	 */
+	private function get_unique_form_ids() {
+		global $wpdb;
+		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+		return $wpdb->get_col($wpdb->prepare(
+			"SELECT DISTINCT form_id FROM %i WHERE form_id IS NOT NULL AND form_id != '' ORDER BY form_id ASC",
+			$table
+		));
+	}
+
+	/**
 	 * Display the filter dropdown
 	 */
 	public function extra_tablenav($which) {
 		if ($which === 'top') {
 			$reasons = $this->get_unique_reasons();
-			$current_reason = isset($_GET['filter_reason']) ? sanitize_text_field($_GET['filter_reason']) : '';
+			$form_ids = $this->get_unique_form_ids();
+			$current_reason = isset($_REQUEST['filter_reason']) ? sanitize_text_field($_REQUEST['filter_reason']) : '';
+			$current_form_ids = isset($_REQUEST['filter_form_id']) ? array_map('sanitize_text_field', (array)$_REQUEST['filter_form_id']) : [];
 			?>
 			<div class="alignleft actions">
-				<select name="filter_reason">
+				<select name="filter_reason" class="postform" id="filter-by-reason">
 					<option value=""><?php _e('All Reasons', 'sp'); ?></option>
 					<?php foreach ($reasons as $reason): ?>
 						<option value="<?php echo esc_attr($reason); ?>" <?php selected($current_reason, $reason); ?>>
@@ -236,8 +259,54 @@ class Spam_Entries extends \WP_List_Table {
 						</option>
 					<?php endforeach; ?>
 				</select>
+
+				<select name="filter_form_id[]" multiple id="form-id-filter" class="form-id-select" placeholder="<?php _e('Select Form IDs', 'sp'); ?>">
+					<?php foreach ($form_ids as $form_id): ?>
+						<option value="<?php echo esc_attr($form_id); ?>" 
+							<?php echo in_array($form_id, $current_form_ids) ? 'selected' : ''; ?>>
+							<?php echo esc_html($form_id); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+
 				<?php submit_button(__('Filter', 'sp'), '', 'filter_action', false); ?>
 			</div>
+
+			<style>
+				.ts-wrapper {
+					min-width: 200px;
+					margin: 0 4px;
+					display: inline-block !important;
+					vertical-align: middle;
+				}
+				.ts-control {
+					min-height: 30px;
+					padding: 2px 8px;
+					border-color: #7e8993;
+				}
+				#filter-by-reason {
+					float: none;
+					vertical-align: middle;
+				}
+				.alignleft.actions select {
+					margin-right: 4px;
+				}
+				.alignleft.actions input[type="submit"] {
+					margin: 1px 8px 0 0;
+				}
+			</style>
+
+			<script>
+			jQuery(document).ready(function($) {
+				new TomSelect('#form-id-filter', {
+					plugins: ['remove_button'],
+					maxItems: null,
+					persist: false,
+					create: false,
+					placeholder: '<?php _e('Select Form IDs', 'sp'); ?>',
+				});
+			});
+			</script>
 			<?php
 		}
 	}
@@ -597,6 +666,16 @@ private static function process_form_fields($raw_entry) {
 			$where[] = "reason = %s";
 			$values[] = sanitize_text_field($_GET['filter_reason']);
 		}
+
+		 // Modify form_id filter to handle multiple values
+		if (isset($_REQUEST['filter_form_id']) && !empty($_REQUEST['filter_form_id'])) {
+			$form_ids = array_map('sanitize_text_field', (array)$_REQUEST['filter_form_id']);
+			if (!empty($form_ids)) {
+				$placeholders = array_fill(0, count($form_ids), '%s');
+				$where[] = "form_id IN (" . implode(',', $placeholders) . ")";
+				$values = array_merge($values, $form_ids);
+			}
+		}
 		
 		// Combine WHERE clauses
 		if (!empty($where)) {
@@ -781,14 +860,33 @@ private static function process_form_fields($raw_entry) {
 
 		// Handle individual actions
         $action = $this->current_action();
-        if ($action === 'report') {
-            if (isset($_GET['spam']) && isset($_GET['_wpnonce'])) {
-                $entry_id = absint($_GET['spam']);
-                if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_spam')) {
-                    self::report_spam_entry($entry_id);
-                    wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
-                    exit;
-                }
+        if (isset($_GET['spam']) && isset($_GET['_wpnonce'])) {
+            $entry_id = absint($_GET['spam']);
+            
+            switch($action) {
+                case 'report':
+                    if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_spam')) {
+                        self::report_spam_entry($entry_id);
+                        wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                        exit;
+                    }
+                    break;
+                    
+                case 'delete':
+                    if (wp_verify_nonce($_GET['_wpnonce'], 'sp_delete_spam')) {
+                        self::delete_spam_entry($entry_id);
+                        wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                        exit;
+                    }
+                    break;
+                    
+                case 'notify':
+                    if (wp_verify_nonce($_GET['_wpnonce'], 'sp_notify_spam')) {
+                        self::notify_spam_entry($entry_id);
+                        wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                        exit;
+                    }
+                    break;
             }
         }
 
@@ -1033,6 +1131,16 @@ class OOPSpam_Spam {
 				<br class="clear">
 			</div>
 		</div>
+		<style>
+		.ts-wrapper {
+			min-width: 200px;
+			margin-right: 5px;
+			margin-left: 5px;
+		}
+		.ts-control {
+			min-height: 30px;
+		}
+		</style>
 	<?php
 	}
 

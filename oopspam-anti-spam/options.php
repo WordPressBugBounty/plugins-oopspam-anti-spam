@@ -323,6 +323,18 @@ function sanitize_positive_int($value) {
     return max(1, $value); // Ensure value is at least 1
 }
 
+function oopspam_sanitize_settings($input) {
+    // Get existing settings
+    $existing_settings = get_option('oopspamantispam_settings');
+    
+    // Preserve the API usage value
+    if (isset($existing_settings['oopspam_api_key_usage'])) {
+        $input['oopspam_api_key_usage'] = $existing_settings['oopspam_api_key_usage'];
+    }
+    
+    return $input;
+}
+
 function oopspamantispam_settings_init()
 {
 
@@ -331,6 +343,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-privacy-settings-group', 'oopspamantispam_privacy_settings');
     register_setting('oopspamantispam-ratelimit-settings-group', 'oopspamantispam_ratelimit_settings');
     register_setting('oopspamantispam-ipfiltering-settings-group', 'oopspamantispam_ipfiltering_settings');
+    register_setting('oopspamantispam-settings-group', 'oopspamantispam_settings', 'oopspam_sanitize_settings');
 
 
     add_settings_section('manual_moderation_section', 'Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
@@ -1770,22 +1783,72 @@ function oopspam_custom_admin_notice()
 
 add_action('admin_notices', 'oopspam_custom_admin_notice');
 
-function oopspam_api_key_usage_render()
-{
-
+function oopspam_api_key_usage_render() {
     $options = get_option('oopspamantispam_settings');
-
+    $usage = isset($options['oopspam_api_key_usage']) ? $options['oopspam_api_key_usage'] : "0/0";
+    
+    // Parse usage values
+    list($remaining, $limit) = array_map('intval', explode('/', $usage));
+    $used = $limit - $remaining;
+    $percentage = $limit > 0 ? ($used / $limit) * 100 : 0;
+    
+    // Determine color based on usage percentage
+    $bar_color = '#2271b1'; // Default WordPress blue
+    if ($percentage >= 90) {
+        $bar_color = '#d63638'; // Red for high usage
+    } else if ($percentage >= 70) {
+        $bar_color = '#dba617'; // Yellow for moderate usage
+    }
     ?>
-        <div>
-            
-            <span id="api_usage" name="oopspamantispam_settings[oopspam_api_key_usage]"><strong> <?php isset($options['oopspam_api_key_usage']) ? print htmlentities($options['oopspam_api_key_usage']) : print "0/0";?> </strong> </span>
-            <p class="description"><?php echo __('Remaining / Limit', 'oopspam'); ?></p>
-            <p class="description"><?php echo __('Usage numbers are updated automatically with each new submission, so they may not reflect plan changes until the next submission is made.', 'oopspam'); ?></p>
+    <div class="oopspam-usage-stats">
+        <div class="oopspam-usage-numbers">
+            <span class="usage-label"><?php _e('API Calls Available:', 'oopspam'); ?></span>
+            <span class="usage-value"><?php echo number_format($remaining); ?> / <?php echo number_format($limit); ?></span>
         </div>
+        
+        <div class="oopspam-usage-bar-container">
+            <div class="oopspam-usage-bar" style="width: <?php echo esc_attr($percentage); ?>%; background-color: <?php echo esc_attr($bar_color); ?>"></div>
+        </div>
+        
+        <p class="oopspam-usage-note description">
+            <?php echo __('Usage updates automatically with new submissions. Changes to your plan limit will be reflected after the next submission.', 'oopspam'); ?>
+        </p>
+
+        <style>
+            .oopspam-usage-stats {
+                margin: 15px 0;
+                max-width: 500px;
+            }
+            .oopspam-usage-numbers {
+                margin-bottom: 8px;
+                font-size: 14px;
+            }
+            .usage-label {
+                font-weight: 500;
+                margin-right: 8px;
+            }
+            .usage-value {
+                font-family: Consolas, Monaco, monospace;
+            }
+            .oopspam-usage-bar-container {
+                height: 8px;
+                background: #f0f0f1;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            .oopspam-usage-bar {
+                height: 100%;
+                transition: width 0.3s ease;
+                border-radius: 4px;
+            }
+            .oopspam-usage-note {
+                margin-top: 8px;
+                font-style: italic;
+            }
+        </style>
+    </div>
     <?php
 }
-
-
 
 function oopspam_is_check_for_ip_render()
 {

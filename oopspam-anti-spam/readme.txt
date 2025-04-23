@@ -3,9 +3,9 @@ Contributors: oopspam
 Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
-Tested up to: 6.7
-Stable tag: 1.2.34
-License: GPLv2 or later
+Tested up to: 6.8
+Stable tag: 1.2.35
+License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy. 
@@ -105,6 +105,10 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.35 =
+* **NEW:** Introduced the ability to filter Form Spam Entries by Form ID.
+* **IMPROVEMENT:** Enhanced the user experience for displaying `Current usage`.
+* **FIX:** Addressed issues with the `Delete` and `Email admin` actions in the Form Spam Entries table.
 = 1.2.34 =
 * **FIX:** Ensure sessions are initiated and terminated correctly only when the 'Minimum Time Between Page Load and Submission (in seconds)' setting is active.
 = 1.2.33 =
