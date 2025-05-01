@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.35
+Stable tag: 1.2.36
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -105,6 +105,9 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.36 =
+* **NEW:** Introduced "Contextual Spam Detection" to analyze spam based on content and website context.
+* **IMPROVEMENT:** Refined API usage metrics for tracking.
 = 1.2.35 =
 * **NEW:** Introduced the ability to filter Form Spam Entries by Form ID.
 * **IMPROVEMENT:** Enhanced the user experience for displaying `Current usage`.

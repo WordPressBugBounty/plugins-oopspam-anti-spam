@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.35
+ * Version: 1.2.36
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -807,6 +807,36 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
             $response = json_decode($response['body'], true);
             $api_reason = extractReasonFromAPIResponse($response);
 
+            $contextDetectionOptions = get_option('oopspamantispam_contextai_settings');
+            $contextualEnabled = isset($contextDetectionOptions['oopspam_is_contextai_enabled']) ? true : false;
+
+            if (isset($response['Details']['isContentSpam'])) {
+                $isContent = $response['Details']['isContentSpam'];
+            }
+
+
+            if ($contextualEnabled && isset($isContent)) {
+                if ($isContent === 'spam') {
+                    if ($returnReason) {
+                        return [
+                            "Score" => 6,
+                            "isItHam" => false,
+                            "Reason" => "Contextual Content detection: Spam content"
+                        ];
+                    }
+                    return false;
+                } else if ($isContent === 'notspam') {
+                    if ($returnReason) {
+                        return [
+                            "Score" => 0,
+                            "isItHam" => true
+                        ];
+                    }
+                    return true;
+                }
+            }
+
+            // Default scoring logic if contextual detection is disabled or no result
             $currentThreshold = oopspamantispam_get_spamscore_threshold();
 
             if ($response['Score'] >= $currentThreshold) {

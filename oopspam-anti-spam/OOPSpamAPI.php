@@ -133,7 +133,7 @@ class OOPSpamAPI {
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
-        if ($response_code !== 200) {
+        if ($response_code !== 200 && $response_code !== 201) {
             error_log('OOPSpam getAPIUsage Error: Invalid response code ' . $response_code);
             return;
         }
@@ -176,8 +176,18 @@ class OOPSpamAPI {
     * @return string It returns structured JSON, Score field as root field indicating the spam score
     */
     public function SpamDetection($content, $sender_ip, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting) {
-        $parameters=array(
+        $contextDetectionOptions = get_option('oopspamantispam_contextai_settings');
+        $isContextualDetectionEnabled = isset($contextDetectionOptions['oopspam_is_contextai_enabled']) ? true : false;
+        
+        if (!$isContextualDetectionEnabled) {
+            $context = "";
+        } else {
+            $context = isset($contextDetectionOptions["oopspam_website_context"]) ? $contextDetectionOptions["oopspam_website_context"] : "";
+        }
+        
+        $parameters = array(
             'content' => $content,
+            'context' => $context,
             'senderIP' => $sender_ip,
             'email' => $email,
             'checkForLength' => $this->check_for_length,
@@ -206,8 +216,20 @@ class OOPSpamAPI {
 
         $options = get_option('oopspamantispam_settings');
         $currentSensitivityLevel = $options["oopspam_spam_score_threshold"];
+
+        $contextDetectionOptions = get_option('oopspamantispam_contextai_settings');
+        $isContextualDetectionEnabled = isset($contextDetectionOptions['oopspam_is_contextai_enabled']) ? true : false;
+
+        if (!$isContextualDetectionEnabled) {
+            $context = "";
+        } else {
+            $context = isset($contextDetectionOptions["oopspam_website_context"]) ? $contextDetectionOptions["oopspam_website_context"] : "";
+        }
+
+
         $parameters=array(
             'content' => $content,
+            'context' => $context,
             'senderIP' => $sender_ip,
             'email' => $email,
             'checkForLength' => $this->check_for_length,
@@ -220,6 +242,7 @@ class OOPSpamAPI {
             "shouldBeSpam" => $isSpam,
             "sensitivityLevel" => $currentSensitivityLevel
         );        
+
         $jsonreply=$this->RequestToOOPSpamReportingAPI(json_encode($parameters));
         
         return $jsonreply;

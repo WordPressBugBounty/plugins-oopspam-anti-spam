@@ -1465,6 +1465,75 @@ function oopspam_jform_spam_message_render()
 
     }
 
+    // Add Contextual Detection settings section
+    register_setting(
+        'oopspamantispam-contextai-settings-group',
+        'oopspamantispam_contextai_settings'
+    );
+
+    add_settings_section(
+        'oopspam_contextai_section',
+        __('Contextual Detection Settings', 'oopspam'),
+        'render_contextai_section_info',
+        'oopspamantispam-contextai-settings-group'
+    );
+
+    add_settings_field(
+        'oopspam_is_contextai_enabled',
+        __('Enable Contextual Detection', 'oopspam'),
+        'oopspam_is_contextai_enabled_render',
+        'oopspamantispam-contextai-settings-group',
+        'oopspam_contextai_section'
+    );
+
+    add_settings_field(
+        'oopspam_website_context',
+        __('Website Context', 'oopspam'),
+        'oopspam_website_context_render',
+        'oopspamantispam-contextai-settings-group',
+        'oopspam_contextai_section'
+    );
+
+}
+
+function render_contextai_section_info() {
+    echo '<p>Enable Contextual Detection to improve spam accuracy by analyzing form submissions based on your website’s purpose.</p>';
+    echo '<p><strong>Use this feature ONLY if your forms include a required textarea field. It relies on message content to function properly.</strong></p>';
+    echo '<p>When enabled, standard spam detection will be disabled. Only Contextual Detection will be used.</p>';    
+}
+
+function oopspam_is_contextai_enabled_render() {
+    $options = get_option('oopspamantispam_contextai_settings');
+    ?>
+    <div>
+        <label for="contextai_enabled">
+            <input type="checkbox"  class="oopspam-toggle"
+                   id="contextai_enabled" 
+                   name="oopspamantispam_contextai_settings[oopspam_is_contextai_enabled]" 
+                   <?php checked(!isset($options['oopspam_is_contextai_enabled']), false, true); ?>/>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_website_context_render() {
+    $options = get_option('oopspamantispam_contextai_settings');
+    $context = isset($options['oopspam_website_context']) ? $options['oopspam_website_context'] : '';
+    ?>
+    <div>
+        <textarea 
+            name="oopspamantispam_contextai_settings[oopspam_website_context]" 
+            id="website_context"
+            class="large-text"
+            rows="3"
+            maxlength="500"
+            placeholder="Example: We sell handmade wooden furniture for homes and offices. Our products include chairs, tables, and custom-made pieces crafted by local artisans."
+        ><?php echo esc_textarea($context); ?></textarea>
+        <p class="description">
+            <?php echo __('Briefly describe your website\'s purpose or business (2-3 sentences maximum).', 'oopspam'); ?>
+        </p>
+    </div>
+    <?php
 }
 
 function oopspam_api_key_render()
@@ -3628,9 +3697,10 @@ if( isset( $_GET[ 'tab' ] ) ) {
 <h2 class="nav-tab-wrapper">
         <a href="?page=wp_oopspam_settings_page&tab=general" class="nav-tab <?php echo $active_tab == 'general' ? 'nav-tab-active' : ''; ?>">General</a>
         <a href="?page=wp_oopspam_settings_page&tab=privacy" class="nav-tab <?php echo $active_tab == 'privacy' ? 'nav-tab-active' : ''; ?>">Privacy</a>
-        <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo $active_tab == 'manual_moderation' ? 'nav-tab-active' : ''; ?>">Manual moderation</a>
+        <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo $active_tab == 'manual_moderation' ? 'nav-tab-active' : ''; ?>">Manual Moderation</a>
         <a href="?page=wp_oopspam_settings_page&tab=rate_limiting" class="nav-tab <?php echo $active_tab == 'rate_limiting' ? 'nav-tab-active' : ''; ?>">Rate Limiting</a>
         <a href="?page=wp_oopspam_settings_page&tab=ip_filtering" class="nav-tab <?php echo $active_tab == 'ip_filtering' ? 'nav-tab-active' : ''; ?>">IP Filtering</a>
+        <a href="?page=wp_oopspam_settings_page&tab=contextai" class="nav-tab <?php echo $active_tab == 'contextai' ? 'nav-tab-active' : ''; ?>">Contextual Detection <span class="beta-tag" style="font-size: 10px; background: #e3e3e3; padding: 2px 4px; border-radius: 3px;">Experimental</span></a>
     </h2>
 
 
@@ -3649,6 +3719,9 @@ if( isset( $_GET[ 'tab' ] ) ) {
             } elseif ($active_tab == 'ip_filtering') {
                 settings_fields('oopspamantispam-ipfiltering-settings-group');
                 do_settings_sections('oopspamantispam-ipfiltering-settings-group');
+            } elseif ($active_tab == 'contextai') {
+                settings_fields('oopspamantispam-contextai-settings-group');
+                do_settings_sections('oopspamantispam-contextai-settings-group');
             } else {
            
                 settings_fields('oopspamantispam-settings-group');
