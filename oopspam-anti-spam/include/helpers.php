@@ -244,53 +244,71 @@ function oopspamantispam_checkIfValidKey()
     return $apiKey;
 }
 
-function oopspamantispam_get_IP_from_headers($var)
-{
-    if (getenv($var)) {
-        return getenv($var);
-    } elseif (isset($_SERVER[$var])) {
-        return $_SERVER[$var];
-    } else {
-        return '';
-    }
-}
+// function oopspamantispam_get_IP_from_headers($var)
+// {
+//     if (getenv($var)) {
+//         return getenv($var);
+//     } elseif (isset($_SERVER[$var])) {
+//         return $_SERVER[$var];
+//     } else {
+//         return '';
+//     }
+// }
 
 function oopspamantispam_get_ip() {
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     
     $ipaddress = '';
-
     if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] !== true) {
-        $headers = [
-            "HTTP_X_SUCURI_CLIENTIP", // Sucuri
-            'HTTP_CF_CONNECTING_IP', // Cloudflare
-            'REMOTE_ADDR',
-            'HTTP_CLIENT_IP',
-            'HTTP_X_FORWARDED_FOR',
-            'HTTP_X_FORWARDED',
-            'HTTP_FORWARDED_FOR',
-            'HTTP_FORWARDED'
-        ];
-
-        foreach ($headers as $header) {
-            if (!empty($_SERVER[$header])) {
-                $ipaddress = $_SERVER[$header];
-                break;
+        // Direct check for Cloudflare header via getallheaders() if available
+        if (function_exists('getallheaders')) {
+            $headers_list = getallheaders();
+            if (isset($headers_list['CF-Connecting-IP'])) {
+                $ipaddress = $headers_list['CF-Connecting-IP'];
+            } else {
+                // Headers might be case-insensitive
+                foreach ($headers_list as $key => $value) {
+                    if (strtolower($key) == 'cf-connecting-ip') {
+                        $ipaddress = $value;
+                        break;
+                    }
+                }
             }
         }
-
+        
+        // If we didn't get the IP from Cloudflare header directly, try server variables
+        if (empty($ipaddress)) {
+            $headers = [
+                "HTTP_X_SUCURI_CLIENTIP", // Sucuri
+                'HTTP_CF_CONNECTING_IP', // Cloudflare
+                'HTTP_X_FORWARDED_FOR',
+                'HTTP_X_FORWARDED',
+                'HTTP_FORWARDED_FOR',
+                'HTTP_FORWARDED',
+                'HTTP_CLIENT_IP',
+                'REMOTE_ADDR'
+            ];
+            
+            foreach ($headers as $header) {
+                if (!empty($_SERVER[$header])) {
+                    $ipaddress = $_SERVER[$header];
+                    break;
+                }
+            }
+        }
+        
         // If IP is a comma-separated list, get the first one
         if (strpos($ipaddress, ',') !== false) {
             $ipaddress = trim(explode(',', $ipaddress)[0]);
         }
-
+        
         // Validate IP address
         if (!filter_var($ipaddress, FILTER_VALIDATE_IP)) {
             $ipaddress = '::1'; // localhost IPv6
         }
     }
-
+    
     return $ipaddress;
 }
 

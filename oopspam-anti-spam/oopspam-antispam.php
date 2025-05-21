@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.36
+ * Version: 1.2.37
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -956,10 +956,10 @@ function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpa
     }
 }
 
-function oopspamantispam_get_ip_address()
-{
-    return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '::1';
-}
+// function oopspamantispam_get_ip_address()
+// {
+//     return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '::1';
+// }
 
 // Remove http & https from domain
 function oopspam_urlToDomain($url)
