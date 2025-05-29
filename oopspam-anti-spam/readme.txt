@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.37
+Stable tag: 1.2.38
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -19,6 +19,7 @@ It uses the [OOPSpam API](https://www.oopspam.com/), which protects over 3.5M we
 ### Features:  
 - **Spam Filtering Sensitivity**: Customize the "sensitivity level" to ensure important messages aren't missed.  
 - **Machine Learning Spam Detection**: Messages are analyzed using advanced machine learning models.  
+- **Website Context-Aware Spam Detection**: Allows only submissions that align with your website's context.  
 - **Country Restrictions**: Block or allow submissions based on geographic location.  
 - **Language Restrictions**: Restrict submissions based on language.  
 - **Blacklist Integration**: Automatically checks messages against multiple IP and email blacklists.  
@@ -105,6 +106,8 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.38 =
+* **IMPROVEMENT:** Enhanced IP detection in the WordPress comment system to account for proxy usage
 = 1.2.37 =
 * **IMPROVEMENT:** Enhanced method for capturing user's IP address
 = 1.2.36 =

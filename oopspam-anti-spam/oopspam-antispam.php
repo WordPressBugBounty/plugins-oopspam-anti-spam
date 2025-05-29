@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.37
+ * Version: 1.2.38
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -956,11 +956,6 @@ function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpa
     }
 }
 
-// function oopspamantispam_get_ip_address()
-// {
-//     return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '::1';
-// }
-
 // Remove http & https from domain
 function oopspam_urlToDomain($url)
 {
@@ -1102,6 +1097,17 @@ function oopspamantispam_check_pingback($approved, $commentdata)
 
 add_filter('pre_comment_approved', 'oopspamantispam_check_comment', 10, 2);
 add_filter( 'pre_comment_approved', 'oopspamantispam_check_pingback', 10, 2 );
+add_filter('preprocess_comment', 'oopspam_fix_comment_author_ip');
+// WordPress doesn't handle comment author IP correctly, especially when using proxies or load balancers.
+function oopspam_fix_comment_author_ip($commentdata) {
+    // Get the real IP address
+    $real_ip = oopspamantispam_get_ip();
+    
+    // Override the comment author IP
+    $commentdata['comment_author_IP'] = $real_ip;
+    
+    return $commentdata;
+}
 
 add_action('admin_init', 'oopspam_admin_init');
 
