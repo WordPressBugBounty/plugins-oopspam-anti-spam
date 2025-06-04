@@ -128,6 +128,15 @@
    border-bottom-color: #bf3445;
 }
 
+.surecart {
+   background-color: white;
+}
+
+.surecart h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #01824c;
+}
+
 .forminator {
    background-color: white;
 }

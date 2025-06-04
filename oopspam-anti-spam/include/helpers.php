@@ -135,6 +135,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'surecart':
+                if (is_plugin_active('surecart/surecart.php')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;
@@ -167,6 +172,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'pmp' => 'OOPSPAM_IS_PMP_ACTIVATED',
         'mpress' => 'OOPSPAM_IS_MPRESS_ACTIVATED',
         'sure' => 'OOPSPAM_IS_SURE_ACTIVATED',
+        'surecart' => 'OOPSPAM_IS_SURECART_ACTIVATED',
         'jform' => 'OOPSPAM_IS_JFORM_ACTIVATED'
     );
 
@@ -201,6 +207,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'pmp' => 'oopspam_is_pmp_activated',
         'mpress' => 'oopspam_is_mpress_activated',
         'sure' => 'oopspam_is_sure_activated',
+        'surecart' => 'oopspam_is_surecart_activated',
         'jform' => 'oopspam_is_jform_activated'
     );
 

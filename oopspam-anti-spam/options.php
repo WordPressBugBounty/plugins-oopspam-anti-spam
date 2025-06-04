@@ -1427,6 +1427,30 @@ function oopspam_jform_spam_message_render()
         );
     }
 
+    // SureCart settings section
+    if (oopspamantispam_plugin_check('surecart') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_surecart_settings_section',
+            __('SureCart', 'oopspam'),
+            false,
+            'oopspamantispam-surecart-settings-group'
+        );
+        add_settings_field('oopspam_is_surecart_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_surecart_activated_render',
+            'oopspamantispam-surecart-settings-group',
+            'oopspam_surecart_settings_section'
+        );
+
+        add_settings_field('oopspam_surecart_spam_message',
+            __('SureCart Spam Message', 'oopspam'),
+            'oopspam_surecart_spam_message_render',
+            'oopspamantispam-surecart-settings-group',
+            'oopspam_surecart_settings_section'
+        );
+
+    }
+
     // SureForms settings section
     if (oopspamantispam_plugin_check('sure') && !empty(oopspamantispam_get_key())) {
 
@@ -3011,6 +3035,47 @@ function oopspam_sure_spam_message_render()
 
 /* SureForms UI settings section ends */
 
+/* SureCart UI settings section starts */
+
+function oopspam_is_surecart_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_SURECART_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_SURECART_ACTIVATED : (isset($options['oopspam_is_surecart_activated']) && 1 == $options['oopspam_is_surecart_activated']);
+    ?>
+    <div>
+        <label for="surecart_support">
+            <input class="oopspam-toggle" type="checkbox" id="surecart_support" 
+                   name="oopspamantispam_settings[oopspam_is_surecart_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+
+function oopspam_surecart_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_surecart_spam_message">
+                  <input id="oopspam_surecart_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_surecart_spam_message]" value="<?php if (isset($options['oopspam_surecart_spam_message'])) {
+        esc_html_e($options['oopspam_surecart_spam_message'], "oopspam");
+    }
+    ?>">
+                      <p class="description"><?php echo __('Enter a short message to display when a spam SureCart order has been submitted. (e.g Our spam detection classified your order as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* SureCart UI settings section ends */
+
 /* WPForms  settings section starts */
 
 function oopspam_is_wpf_activated_render()
@@ -3855,6 +3920,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                     <div class="sure-forms form-setting">
                     <?php
                     do_settings_sections('oopspamantispam-sure-settings-group');
+                    ?>
+                    </div>
+                    <div class="surecart form-setting">
+                    <?php
+                    do_settings_sections('oopspamantispam-surecart-settings-group');
                     ?>
                     </div>
                     <?php

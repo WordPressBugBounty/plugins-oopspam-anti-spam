@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.38
+Stable tag: 1.2.39
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -77,6 +77,7 @@ The plugin filters both **comments**, **site search**, and **contact form submis
 - Jetpack Forms
 - MC4WP: Mailchimp for WordPress
 - SureForms
+- SureCart
 
 
 OOPSpam Anti-Spam Wordpress plugin requires minimal configuration. The only thing you need to do is to [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -106,6 +107,8 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.39 =
+* **NEW:** Added support for SureCart
 = 1.2.38 =
 * **IMPROVEMENT:** Enhanced IP detection in the WordPress comment system to account for proxy usage
 = 1.2.37 =
