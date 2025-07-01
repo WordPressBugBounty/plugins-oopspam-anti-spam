@@ -17,6 +17,7 @@ function oopspamantispam_cf7_pre_submission($spam)
 
         $userIP = "";
         $email = "";
+        $escapedMsg = "";
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
@@ -34,24 +35,21 @@ function oopspamantispam_cf7_pre_submission($spam)
             }
         }
 
-        // This is default ID, set by CF7
-        $customContentFieldId = "your-message";
-        // Capture the default textarea field value
-        $escapedMsg = sanitize_textarea_field($_POST[$customContentFieldId]);
 
         if (isset($options['oopspam_is_cf7_content_field']) && $options['oopspam_is_cf7_content_field']) {
             $customContentFieldId = sanitize_text_field(trim($options['oopspam_is_cf7_content_field']));
-
             $idsArray = array_map('trim', explode(',', $customContentFieldId));
 
             // Iterate through each ID to look for message field value
             foreach ($idsArray as $id) {
                 // Capture the content
                 if (isset($_POST[$id])) {
-                    $escapedMsg = sanitize_textarea_field($_POST[$id]);
-                    break;
+                    $escapedMsg .= ' ' . sanitize_textarea_field($_POST[$id]) . ' ';
                 }
             }
+        } else {
+            // Default message field
+            $escapedMsg = isset($_POST["your-message"]) ? sanitize_textarea_field($_POST["your-message"]) : '';
         }
         
         $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "cf7");

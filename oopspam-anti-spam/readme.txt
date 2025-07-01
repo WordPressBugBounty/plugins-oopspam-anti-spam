@@ -4,7 +4,7 @@ Link: http://www.oopspam.com/
 Tags: spam, anti spam, anti-spam, spam protection, comments
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.39
+Stable tag: 1.2.40
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -107,6 +107,8 @@ Using the plugin requires you to have an OOPSpam API key. You can get one from [
 Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
 
 == Changelog ==
+= 1.2.40 =
+* **FIX:** "The main content field ID (optional)" setting was not capturing multiple field data in Contact Form 7.
 = 1.2.39 =
 * **NEW:** Added support for SureCart
 = 1.2.38 =
