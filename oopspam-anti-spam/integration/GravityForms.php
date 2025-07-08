@@ -5,6 +5,56 @@ namespace OOPSPAM\Integrations;
 add_filter('gform_entry_is_spam', 'OOPSPAM\Integrations\oopspamantispam_gform_check_spam', 999, 3);
 add_filter('gform_confirmation', 'OOPSPAM\Integrations\oopspamantispam_gform_confirmation', 11, 3);
 
+add_action( 'gform_partialentries_post_entry_saved', 'OOPSPAM\Integrations\oopspamantispam_gpartialentries_check_spam', 10, 2 );
+
+function oopspamantispam_gpartialentries_check_spam( $partial_entry, $form ) {
+     
+    $extractedData = extractData($form, $partial_entry);
+     
+    $options = get_option('oopspamantispam_settings');
+    $privacyOptions = get_option('oopspamantispam_privacy_settings');
+
+    $message = $extractedData['message'];
+    $userIP = oopspamantispam_get_ip();
+    $email = $extractedData['email'];
+
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('gf')) {
+        // Check if the form is excluded from spam protection
+        if (isset($options['oopspam_gf_exclude_form']) && $options['oopspam_gf_exclude_form']) {
+            $excludedFormIdsSanitized = sanitize_text_field(trim($options['oopspam_gf_exclude_form']));
+            $excludedFormIds = array_map('trim', explode(',', $excludedFormIdsSanitized));
+            if (in_array($form['id'], $excludedFormIds)) {
+                return $is_spam;
+            }
+        }
+
+        $escapedMsg = sanitize_textarea_field($message);
+
+        $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "gravity");
+        if (!isset($detectionResult["isItHam"])) {
+            return $is_spam;
+        }
+
+        $frmEntry = [
+            "Score" => $detectionResult["Score"],
+            "Message" => $escapedMsg,
+            "IP" => $userIP,
+            "Email" => $email,
+            "RawEntry" => json_encode($partial_entry),
+            "FormId" => $form['id'],
+        ];
+
+        if (!$detectionResult["isItHam"]) {
+            // It's spam, store the submission
+            oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
+            $submission_id = rgar($partial_entry, 'id');
+            \GFFormsModel::change_entry_status( $submission_id, 'trash' );
+        }
+    }
+
+}
+
+
 function oopspamantispam_gform_confirmation($confirmation, $form, $entry) {
     if (empty($entry) || rgar($entry, 'status') === 'spam') {
         $options = get_option('oopspamantispam_settings');
