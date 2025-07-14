@@ -51,11 +51,19 @@ class WooSpamProtection
         }
         
         if (is_array($data)) {
-            if (isset($data['password'])) {
-                unset($data['password']);
-            }
-            if (isset($data['user_pass'])) {
-                unset($data['user_pass']);
+            $sensitive_fields = [
+                'password',
+                'user_pass',
+                'account_password',
+                'moneris-card-number',
+                'moneris-card-expiry',
+                'moneris-card-cvc'
+            ];
+
+            foreach ($sensitive_fields as $field) {
+                if (isset($data[$field])) {
+                    unset($data[$field]);
+                }
             }
         }
         
