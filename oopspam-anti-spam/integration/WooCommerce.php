@@ -159,7 +159,7 @@ class WooSpamProtection
             $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
             if ($showError) {
                 $error_to_show = $this->get_error_message();
-                wc_add_notice( esc_html__( $error_to_show ), 'error' );
+                \wc_add_notice( esc_html__( $error_to_show ), 'error' );
             }
         
     }    
@@ -246,7 +246,7 @@ class WooSpamProtection
             $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
             if ($showError) {
                 $error_to_show = $this->get_error_message();
-                wc_add_notice( esc_html__( $error_to_show ), 'error' );
+                \wc_add_notice( esc_html__( $error_to_show ), 'error' );
             }
         
     }    
@@ -329,7 +329,7 @@ class WooSpamProtection
         $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
         if ($showError) {
             $error_to_show = $this->get_error_message();
-            wc_add_notice( esc_html__( $error_to_show ), 'error' );
+            \wc_add_notice( esc_html__( $error_to_show ), 'error' );
         }
     }    
 
@@ -346,7 +346,7 @@ class WooSpamProtection
         $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), sanitize_text_field($message));
         if ($showError) {
             $error_to_show = $this->get_error_message();
-            wc_add_notice( esc_html__( $error_to_show ), 'error' );
+            \wc_add_notice( esc_html__( $error_to_show ), 'error' );
         }
     }
     /**
