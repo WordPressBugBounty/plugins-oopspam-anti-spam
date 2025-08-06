@@ -107,6 +107,7 @@ require_once dirname(__FILE__) . '/integration/MC4WP.php';
 require_once dirname(__FILE__) . '/integration/SureForms.php';
 require_once dirname(__FILE__) . '/integration/SureCart.php';
 require_once dirname(__FILE__) . '/integration/BreakdanceForm.php';
+require_once dirname(__FILE__) . '/integration/Quform.php';
 
 
 require_once dirname(__FILE__) . '/integration/WooCommerce.php';
@@ -965,9 +966,19 @@ function oopspam_urlToDomain($url)
 
 
 function oopspamantispam_check_comment($approved, $commentdata)
-{
+{    
+        static $processed_comments = array();
+        
+        // Generate a unique identifier for this comment
+        $comment_identifier = md5($commentdata['comment_content'] . $commentdata['comment_author_IP']);
+        
+        // If we've already processed this comment, return the previous result
+        if (isset($processed_comments[$comment_identifier])) {
+            return $processed_comments[$comment_identifier];
+        }
+        
     // If admin skip
-    if( current_user_can( 'administrator' ) ){
+    if (current_user_can('administrator')) {
         return $approved;
     }
 
@@ -1030,6 +1041,8 @@ function oopspamantispam_check_comment($approved, $commentdata)
         $frmEntry["Score"] = 6;
         oopspam_store_spam_submission($frmEntry, $reason);
 
+        // Store the result before returning
+        $processed_comments[$comment_identifier] = $currentSpamFolder;
         return $currentSpamFolder;
         // TODO: Allow UI customization for this message
         // wp_die(__('Your comment has been flagged as spam.', 'oopspam'));
@@ -1037,6 +1050,9 @@ function oopspamantispam_check_comment($approved, $commentdata)
         // It's ham
         $frmEntry["Score"] = 0;
         oopspam_store_ham_submission($frmEntry);
+        
+        // Store the result before returning
+        $processed_comments[$comment_identifier] = $approved;
         return $approved;
     }
 
@@ -1048,6 +1064,7 @@ function oopspamantispam_check_pingback($approved, $commentdata)
 {
 
     if ($commentdata['comment_type'] == 'pingback' || $commentdata['comment_type'] == 'trackback') {
+
         $senderIp = "";
         $email = "";
         $isItSpam = false;
@@ -1093,7 +1110,6 @@ function oopspamantispam_check_pingback($approved, $commentdata)
     }
     return $approved;
 }
-
 
 
 add_filter('pre_comment_approved', 'oopspamantispam_check_comment', 10, 2);

@@ -140,6 +140,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'quform':
+                if (is_plugin_active('quform/quform.php')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;
@@ -173,7 +178,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'mpress' => 'OOPSPAM_IS_MPRESS_ACTIVATED',
         'sure' => 'OOPSPAM_IS_SURE_ACTIVATED',
         'surecart' => 'OOPSPAM_IS_SURECART_ACTIVATED',
-        'jform' => 'OOPSPAM_IS_JFORM_ACTIVATED'
+        'jform' => 'OOPSPAM_IS_JFORM_ACTIVATED',
+        'quform' => 'OOPSPAM_IS_QUFORM_ACTIVATED'
     );
 
     // Check if there's a constant defined for this form builder
@@ -208,7 +214,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'mpress' => 'oopspam_is_mpress_activated',
         'sure' => 'oopspam_is_sure_activated',
         'surecart' => 'oopspam_is_surecart_activated',
-        'jform' => 'oopspam_is_jform_activated'
+        'jform' => 'oopspam_is_jform_activated',
+        'quform' => 'oopspam_is_quform_activated'
     );
 
     $option_name = isset($option_map[$form_builder]) ? $option_map[$form_builder] : $form_builder;
@@ -250,17 +257,6 @@ function oopspamantispam_checkIfValidKey()
     }
     return $apiKey;
 }
-
-// function oopspamantispam_get_IP_from_headers($var)
-// {
-//     if (getenv($var)) {
-//         return getenv($var);
-//     } elseif (isset($_SERVER[$var])) {
-//         return $_SERVER[$var];
-//     } else {
-//         return '';
-//     }
-// }
 
 function oopspamantispam_get_ip() {
     $options = get_option('oopspamantispam_settings');

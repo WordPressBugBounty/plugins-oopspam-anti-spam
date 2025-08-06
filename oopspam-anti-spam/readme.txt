@@ -1,54 +1,74 @@
-=== OOPSpam Anti-Spam ===
+=== OOPSpam Anti-Spam: Spam Protection for WordPress Forms & Comments (No CAPTCHA) ===
 Contributors: oopspam
-Link: http://www.oopspam.com/
-Tags: spam, anti spam, anti-spam, spam protection, comments
+Link: https://www.oopspam.com/
+Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.43
+Stable tag: 1.2.44
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy. 
+Protect your forms from spam with 99.9% accuracy - no CAPTCHA, no JavaScript, no tracking. Trusted by 3.5M+ websites.
 
 == Description ==
-The OOPSpam WordPress plugin is a modern spam filter that uses machine learning to analyze messages, checking each submission against our extensive database of 500 million IPs and emails to effectively detect and block spam.
+[OOPSpam](https://www.oopspam.com/) is a modern anti-spam solution that uses advanced AI and machine learning to protect your WordPress forms and comments from spam. Our system has blocked over 1 billion spam attempts across 3.5M+ websites, maintaining 99.9% accuracy without compromising user privacy or accessibility.
 
-It uses the [OOPSpam API](https://www.oopspam.com/), which protects over 3.5M websites daily. 
-
-
-### Features:  
-- **Spam Filtering Sensitivity**: Customize the "sensitivity level" to ensure important messages aren't missed.  
-- **Machine Learning Spam Detection**: Messages are analyzed using advanced machine learning models.  
-- **Website Context-Aware Spam Detection**: Allows only submissions that align with your website's context.  
-- **Country Restrictions**: Block or allow submissions based on geographic location.  
-- **Language Restrictions**: Restrict submissions based on language.  
-- **Blacklist Integration**: Automatically checks messages against multiple IP and email blacklists.  
-- **Spam Word Detection**: Identifies and blocks messages containing common spam patterns.  
-- **Manual Moderation**: Block email, IP, or specific keywords manually.  
-- **Privacy Features**:  
-  - `Do not analyze IP addresses`  
-  - `Do not analyze Emails`  
-  - `Remove sensitive information from messages`  
-- **Form Spam Entries Management**: View, delete, send submissions to website admins, or report them.  
-- **Form Ham Entries Management**: View non-spam entries, delete, or report them.  
-- **Rate Limiting**: Control submission rates to prevent abuse and click frauds.
-- **IP Filtering**: Block submissions from Cloud Providers and VPNs.
+Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpam works silently in the background, analyzing submissions against our extensive database of 500M+ malicious IPs and emails to catch both bot and human spammers. 
 
 
-The value we bring:
+### Why Choose OOPSpam?
 
-* Fast, Lightweight & Accessible
-* No cookies, no challenges, no JavaScript, no tracking.
-* High accuracy (%99.9)
-* Use one API key across unlimited websites.
-* No data stored on our servers. All your data is stored in your local WordPress database.
-* Privacy by design
-* Thoroughly tested to ensure compatibility and stability with every update.
-* Operated by a company with an active vulnerability disclosure program.
-* Enjoy 24-hour response times for any assistance you need.
+**🚀 Zero Impact on User Experience**
+- No CAPTCHA puzzles or challenges that hurt conversions
+- Works silently in the background without JavaScript or tracking
+- Maintains fast website performance with server-side processing
+
+**🛡️ Intelligent Spam Prevention**
+- Catch 99.9% of spam using advanced machine learning and contextual analysis
+- Protect against both automated bots and human spammers
+- Auto-detect spam patterns unique to your website's context
+- Block spam from VPNs and known malicious sources
+
+**🔒 Privacy-First Design**
+- GDPR-compliant with no data stored on our servers
+- Optional IP and email analysis for maximum privacy
+- All logs stored in your WordPress database
+- Remove sensitive information from messages automatically
+
+**🌍 Smart Geographic Controls**
+- Target your relevant market by blocking specific countries
+- Filter submissions by language to focus on your audience
+- Prevent fraud and abuse from high-risk regions
+
+**⚙️ Powerful Management Tools**
+- View and manage spam entries with detailed detection reasons
+- Export data for analysis or reporting
+- Rate limiting to prevent abuse and click fraud
+- Manual override options for complete control
+
+**🏢 Perfect for Agencies**
+- Use one API key across unlimited websites
+- Centralized logging option in OOPSpam dashboard
+- Consistent protection across all your client sites
 
 
-The plugin filters both **comments**, **site search**, and **contact form submissions**.
+### What Our Users Say
+
+> "It's eliminated all spam, and even the need for CAPTCHA. Setup is quick and the interface is intuitive." - @gotmick
+
+> "Very responsive support and dev team. Customer support was amazing, response time was immediate and issues were solved instantly." - @viv18germany
+
+> "Pricing is perfect for agencies as they do tiers by actual # of API calls and no limit on the number of sites you can install this on." - @squarecandy
+
+### By the Numbers
+- **3.5M+** websites protected daily
+- **1B+** spam attempts blocked
+- **99.9%** detection accuracy
+- **24/7** customer support
+- **500M+** malicious IPs and emails in our database
+
+### Works With Everything
+The plugin seamlessly protects your **comments**, **site search**, and **all major form plugins**. No extra configuration needed - it just works!
 
 ### Supported form & comment solutions:
 
@@ -78,9 +98,10 @@ The plugin filters both **comments**, **site search**, and **contact form submis
 - MC4WP: Mailchimp for WordPress
 - SureForms
 - SureCart
+- QuForm
 
 
-OOPSpam Anti-Spam Wordpress plugin requires minimal configuration. The only thing you need to do is to [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
+OOPSpam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
 
 **Please note**: This is a premium plugin. You need an [OOPSpam Anti-Spam API key](https://app.oopspam.com/Identity/Account/Register) to use the plugin. Each account comes with 40 free spam checks per month.
 If you already use OOPSpam on other platforms, you can use the same API key for this plugin.
@@ -102,11 +123,23 @@ You can install OOPSpam Anti-Spam plugin both from your WordPress admin dashboar
 3. Go to _OOPSpam Anti-Spam=>Settings_
 
 ### AFTER ACTIVATION
-    
-Using the plugin requires you to have an OOPSpam API key. You can get one from [here](https://app.oopspam.com/).
-Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam Anti-Spam=>Settings_
+
+After activating the plugin, follow these quick setup steps:
+
+1. Register on the [OOPSpam Dashboard](https://app.oopspam.com/) and copy your API key
+2. Go to _OOPSpam Anti-Spam=>Settings_ in your WordPress dashboard
+3. Paste the key into the "My API Key" field
+4. Select "OOPSpam Dashboard" from the "I got my API Key from" setting
+5. If you're using a contact form plugin, make sure the "Activate Spam Protection" option is checked for that plugin
+
+That's it! Your forms are now protected from spam. The plugin works automatically in the background with no additional configuration needed.
+
+For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.44 =
+* **NEW:** Added support for QuForm
+* **FIX:** Prevent the pre-comment approval hook from executing multiple times
 = 1.2.43 =
 * **FIX:** [WooCommerce] Fixed undefined function error in scheduled payments by enforcing global namespace.
 = 1.2.42 =
@@ -315,9 +348,59 @@ Once you have a key, copy it and paste into OOPSpam API key field under _OOPSpam
 * FIX: Failed nonce verification in cron jobs that empty spam/ham entries
 
 
+== Frequently Asked Questions ==
+
+= How does OOPSpam compare to Akismet? =
+
+While Akismet focuses primarily on comment spam, OOPSpam offers comprehensive protection for all forms of submissions:
+- Protects ALL form types (comments, contact forms, registration, etc.) out of the box
+- No need to share user data with third parties
+- Includes country blocking and language filtering
+- Provides detailed analytics and reporting
+- Works silently without impacting user experience
+- One API key works across unlimited websites
+
+= How does OOPSpam compare to CleanTalk? =
+
+OOPSpam offers several advantages over CleanTalk:
+- Higher accuracy (99.9%) with advanced machine learning
+- No JavaScript required, improving site performance
+- Better privacy with optional IP/email analysis
+- More granular controls for geographic restrictions
+- Unlimited websites with one API key
+- 24/7 responsive support
+
+= Do I need to solve CAPTCHA or other challenges? =
+
+No! OOPSpam works completely in the background without any user interaction required. This means:
+- No puzzles or challenges
+- No impact on conversion rates
+- Full accessibility compliance
+- Better user experience
+
+= How many API calls do I need? =
+
+1 API call = 1 spam check
+
+When someone submits a form on your website, that counts as one API call. The free plan includes 40 calls to test the service. Here's a general guide:
+- The Freelance plan (100,000 API calls) typically covers ~100 websites
+- Average website gets 20-50 form submissions daily
+- To estimate your needs, count your monthly form submissions across all your websites
+
+Contact us if you need help estimating your needs.
+
+= Is OOPSpam GDPR compliant? =
+
+Yes! OOPSpam is fully GDPR compliant:
+- No data stored on our servers by default
+- Optional IP and email analysis
+- All logs stored in your WordPress database
+- Ability to remove sensitive information from messages
+
 == Screenshots ==
-1. OOPSpam admin settings
-2. Spam Entries from contact forms
-3. Manual moderation settings
-4. Rate Limiting settings
-5. Privacy settings
+
+1. **Intuitive Dashboard** - OOPSpam's admin settings provide easy access to all protection features with clear organization
+2. **Comprehensive Spam Management** - View, analyze, and manage spam entries with detailed detection reasons
+3. **Advanced Manual Controls** - Fine-tune your protection with IP, email, and keyword blocking options
+4. **Smart Rate Limiting** - Prevent abuse with intelligent submission rate controls
+5. **Privacy-First Settings** - Configure data handling and privacy options to match your requirements

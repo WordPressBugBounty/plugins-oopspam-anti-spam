@@ -1489,6 +1489,44 @@ function oopspam_jform_spam_message_render()
 
     }
 
+       // Quform settings section
+    if (oopspamantispam_plugin_check('quform') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_quform_settings_section',
+            __('Quform', 'oopspam'),
+            false,
+            'oopspamantispam-quform-settings-group'
+        );
+        add_settings_field('oopspam_is_quform_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_quform_activated_render',
+            'oopspamantispam-quform-settings-group',
+            'oopspam_quform_settings_section'
+        );
+
+        add_settings_field('oopspam_quform_spam_message',
+            __('Quform Spam Message', 'oopspam'),
+            'oopspam_quform_spam_message_render',
+            'oopspamantispam-quform-settings-group',
+            'oopspam_quform_settings_section'
+        );
+
+        add_settings_field('oopspam_quform_content_field',
+            __('The main content field Unique ID (optional)', 'oopspam'),
+            'oopspam_quform_content_field_render',
+            'oopspamantispam-quform-settings-group',
+            'oopspam_quform_settings_section'
+        );
+
+        add_settings_field('oopspam_quform_exclude_form',
+            __("Don't protect these forms", 'oopspam'),
+            'oopspam_quform_exclude_form_render',
+            'oopspamantispam-quform-settings-group',
+            'oopspam_quform_settings_section'
+        );
+
+    }
+
     // Add Contextual Detection settings section
     register_setting(
         'oopspamantispam-contextai-settings-group',
@@ -3035,6 +3073,78 @@ function oopspam_sure_spam_message_render()
 
 /* SureForms UI settings section ends */
 
+/* QuForm UI settings section starts */
+
+function oopspam_is_quform_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_QUFORM_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_QUFORM_ACTIVATED : (isset($options['oopspam_is_quform_activated']) && 1 == $options['oopspam_is_quform_activated']);
+    ?>
+    <div>
+        <label for="quform_support">
+            <input class="oopspam-toggle" type="checkbox" id="quform_support" 
+                   name="oopspamantispam_settings[oopspam_is_quform_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_quform_content_field_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_quform_content_field">
+                    <input type="text" class="regular-text" name="oopspamantispam_settings[oopspam_quform_content_field]" value="<?php if (isset($options['oopspam_quform_content_field'])) {
+        echo esc_html($options['oopspam_quform_content_field']);
+    }
+    ?>">
+                        <p class="description"><?php echo __('By default, OOPSpam looks for a textarea field in your QuForms. If you have multiple textarea fields, specify the main content/message Unique ID here.', 'oopspam'); ?></p>
+                        <p class="description"><?php echo __('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+function oopspam_quform_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+       <div>
+               <label for="oopspam_quform_exclude_form">
+               <input id="oopspam_quform_exclude_form" type="text" placeholder="Enter form IDs (e.g 1,5,2 or 5)" class="regular-text" name="oopspamantispam_settings[oopspam_quform_exclude_form]" value="<?php if (isset($options['oopspam_quform_exclude_form'])) {
+        echo esc_html($options['oopspam_quform_exclude_form']);
+    }
+    ?>">
+                   </label>
+           </div>
+       <?php
+}
+
+function oopspam_quform_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_quform_spam_message">
+                  <input id="oopspam_quform_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_quform_spam_message]" value="<?php if (isset($options['oopspam_quform_spam_message'])) {
+        esc_html_e($options['oopspam_quform_spam_message'], "oopspam");
+    }
+    ?>">
+                      <p class="description"><?php echo __('Enter a short message to display when a spam QuForms entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* QuForm UI settings section ends */
+
 /* SureCart UI settings section starts */
 
 function oopspam_is_surecart_activated_render()
@@ -3925,6 +4035,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                     <div class="surecart form-setting">
                     <?php
                     do_settings_sections('oopspamantispam-surecart-settings-group');
+                    ?>
+                    </div>
+                    <div class="quform form-setting">
+                    <?php
+                    do_settings_sections('oopspamantispam-quform-settings-group');
                     ?>
                     </div>
                     <?php

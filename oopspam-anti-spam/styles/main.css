@@ -128,6 +128,15 @@
    border-bottom-color: #bf3445;
 }
 
+.quform {
+   background-color: white;
+}
+
+.quform h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #c73310;
+}
+
 .surecart {
    background-color: white;
 }
