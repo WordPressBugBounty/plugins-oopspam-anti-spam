@@ -412,6 +412,8 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-bb-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-umember-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-mpress-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-happyforms-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-quform-settings-group', 'oopspamantispam_settings');
 
     // Add settings section
     add_settings_section(
@@ -1007,6 +1009,36 @@ function oopspamantispam_settings_init()
         'oopspamantispam-br-settings-group',
         'oopspam_br_settings_section'
     );
+    }
+
+     // HappyForms settings section
+    if (oopspamantispam_plugin_check('happyforms') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_happyforms_settings_section',
+            __('HappyForms', 'oopspam'),
+            false,
+            'oopspamantispam-happyforms-settings-group'
+        );
+        add_settings_field('oopspam_is_happyforms_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_happyforms_activated_render',
+            'oopspamantispam-happyforms-settings-group',
+            'oopspam_happyforms_settings_section'
+        );
+
+        add_settings_field('oopspam_happyforms_spam_message',
+        __('HappyForms Spam Message', 'oopspam'),
+        'oopspam_happyforms_spam_message_render',
+        'oopspamantispam-happyforms-settings-group',
+        'oopspam_happyforms_settings_section'
+    );
+
+        add_settings_field('oopspam_happyforms_exclude_form',
+            __("Don't protect these forms", 'oopspam'),
+            'oopspam_happyforms_exclude_form_render',
+            'oopspamantispam-happyforms-settings-group',
+            'oopspam_happyforms_settings_section'
+        );
     }
 
     // WS Form settings section
@@ -2907,6 +2939,61 @@ function oopspam_br_exclude_form_render()
 
 /* Bricks Forms UI settings section ends */
 
+/* HappyForms UI settings section starts */
+
+function oopspam_is_happyforms_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_HAPPYFORMS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_HAPPYFORMS_ACTIVATED : (isset($options['oopspam_is_happyforms_activated']) && 1 == $options['oopspam_is_happyforms_activated']);
+    ?>
+    <div>
+        <label for="happyforms_support">
+            <input class="oopspam-toggle" type="checkbox" id="happyforms_support" 
+                   name="oopspamantispam_settings[oopspam_is_happyforms_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_happyforms_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+       <div>
+               <label for="oopspam_happyforms_exclude_form">
+               <input id="oopspam_happyforms_exclude_form" type="text" placeholder="Enter form IDs (e.g 1,5,2 or 5)" class="regular-text" name="oopspamantispam_settings[oopspam_happyforms_exclude_form]" value="<?php if (isset($options['oopspam_happyforms_exclude_form'])) {
+        echo esc_html($options['oopspam_happyforms_exclude_form']);
+    }
+    ?>">
+                   </label>
+           </div>
+       <?php
+}
+
+function oopspam_happyforms_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_happyforms_spam_message">
+                  <input id="oopspam_happyforms_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_happyforms_spam_message]" value="<?php if (isset($options['oopspam_happyforms_spam_message'])) {
+        esc_html_e($options['oopspam_happyforms_spam_message'], "oopspam");
+    }
+    ?>">
+                      <p class="description"><?php echo __('Enter a short message to display when a spam HappyForms entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* HappyForms UI settings section ends */
+
 /* WS Form UI settings section starts */
 
 function oopspam_is_ws_activated_render()
@@ -4040,6 +4127,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                     <div class="quform form-setting">
                     <?php
                     do_settings_sections('oopspamantispam-quform-settings-group');
+                    ?>
+                    </div>
+                     <div class="happyforms form-setting">
+                    <?php
+                    do_settings_sections('oopspamantispam-happyforms-settings-group');
                     ?>
                     </div>
                     <?php

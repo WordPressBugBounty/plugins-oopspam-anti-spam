@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.44
+Stable tag: 1.2.45
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -99,6 +99,7 @@ The plugin seamlessly protects your **comments**, **site search**, and **all maj
 - SureForms
 - SureCart
 - QuForm
+- HappyForms Pro
 
 
 OOPSpam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -137,6 +138,9 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.45 =
+* **NEW:** Added support for HappyForms
+* **IMPROVEMENT:** Enhanced logging of block reasons in the comment system
 = 1.2.44 =
 * **NEW:** Added support for QuForm
 * **FIX:** Prevent the pre-comment approval hook from executing multiple times

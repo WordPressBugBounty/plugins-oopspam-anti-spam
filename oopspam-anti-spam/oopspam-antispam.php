@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.43
+ * Version: 1.2.45
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -108,6 +108,7 @@ require_once dirname(__FILE__) . '/integration/SureForms.php';
 require_once dirname(__FILE__) . '/integration/SureCart.php';
 require_once dirname(__FILE__) . '/integration/BreakdanceForm.php';
 require_once dirname(__FILE__) . '/integration/Quform.php';
+require_once dirname(__FILE__) . '/integration/HappyForms.php';
 
 
 require_once dirname(__FILE__) . '/integration/WooCommerce.php';
@@ -967,15 +968,16 @@ function oopspam_urlToDomain($url)
 
 function oopspamantispam_check_comment($approved, $commentdata)
 {    
-        static $processed_comments = array();
-        
-        // Generate a unique identifier for this comment
-        $comment_identifier = md5($commentdata['comment_content'] . $commentdata['comment_author_IP']);
-        
-        // If we've already processed this comment, return the previous result
-        if (isset($processed_comments[$comment_identifier])) {
-            return $processed_comments[$comment_identifier];
-        }
+
+    static $processed_comments = array();
+    
+    // Generate a unique identifier for this comment
+    $comment_identifier = md5($commentdata['comment_content'] . $commentdata['comment_author_IP']);
+    
+    // If we've already processed this comment, return the previous result
+    if (isset($processed_comments[$comment_identifier])) {
+        return $processed_comments[$comment_identifier];
+    }
         
     // If admin skip
     if (current_user_can('administrator')) {
@@ -1017,40 +1019,42 @@ function oopspamantispam_check_comment($approved, $commentdata)
     if ($checkForLength && strlen($commentdata['comment_content']) <= 20) {
         $isItSpam = true;
         $reason = "Consider short messages as spam setting";
-    } else {
-        // if Spam filtering is on and the OOPSpam Service considers it spam then mark it as spam
-        $isItSpam = oopspamantispam_call_OOPSpam(sanitize_textarea_field($content), $senderIp, $email, false, "comment") == false;
-        if ($isItSpam) {
-            $reason = "High Score for the comment";
-        }
     }
 
+    if ($isItSpam) {
+        $detectionResult = [
+            "Score" => 6,
+            "isItHam" => false,
+            "Reason" => $reason
+        ];
+    } else {
+        // if Spam filtering is on and the OOPSpam Service considers it spam then mark it as spam
+        $detectionResult = oopspamantispam_call_OOPSpam(sanitize_textarea_field($content), $senderIp, $email, true, "comment");
+        if (!isset($detectionResult["isItHam"])) {
+            return;
+        }
+    }
+   
     $raw_entry = json_encode($commentdata);
     $frmEntry = [
-        "Score" => 0,
-        "Message" => $content,
-        "IP" => $senderIp,
-        "Email" => $email,
-        "RawEntry" => $raw_entry,
-        "FormId" => "comment",
-    ];
+            "Score" => $detectionResult["Score"],
+            "Message" => $content,
+            "IP" => $senderIp,
+            "Email" => $email,
+            "RawEntry" => $raw_entry,
+            "FormId" => "comment",
+        ];
 
-    // Move the spam comment select folder (Trash or spam) and store
-    if ($isItSpam) {
-        // Manually assign the highest score to a comment because it is spam.
-        $frmEntry["Score"] = 6;
-        oopspam_store_spam_submission($frmEntry, $reason);
-
-        // Store the result before returning
+    // Move the spam comment select folder (Trash or spam) and log
+    if (!$detectionResult["isItHam"]) {
+        oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
         $processed_comments[$comment_identifier] = $currentSpamFolder;
         return $currentSpamFolder;
         // TODO: Allow UI customization for this message
         // wp_die(__('Your comment has been flagged as spam.', 'oopspam'));
     } else {
         // It's ham
-        $frmEntry["Score"] = 0;
         oopspam_store_ham_submission($frmEntry);
-        
         // Store the result before returning
         $processed_comments[$comment_identifier] = $approved;
         return $approved;

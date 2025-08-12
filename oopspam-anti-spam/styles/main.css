@@ -137,6 +137,15 @@
    border-bottom-color: #c73310;
 }
 
+.happyforms {
+   background-color: white;
+}
+
+.happyforms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: black;
+}
+
 .surecart {
    background-color: white;
 }
