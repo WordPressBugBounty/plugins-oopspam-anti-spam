@@ -56,7 +56,7 @@ function oopspamantispam_mpress_validate_signup($errors)
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and add error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = isset($options['oopspam_mpress_spam_message']) ? $options['oopspam_mpress_spam_message'] : "Your submission has been flagged as spam.";
+            $error_to_show = (isset($options['oopspam_mpress_spam_message']) && !empty($options['oopspam_mpress_spam_message'])) ? $options['oopspam_mpress_spam_message'] : "Your submission has been flagged as spam.";
             $errors[] = wp_kses($error_to_show, 'post');
         } else {
             // It's ham

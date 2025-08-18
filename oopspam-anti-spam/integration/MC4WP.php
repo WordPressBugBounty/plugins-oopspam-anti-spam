@@ -55,7 +55,7 @@ add_filter( 'mc4wp_form_errors', function( array $errors, \MC4WP_Form $form ) {
 */
 function oopspam_add_mc4wp_error_message($messages) {
     $options = get_option('oopspamantispam_settings');
-    $error_to_show = isset($options['oopspam_mc4wp_spam_message']) ? $options['oopspam_mc4wp_spam_message'] : 'Your submission has been flagged as spam.';
+    $error_to_show = (isset($options['oopspam_mc4wp_spam_message']) && !empty($options['oopspam_mc4wp_spam_message'])) ? $options['oopspam_mc4wp_spam_message'] : 'Your submission has been flagged as spam.';
     $messages['oopspam_spam'] = $error_to_show;
     return $messages;
 }

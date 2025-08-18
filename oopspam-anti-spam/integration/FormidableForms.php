@@ -93,7 +93,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = isset($options['oopspam_fable_spam_message']) ? $options['oopspam_fable_spam_message'] : 'Your submission has been flagged as spam.';
+            $error_to_show = (isset($options['oopspam_fable_spam_message']) && !empty($options['oopspam_fable_spam_message'])) ? $options['oopspam_fable_spam_message'] : 'Your submission has been flagged as spam.';
             $errors['spam'] = $error_to_show;
         } else {
             // It's ham

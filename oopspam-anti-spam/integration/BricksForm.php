@@ -100,8 +100,8 @@ function oopspam_spam_check($errors, $form)
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-            $error_to_show = isset($options['oopspam_br_spam_message']) ? $options['oopspam_br_spam_message'] : 'Your submission has been flagged as spam.';
-
+            $error_to_show = (isset($options['oopspam_br_spam_message']) && !empty($options['oopspam_br_spam_message'])) ? $options['oopspam_br_spam_message'] : 'Your submission has been flagged as spam.';
+  
             // Show error
             $allowedEls = array(
                 'a' => array(

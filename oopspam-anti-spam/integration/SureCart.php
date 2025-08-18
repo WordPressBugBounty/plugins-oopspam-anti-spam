@@ -39,7 +39,7 @@ function oopspamantispam_surecart_pre_order( $errors, $args, $request ) {
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = isset($options['oopspam_surecart_spam_message']) ? $options['oopspam_surecart_spam_message'] : __('Your order has been flagged as spam.', 'oopspam');
+            $error_to_show = (isset($options['oopspam_surecart_spam_message']) && !empty($options['oopspam_surecart_spam_message'])) ? $options['oopspam_surecart_spam_message'] : __('Your order has been flagged as spam.', 'oopspam');
             $errors->add( 'blocked', $error_to_show );
 
         } else {

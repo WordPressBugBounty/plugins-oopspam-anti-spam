@@ -73,7 +73,7 @@ function oopspamantispam_kb_adv_pre_submission($reject, $form_args, $processed_f
 function oopspam_kadence_reject_message($message, $form_args, $processed_fields, $post_id) {
     // Customize the rejection message
     $options = get_option('oopspamantispam_settings');
-    $error_to_show = isset($options['oopspam_kb_spam_message']) ? $options['oopspam_kb_spam_message'] : 'Your submission has been flagged as spam.';
+    $error_to_show = (isset($options['oopspam_kb_spam_message']) && !empty($options['oopspam_kb_spam_message'])) ? $options['oopspam_kb_spam_message'] : 'Your submission has been flagged as spam.';
     return __($error_to_show, 'oopspam');
 }
 // Filter function
@@ -124,7 +124,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_kb_spam_message'];
+            $error_to_show = (isset($options['oopspam_kb_spam_message']) && !empty($options['oopspam_kb_spam_message'])) ? $options['oopspam_kb_spam_message'] : 'Your submission has been flagged as spam.';
             $kb = new \KB_Ajax_Form();
             $kb -> process_bail( __( $error_to_show, 'oopspam' ), __( 'Spam Detected by OOPSpam', 'oopspam' ) );
             return;

@@ -83,7 +83,7 @@ function oopspamantispam_cf7_pre_submission($spam)
             ));
 
             // Show a custom message
-            if (isset($options['oopspam_cf7_spam_message']) && $options['oopspam_cf7_spam_message']) {
+            if (isset($options['oopspam_cf7_spam_message']) && !empty($options['oopspam_cf7_spam_message'])) {
                 $error_to_show = $options['oopspam_cf7_spam_message'];
             } else {
                 $error_to_show = "Your submission has been flagged as spam.";

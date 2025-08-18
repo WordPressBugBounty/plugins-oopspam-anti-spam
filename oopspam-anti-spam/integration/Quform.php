@@ -91,7 +91,7 @@ function my_pre_validate(array $result, \Quform_Form $form)
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = isset($options['oopspam_quform_spam_message']) ? 
+            $error_to_show = (isset($options['oopspam_quform_spam_message']) && !empty($options['oopspam_quform_spam_message'])) ? 
                             $options['oopspam_quform_spam_message'] : 
                             __('Your submission has been flagged as spam.', 'oopspam');
             

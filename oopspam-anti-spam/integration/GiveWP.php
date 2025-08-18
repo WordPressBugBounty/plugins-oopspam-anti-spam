@@ -59,7 +59,7 @@ function oopspamantispam_givewp_pre_submission($data)
                 "FormId" => $form_id,
             ];
             oopspam_store_spam_submission($frmEntry, "Gateway mismatch");
-            $error_to_show = isset($options['oopspam_give_spam_message']) ? $options['oopspam_give_spam_message'] : 'Your submission has been flagged as spam.';
+            $error_to_show = (isset($options['oopspam_give_spam_message']) && !empty($options['oopspam_give_spam_message'])) ? $options['oopspam_give_spam_message'] : 'Your submission has been flagged as spam.';
             give_set_error('give_message', $error_to_show);
             return $data;
         }
@@ -82,7 +82,7 @@ function oopspamantispam_givewp_pre_submission($data)
 
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = $options['oopspam_give_spam_message'];
+            $error_to_show = (isset($options['oopspam_give_spam_message']) && !empty($options['oopspam_give_spam_message'])) ? $options['oopspam_give_spam_message'] : 'Your submission has been flagged as spam.';
             give_set_error('give_message', $error_to_show);
         } else {
             // It's ham

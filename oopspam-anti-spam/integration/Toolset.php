@@ -53,7 +53,7 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
         // It's spam, store the submission and show error
         oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-        $error_to_show = isset($options['oopspam_ts_spam_message']) ? $options['oopspam_ts_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+        $error_to_show = (isset($options['oopspam_ts_spam_message']) && !empty($options['oopspam_ts_spam_message'])) ? $options['oopspam_ts_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
 
         // Get first element in the form to display error message
         $keys = array_keys($fields);

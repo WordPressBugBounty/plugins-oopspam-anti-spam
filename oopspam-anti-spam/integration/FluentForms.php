@@ -128,7 +128,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-            $error_to_show = isset($options['oopspam_ff_spam_message']) ? $options['oopspam_ff_spam_message'] : 'Your submission has been flagged as spam.';
+            $error_to_show = (isset($options['oopspam_ff_spam_message']) && !empty($options['oopspam_ff_spam_message'])) ? $options['oopspam_ff_spam_message'] : 'Your submission has been flagged as spam.';
             wp_send_json(['errors' => [
                 'restricted' => [
                     $error_to_show,

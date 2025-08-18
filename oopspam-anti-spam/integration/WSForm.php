@@ -120,7 +120,7 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission in Form Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = isset($options['oopspam_ws_spam_message']) ? $options['oopspam_ws_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+            $error_to_show = (isset($options['oopspam_ws_spam_message']) && !empty($options['oopspam_ws_spam_message'])) ? $options['oopspam_ws_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
             $field_error_action_array[] = array(
                 'action' => 'message',
                 'message' => $error_to_show,

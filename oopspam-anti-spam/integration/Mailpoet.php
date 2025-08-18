@@ -37,7 +37,7 @@ function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_
         if (!$detectionResult["isItHam"]) {
             // It's spam, show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = isset($options['oopspam_mpoet_spam_message']) ? $options['oopspam_mpoet_spam_message'] : 'Your submission has been flagged as spam.';
+            $error_to_show = (isset($options['oopspam_mpoet_spam_message']) && !empty($options['oopspam_mpoet_spam_message'])) ? $options['oopspam_mpoet_spam_message'] : 'Your submission has been flagged as spam.';
             throw new \MailPoet\UnexpectedValueException($error_to_show);
         } else {
             // It's ham, continue with the subscription

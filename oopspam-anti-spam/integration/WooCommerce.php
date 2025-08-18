@@ -610,7 +610,7 @@ class WooSpamProtection
 private function get_error_message()
 {
     $options = get_option('oopspamantispam_settings', array());
-    return isset($options['oopspam_woo_spam_message']) 
+    return (isset($options['oopspam_woo_spam_message']) && !empty($options['oopspam_woo_spam_message'])) 
         ? $options['oopspam_woo_spam_message'] 
         : __('There was an error with your submission. Please try again.', 'woocommerce');
 }

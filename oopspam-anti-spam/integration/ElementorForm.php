@@ -109,7 +109,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
         $userIP = "";
 
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-            $userIP = \ElementorPro\Core\Utils::get_client_ip();
+            $userIP = oopspamantispam_get_ip();
         }
 
         $escapedMsg = sanitize_textarea_field($message);
@@ -141,7 +141,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
                 $field_id = $field['id'];
             }
 
-            $error_to_show = isset($options['oopspam_el_spam_message']) ? $options['oopspam_el_spam_message'] : 'Your submission has been flagged as spam.';
+            $error_to_show = (isset($options['oopspam_el_spam_message']) && !empty($options['oopspam_el_spam_message'])) ? $options['oopspam_el_spam_message'] : 'Your submission has been flagged as spam.';
             $ajax_handler->add_error($field_id, $error_to_show);
         } else {
             // It's ham
