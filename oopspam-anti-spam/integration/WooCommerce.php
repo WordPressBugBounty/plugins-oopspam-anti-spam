@@ -572,7 +572,7 @@ class WooSpamProtection
         if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('woo')) {
 
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-            $userIP = \WC_Geolocation::get_ip_address();
+            $userIP = oopspamantispam_get_ip();
         }
 
         if (!empty($userIP) || !empty($email)) {
@@ -620,7 +620,7 @@ private function isEmailAllowed($email, $rawEntry)
         $hasAllowedEmail = oopspam_is_email_allowed($email);
         
         if ($hasAllowedEmail) {
-            $userIP = \WC_Geolocation::get_ip_address();
+            $userIP = oopspamantispam_get_ip();
             $frmEntry = [
                 "Score" => 0,
                 "Message" => "",

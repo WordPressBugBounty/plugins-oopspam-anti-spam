@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.46
+ * Version: 1.2.47
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -721,9 +721,42 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     
     $countryallowlistSetting = (get_option('oopspam_countryallowlist') != null ? get_option('oopspam_countryallowlist') : [""]);
     $countryblocklistSetting = (get_option('oopspam_countryblocklist') != null ? get_option('oopspam_countryblocklist') : [""]);
+    $countryAlwaysAllowSetting = (get_option('oopspam_country_always_allow') != null ? get_option('oopspam_country_always_allow') : [""]);
     $languageallowlistSetting = (get_option('oopspam_languageallowlist') != null ? get_option('oopspam_languageallowlist') : [""]);
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
     $isLoggable = defined('OOPSPAM_ENABLE_REMOTE_LOGGING') ? OOPSPAM_ENABLE_REMOTE_LOGGING : (isset($options['oopspam_is_loggable']) ? $options['oopspam_is_loggable'] : false);
+    
+    // Check if submission is from an always allowed country
+    if (!empty($commentIP) && !empty($countryAlwaysAllowSetting)) {
+        $args = array(
+            'timeout' => 5,
+            'redirection' => 5,
+            'httpversion' => '1.1',
+            'blocking' => true,
+            'sslverify' => true
+        );
+
+        $response = wp_remote_get("https://reallyfreegeoip.org/json/{$commentIP}", $args);
+        
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $body = wp_remote_retrieve_body($response);
+            $data = json_decode($body, true);
+            if (isset($data['country_code'])) {
+                $country_code = strtolower($data['country_code']);
+                if (in_array($country_code, $countryAlwaysAllowSetting)) {
+                    if ($returnReason) {
+                        $reason = [
+                            "Score" => 0,
+                            "isItHam" => true,
+                            "Reason" => "From always allowed country"
+                        ];
+                        return $reason;
+                    }
+                    return true;
+                }
+            }
+        }
+    }
 
     $blockTempEmail = (isset($options['oopspam_block_temp_email']) ? $options['oopspam_block_temp_email'] : false);
     $blockVPNs = (isset($ipFilteringOptions['oopspam_block_vpns']) ? $ipFilteringOptions['oopspam_block_vpns'] : false);
@@ -792,9 +825,6 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         
         // Unicode support
         $commentText = mb_convert_encoding($commentText, "UTF-8");
-
-        // Add submission speed to comment text for analysis
-        // $commentText .= " [Submission Speed: " . $submissionSpeed . "s]";
 
         $response = $OOPSpamAPI->SpamDetection($commentText, 
         $commentIP, 
@@ -890,7 +920,7 @@ function extractReasonFromAPIResponse($response) {
         $booleanChecks = [
             'isIPBlocked' => 'IP blocked',
             'isEmailBlocked' => 'Email blocked',
-            'isContentTooShort' => 'Content short'
+            'isContentTooShort' => 'Content too short'
         ];
 
         foreach ($booleanChecks as $key => $reason) {
@@ -900,27 +930,27 @@ function extractReasonFromAPIResponse($response) {
         }
 
         if (isset($details['isContentSpam']) && $details['isContentSpam'] === 'spam') {
-            return 'The message is spam';
+            return 'Content identified as spam';
         }
 
         // Check for language and country mismatch
         if (isset($details['langMatch']) && $details['langMatch'] === false) {
-            return 'The language is not allowed';
+            return 'Language not allowed';
         }
 
-        if (isset($details['countryMatch']) && $details['countryMatch'] === false && $response['Score'] >= 6) {
-            return 'The country is not allowed';
+        if (isset($details['countryMatch']) && $details['countryMatch'] === true && $response['Score'] >= 6) {
+            return 'Country blocked';
         }
     }
 
-
+    
     // If no specific reason found, use the overall score
     if (isset($response['Score']) && $response['Score'] >= 3 ) {
-        return 'High score';
+        return 'High spam score';
     }
 
     // If no reason found at all
-    return 'Unknown reason';
+    return 'Multiple spam indicators';
 }
 
 function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpam)

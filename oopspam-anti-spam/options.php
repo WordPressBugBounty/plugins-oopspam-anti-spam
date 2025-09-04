@@ -386,6 +386,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-settings-group', 'oopspam_countryallowlist');
     register_setting('oopspamantispam-settings-group', 'oopspam_countryblocklist');
+    register_setting('oopspamantispam-settings-group', 'oopspam_country_always_allow');
     register_setting('oopspamantispam-settings-group', 'oopspam_languageallowlist');
     register_setting('oopspamantispam-settings-group', 'oopspam_admin_emails');
 
@@ -597,24 +598,31 @@ function oopspamantispam_settings_init()
     $isItAllowedToCheckIPs = isset($privacy_options['oopspam_is_check_for_ip']) ? $privacy_options['oopspam_is_check_for_ip'] : false;
 
     if(!$isItAllowedToCheckIPs) {
+        add_settings_field('oopspam_country_always_allow',
+            __('Trusted Countries (always bypasses spam checks):', 'oopspam'),
+            'oopspam_country_always_allow_render',
+            'oopspamantispam-settings-group',
+            'oopspam_settings_section'
+        );
+
         add_settings_field('oopspam_countryallowlist',
-            __('Allow submissions only from these countries:', 'oopspam'),
+            __('Country Allowlist (only accept from these countries):', 'oopspam'),
             'oopspam_countryallowlist_render',
             'oopspamantispam-settings-group',
             'oopspam_settings_section'
         );
 
         add_settings_field('oopspam_countryblocklist',
-        __('Block submissions from these countries:', 'oopspam'),
-        'oopspam_countryblocklist_render',
-        'oopspamantispam-settings-group',
-        'oopspam_settings_section'
+            __('Country Blocklist (reject submissions from these countries):', 'oopspam'),
+            'oopspam_countryblocklist_render',
+            'oopspamantispam-settings-group',
+            'oopspam_settings_section'
         );
     }
 
     
     add_settings_field('oopspam_languageallowlist',
-        __('Allow messages only in these languages:', 'oopspam'),
+        __('Language Allowlist (only process messages in these languages):', 'oopspam'),
         'oopspam_languageallowlist_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
@@ -2066,6 +2074,34 @@ function oopspam_is_search_protection_on_render() {
         <?php
 }
 
+function oopspam_country_always_allow_render()
+{
+    $countryAlwaysAllowSetting = get_option('oopspam_country_always_allow');
+    $countrylist = oopspam_get_isocountries();
+    ?>
+
+        <div id="alwaysallowcountry">
+        <select class="select" data-placeholder="Choose a country..." name="oopspam_country_always_allow[]" multiple="true" style="width:600px;">
+        <optgroup label="(de)select all countries">
+
+            <?php
+foreach ($countrylist as $key => $value) {
+        print "<option value=\"$key\"";
+        if (is_array($countryAlwaysAllowSetting) && in_array($key, $countryAlwaysAllowSetting)) {
+            print " selected=\"selected\" ";
+        }
+        print ">$value</option>\n";
+}
+            ?>
+        </optgroup>
+        </select>
+        </div>
+        <p class="description">
+            <?php echo __('Highest priority: Submissions from these countries will always be allowed and bypass all spam checks.', 'oopspam'); ?>
+        </p>
+<?php
+}
+
 function oopspam_countryallowlist_render()
 {
     $countryallowlistSetting = get_option('oopspam_countryallowlist');
@@ -2089,6 +2125,9 @@ foreach ($countrylist as $key => $value) {
 
     ?>
         </div>
+        <p class="description">
+            <?php echo __('When countries are selected here, ONLY submissions from these countries will be processed. Leave empty to accept from all countries not in the blocklist.', 'oopspam'); ?>
+        </p>
         <?php
 
 }
@@ -2140,6 +2179,9 @@ function oopspam_countryblocklist_render()
                 <button id="eu-countries" type="button" class="button button-secondary">Add countries in the EU</button>
             </div>
         </div>
+        <p class="description">
+            <?php echo __('Submissions from these countries will be rejected, unless they appear in the Trusted Countries list above.', 'oopspam'); ?>
+        </p>
         <?php
 }
 
@@ -2179,6 +2221,9 @@ foreach ($languagelist as $key => $value) {
 
     ?>
         </div>
+        <p class="description">
+            <?php echo __('When languages are selected, only messages in these languages will be accepted. Leave empty to accept all languages.', 'oopspam'); ?>
+        </p>
         <?php
 
 }

@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.46
+Stable tag: 1.2.47
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -138,6 +138,10 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.47 =
+* **NEW:** Added a new setting: "Trusted Countries (always bypasses spam checks)"
+* **IMPROVEMENT:** WooCommerce orders now use our IP detection method to capture the real IP instead of proxy IPs
+* **IMPROVEMENT:** UX improvements for geo-location settings
 = 1.2.46 =
 * **IMPROVEMENT:** Enhanced IP address detection for Elementor Forms integration
 * **FIX:** Fixed custom spam messages not falling back to default when empty across all form integrations
