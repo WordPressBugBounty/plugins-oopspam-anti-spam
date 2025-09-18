@@ -56,8 +56,16 @@ add_action('admin_enqueue_scripts', 'oopspam_admin_menu_styles');
  * Redirect to setup wizard on plugin activation if not completed
  */
 function oopspam_maybe_redirect_to_wizard() {
-    // Only redirect if it's a single activation
-    if (isset($_GET['activate-multi']) || oopspam_is_wizard_completed() || get_transient('oopspam_activation_redirect')) {
+    // Check and mark wizard completed first if API key exists
+    if (oopspam_has_api_key() && !oopspam_is_wizard_completed()) {
+        update_option('oopspam_wizard_completed', true);
+    }
+    
+    // Only redirect if it's a single activation, wizard not completed, API key doesn't exist, and no previous redirect
+    if (isset($_GET['activate-multi']) || 
+        oopspam_is_wizard_completed() || 
+        oopspam_has_api_key() || 
+        get_transient('oopspam_activation_redirect')) {
         return;
     }
 

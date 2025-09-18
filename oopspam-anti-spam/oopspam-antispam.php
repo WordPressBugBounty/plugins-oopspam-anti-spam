@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.48
+ * Version: 1.2.49
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -131,6 +131,9 @@ register_deactivation_hook(__FILE__, 'oopspam_plugin_deactivation');
 register_activation_hook(__FILE__, 'oopspamantispam_check_run_migration');
 add_action('plugins_loaded', 'oopspamantispam_check_run_migration');
 
+// Automatically mark wizard as completed for existing installations with API keys
+add_action('admin_init', 'oopspam_check_and_mark_wizard_completed', 5); // Run with high priority
+
 function oopspamantispam_migrate_privacy_settings() {
     $old_options = get_option('oopspamantispam_settings');
     $privacy_options = get_option('oopspamantispam_privacy_settings', array());
@@ -152,8 +155,21 @@ function oopspamantispam_migrate_privacy_settings() {
 }
 
 function oopspamantispam_check_run_migration() {
+    // Run privacy settings migration if needed
     if (get_option('oopspamantispam_privacy_migration_completed') !== true) {
         oopspamantispam_migrate_privacy_settings();
+    }
+    
+    // Check if this is a plugin update by checking if API key exists but wizard is not completed
+    // This is especially important for updates from older versions
+    if (function_exists('oopspamantispam_checkIfValidKey')) {
+        $api_key = oopspamantispam_checkIfValidKey();
+        
+        if ($api_key && !get_option('oopspam_wizard_completed', false)) {
+            // API key exists but wizard is not marked as completed
+            // Mark wizard as completed to prevent notice after update
+            update_option('oopspam_wizard_completed', true);
+        }
     }
 }
 
@@ -293,8 +309,22 @@ function oopspam_plugin_activate() {
     // Set default settings
     do_action('oopspam_set_default_settings');
     
-    // Set transient for redirect to setup wizard
-    if (!get_option('oopspam_wizard_completed', false)) {
+    // Use function to check if API key exists (after helpers.php is included)
+    // If helpers.php hasn't been included yet, fall back to direct option check
+    if (function_exists('oopspamantispam_checkIfValidKey')) {
+        $has_key = oopspamantispam_checkIfValidKey();
+    } else {
+        // Fallback to direct option check if function not available yet
+        $options = get_option('oopspamantispam_settings');
+        $has_key = defined('OOPSPAM_API_KEY') || (isset($options['oopspam_api_key']) && !empty($options['oopspam_api_key']));
+    }
+    
+    // If API key exists, mark wizard as completed automatically
+    if ($has_key) {
+        update_option('oopspam_wizard_completed', true);
+    }
+    // Otherwise, set transient for redirect to setup wizard
+    elseif (!get_option('oopspam_wizard_completed', false)) {
         // Set a transient to redirect to the setup wizard
         set_transient('oopspam_activation_redirect', true, 30);
     }
@@ -1373,14 +1403,57 @@ function oopspam_admin_style()
 /**
  * Display admin notice if the plugin is not set up
  */
+/**
+ * Check for existing API key and mark wizard as completed
+ * This ensures older installations with API keys don't see the wizard notice
+ */
+function oopspam_check_and_mark_wizard_completed() {
+    static $already_run = false;
+    
+    // Make sure this only runs once per page load
+    if ($already_run) {
+        return;
+    }
+    $already_run = true;
+    
+    // Use the most reliable API key check
+    if (function_exists('oopspamantispam_checkIfValidKey')) {
+        $has_api_key = oopspamantispam_checkIfValidKey();
+    } else if (function_exists('oopspam_has_api_key')) {
+        $has_api_key = oopspam_has_api_key();
+    } else {
+        $options = get_option('oopspamantispam_settings');
+        $has_api_key = defined('OOPSPAM_API_KEY') || (isset($options['oopspam_api_key']) && !empty($options['oopspam_api_key']));
+    }
+    
+    // If API key exists but wizard not completed, mark it as completed
+    if (!get_option('oopspam_wizard_completed', false) && $has_api_key) {
+        update_option('oopspam_wizard_completed', true);
+    }
+}
+
+/**
+ * Display admin notice for setup wizard
+ */
 function oopspam_admin_setup_notice() {
     // Don't show notice on the setup wizard page
     if (isset($_GET['page']) && $_GET['page'] === 'oopspam_setup_wizard') {
         return;
     }
     
-    // Check if the wizard is completed and an API key is set
-    if (!oopspam_is_wizard_completed() || !oopspam_has_api_key()) {
+    // Check and mark wizard completed first if API key exists
+    oopspam_check_and_mark_wizard_completed();
+    
+    // Run the check for existing installations one more time using the most reliable method
+    if (function_exists('oopspamantispam_checkIfValidKey')) {
+        $api_key = oopspamantispam_checkIfValidKey();
+        if ($api_key && !get_option('oopspam_wizard_completed', false)) {
+            update_option('oopspam_wizard_completed', true);
+        }
+    }
+    
+    // Only show the notice if wizard is not completed AND API key is missing after the check
+    if (!get_option('oopspam_wizard_completed', false) && !oopspam_has_api_key()) {
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>

@@ -4059,8 +4059,11 @@ function oopspamantispam_options_page()
     $options = get_option('oopspamantispam_settings');
     $api_key = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
 
-    // If API key is not set, redirect to setup wizard
-    if (empty($api_key)) {
+    // Check if user manually requested the wizard
+    $start_wizard = isset($_GET['start_wizard']) && $_GET['start_wizard'] == 1;
+    
+    // If API key is not set or user manually requested the wizard, redirect to setup wizard
+    if (empty($api_key) || $start_wizard) {
         // Prevent redirect loops by checking if we're already coming from the wizard or have a redirect flag
         $from_wizard = isset($_GET['from_wizard']) && $_GET['from_wizard'] == 1;
         $redirect_flag = get_transient('oopspam_options_redirect');
@@ -4068,7 +4071,7 @@ function oopspamantispam_options_page()
         if (!$from_wizard && !$redirect_flag) {
             // Set a transient to prevent multiple redirects
             set_transient('oopspam_options_redirect', true, 30);
-            // Redirect to setup wizard if no API key is set
+            // Redirect to setup wizard
             wp_redirect(admin_url('admin.php?page=oopspam_setup_wizard'));
             exit;
         }

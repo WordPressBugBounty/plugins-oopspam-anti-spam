@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.48
+Stable tag: 1.2.49
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -28,6 +28,7 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpa
 - Protect against both automated bots and human spammers
 - Auto-detect spam patterns unique to your website's context
 - Block spam from VPNs and known malicious sources
+- Prevent WooCommerce card testing attacks with advanced checkout protection
 
 **🔒 Privacy-First Design**
 - GDPR-compliant with no data stored on our servers
@@ -138,6 +139,8 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.49 =
+* **FIX:** Fixed issue where setup wizard would appear even when API key was already configured
 = 1.2.48 =
 * **NEW:** Added interactive setup wizard for easier configuration
 * **NEW:** [WooCommerce] Added "Disable WooCommerce checkout via REST API" setting to prevent API-based attacks
