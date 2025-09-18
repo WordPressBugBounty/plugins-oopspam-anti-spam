@@ -23,7 +23,7 @@ function oopspam_spam_check($errors, $form)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Ham Entries
+                // Don't log under Form Valid Entries
                 if ($formId === $id) {
                     return $errors;
                 }

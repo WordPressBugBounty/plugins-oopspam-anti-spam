@@ -32,7 +32,7 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Ham Entries
+                // Don't log under Form Valid Entries
                 if ($form_id == $id) {
                     return $field_error_action_array;
                 }

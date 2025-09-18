@@ -95,7 +95,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
     
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Ham Entries
+                // Don't log under Form Valid Entries
                 if ($insertData["form_id"] == $id) {
                     return;
                 }

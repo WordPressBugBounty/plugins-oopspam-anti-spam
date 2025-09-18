@@ -24,7 +24,22 @@ class WooSpamProtection
     public function __construct()
     {
         $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't set up any hooks
+        if (!$woo_enabled) {
+            return;
+        }
+        
         $honeypot_enabled = isset($options['oopspam_woo_check_honeypot']) && $options['oopspam_woo_check_honeypot'] == 1;
+        $disable_rest_checkout = isset($options['oopspam_woo_disable_rest_checkout']) && $options['oopspam_woo_disable_rest_checkout'] == 1;
+        
+        // Disable WooCommerce REST API checkout endpoints if the setting is enabled
+        if ($disable_rest_checkout) {
+            add_action('rest_api_init', array($this, 'oopspam_disable_wc_rest_checkout'));
+        }
 
         // Initialize actions & filters
         if ($honeypot_enabled) {
@@ -33,7 +48,7 @@ class WooSpamProtection
             add_action('woocommerce_login_form', [$this, 'oopspam_woocommerce_login_form'], 1, 0);
         }
         
-        // Always add these hooks as they handle both honeypot and API validation
+        // Add hooks for checkout validation
         add_action('woocommerce_register_post', array($this, 'oopspam_process_registration'), 10, 3);
         add_action('woocommerce_process_registration_errors', [$this, 'oopspam_woocommerce_register_errors'], 10, 4);
         add_filter('woocommerce_process_login_errors', [$this, 'oopspam_woocommerce_login_errors'], 1, 1);
@@ -43,6 +58,8 @@ class WooSpamProtection
         add_action('woocommerce_checkout_order_processed', [$this, 'oopspam_checkout_classic_processed'], 10, 3);
         // Legacy API hook
         add_action('woocommerce_new_order', [$this, 'oopspam_legacy_checkout_classic_processed'], 10, 2);
+
+        add_action('woocommerce_order_save_attribution_data', [$this, 'oopspam_check_order_attributes'], 10, 2);
     }
 
     private function cleanSensitiveData($data) {
@@ -70,7 +87,121 @@ class WooSpamProtection
         return json_encode($data);
     }
 
+    function oopspam_check_order_attributes($order, $data ) {
+        $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $order;
+        }
+        
+        // Check for allowed email/IP
+        $email = $order->get_billing_email();
+        $hasAllowedEmail = $email ? $this->isEmailAllowed($email, $data) : false;
+
+        if ($hasAllowedEmail) {
+            return $order;
+        }
+
+        $minSessionPages = isset($options['oopspam_woo_min_session_pages']) && $options['oopspam_woo_min_session_pages'] !== '' ? intval($options['oopspam_woo_min_session_pages']) : 0;
+        $requireDeviceType = isset($options['oopspam_woo_require_device_type']) && $options['oopspam_woo_require_device_type'] == 1;
+        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
+        
+        // Block order if any of the independent checks fail
+        $blockOrder = false;
+        $blockReason = "";
+        
+        // 1. Device type check - block if user_agent doesn't exist and device type is required
+        if ($requireDeviceType && (!isset($data['user_agent']) || empty($data['user_agent']))) {
+            $blockOrder = true;
+            $blockReason = "Invalid Device Type";
+        }
+        
+        // 2. Origin check - block if source_type doesn't exist or is empty when required
+        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
+            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
+            $should_check_origin = false;
+
+            // If no payment methods specified, always check origin
+            if (empty($payment_methods)) {
+                $should_check_origin = true;
+            } 
+            // If payment methods are specified, only check if current method matches
+            else {
+                $current_payment_method = strtolower($order->get_payment_method_title());
+                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
+                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
+                
+                foreach ($allowed_methods as $method) {
+                    if (strpos($current_payment_method, $method) !== false) {
+                        $should_check_origin = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($should_check_origin && (!isset($data['source_type']) || empty($data['source_type']))) {
+                $blockOrder = true;
+                $blockReason = "Unknown Order Attribution";
+            }
+        }
+        
+        // 3. Session pages check - block if session_pages is less than minimum required
+        if ($minSessionPages > 0) {
+            $sessionPagesValue = isset($data['session_pages']) ? intval($data['session_pages']) : 0;
+            if ($sessionPagesValue < $minSessionPages) {
+                $blockOrder = true;
+                $blockReason = "Insufficient Session Pages: {$sessionPagesValue}/{$minSessionPages}";
+            }
+        }
+        
+        // Process blockOrder regardless of the origin check
+        if ($blockOrder) {
+            // Check if user has completed orders before - don't block if they do
+            $email = $order->get_billing_email();
+            $hasCompletedOrders = $this->hasCompletedOrders($email);
+            
+            if ($hasCompletedOrders) {
+                // User has previous completed orders, allow this order to proceed
+                return $order;
+            } else {
+                $userIP = oopspamantispam_get_ip();
+                // No previous orders, proceed with blocking
+                $frmEntry = [
+                    "Score" => 6,
+                    "Message" => "",
+                    "IP" => $userIP,
+                    "Email" => $email,
+                    "RawEntry" => $this->cleanSensitiveData($data),
+                    "FormId" => "WooCommerce",
+                ];
+                oopspam_store_spam_submission($frmEntry, $blockReason);
+    
+                // Trash the order
+                if ($order) {
+                    $order->delete(true); // 'true' deletes permanently
+                }
+    
+                $error_to_show = $this->get_error_message();
+                wp_die($error_to_show);
+            }
+        }
+        
+        return $order;
+    }
     function oopspam_legacy_checkout_classic_processed($order_id, $order) {
+        $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $order;
+        }
         
         $data = json_decode($order, true);
         $post = $_POST;
@@ -82,163 +213,40 @@ class WooSpamProtection
             return $order;
         }
 
-        $options = get_option('oopspamantispam_settings');
-        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
-
-        // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
-        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
-            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
-            $should_check_origin = false;
-
-            // If no payment methods specified, always check origin
-            if (empty($payment_methods)) {
-                $should_check_origin = true;
-            } 
-            // If payment methods are specified, only check if current method matches
-            elseif ($order instanceof \WC_Order) {
-                $current_payment_method = strtolower($order->get_payment_method_title());
-                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
-                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
-                
-                foreach ($allowed_methods as $method) {
-                    if (strpos($current_payment_method, $method) !== false) {
-                        $should_check_origin = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($should_check_origin) {
-                $sourceTypeExists = false;
-                $sourceTypeValue = null; 
-
-                if (isset($data['meta_data'])) {
-                    foreach ($data['meta_data'] as $meta) {
-                        if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
-                            $sourceTypeExists = true;
-                            $sourceTypeValue = $meta['value'];
-                            break;
-                        }
-                    }
-                }
-
-                // Check legacy origin attributes
-                if (empty($sourceTypeValue) && isset($post['wc_order_attribution_source_type'])) {
-                    $sourceTypeExists = true;
-                    $sourceTypeValue = $post['wc_order_attribution_source_type'];
-                }
-
-                // This is to prevent the order from being processed if the source type is not set.            
-                if (!$sourceTypeExists || empty($sourceTypeValue)) {
-                    
-                    $frmEntry = [
-                        "Score" => 6,
-                        "Message" => "",
-                        "IP" => $data['customer_ip_address'],
-                        "Email" => sanitize_email($data['billing']['email']),
-                        "RawEntry" => $this->cleanSensitiveData(array_merge($data, $post)),
-                        "FormId" => "WooCommerce",
-                    ];
-                    oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
-
-                    // Trash the order
-                    if ( $order ) {
-                        $order->delete( true ); // 'false' moves to trash, 'true' deletes permanently
-                    }
-
-                    $error_to_show = $this->get_error_message();
-                    wp_die($error_to_show);
-                }
-            }
+        // Now check with OOPSpam API
+        $message = isset($post['order_comments']) ? sanitize_text_field($post['order_comments']) : '';
+        if (empty($message) && isset($data['customer_note'])) {
+            $message = sanitize_text_field($data['customer_note']);
         }
-            // Now check with OOPSpam API
-            $message = isset($post['order_comments']) ? sanitize_text_field($post['order_comments']) : '';
-            if (empty($message) && isset($data['customer_note'])) {
-                $message = sanitize_text_field($data['customer_note']);
-            }
-            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
-            if ($showError) {
-                $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html__( $error_to_show ), 'error' );
-            }
-        
-    }    
-    
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
+        if ($showError) {
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html__( $error_to_show ), 'error' );
+        }
+
+    }
 
     function oopspam_checkout_store_api_processed($order) {
+        $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $order;
+        }
         
         $data = json_decode($order, true);
-        
+
         // Check for allowed email/IP
         $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
 
         if ($hasAllowedEmail) {
             return $order;
         }
-
-        $options = get_option('oopspamantispam_settings');
-        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
-        
-        // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
-        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
-            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
-            $should_check_origin = false;
-
-            // If no payment methods specified, always check origin
-            if (empty($payment_methods)) {
-                $should_check_origin = true;
-            } 
-            // If payment methods are specified, only check if current method matches
-            elseif ($order instanceof \WC_Order) {
-                $current_payment_method = strtolower($order->get_payment_method_title());
-                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
-                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
-                
-                foreach ($allowed_methods as $method) {
-                    if (strpos($current_payment_method, $method) !== false) {
-                        $should_check_origin = true;
-                        break;
-                    }
-                }
-            }
-
             
-            if ($should_check_origin) {
-                $sourceTypeExists = false;
-                $sourceTypeValue = null; 
-
-                if (isset($data['meta_data'])) {
-                    foreach ($data['meta_data'] as $meta) {
-                        if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
-                            $sourceTypeExists = true;
-                            $sourceTypeValue = $meta['value'];
-                            break;
-                        }
-                    }
-                }
-
-                if (isset($data['password'])) {
-                    unset($data['password']);
-                }
-                // This is to prevent the order from being processed if the source type is not set.            
-                if (!$sourceTypeExists || empty($sourceTypeValue)) {
-                    
-                    $frmEntry = [
-                        "Score" => 6,
-                        "Message" => "",
-                        "IP" => $data['customer_ip_address'],
-                        "Email" => sanitize_email($data['billing']['email']),
-                        "RawEntry" => $this->cleanSensitiveData($data),
-                        "FormId" => "WooCommerce",
-                    ];
-                    oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
-
-                    $error_to_show = $this->get_error_message();
-                    wp_die($error_to_show);
-                }
-            }
-        }
-            // Now check with OOPSpam API
+        // Now check with OOPSpam API
             $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
             if (empty($message) && isset($data['order_comments'])) {
                 $message = sanitize_text_field($data['order_comments']);
@@ -252,6 +260,15 @@ class WooSpamProtection
     }    
 
     function oopspam_checkout_classic_processed($order_id, $posted_data, $order) {
+        $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $order;
+        }
         
         $data = json_decode($order, true);
 
@@ -260,65 +277,6 @@ class WooSpamProtection
 
         if ($hasAllowedEmail) {
             return $order;
-        }
-        
-        $options = get_option('oopspamantispam_settings');
-        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
-
-        // Check if WooCommerce -> Settings -> Advanced -> Features -> Order Attribution and "Block orders from unknown origin" are enabled.
-        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
-            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
-            $should_check_origin = false;
-
-            // If no payment methods specified, always check origin
-            if (empty($payment_methods)) {
-                $should_check_origin = true;
-            } 
-            // If payment methods are specified, only check if current method matches
-            elseif ($order instanceof \WC_Order) {
-                $current_payment_method = strtolower($order->get_payment_method_title());
-                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
-                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
-                
-                foreach ($allowed_methods as $method) {
-                    if (strpos($current_payment_method, $method) !== false) {
-                        $should_check_origin = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($should_check_origin) {
-                $sourceTypeExists = false;
-                $sourceTypeValue = null;
-
-                if (isset($data['meta_data'])) {
-                    foreach ($data['meta_data'] as $meta) {
-                        if (isset($meta['key']) && $meta['key'] === '_wc_order_attribution_source_type') {
-                            $sourceTypeExists = true;
-                            $sourceTypeValue = $meta['value'];
-                            break;
-                        }
-                    }
-                }
-
-                // This is to prevent the order from being processed if the source type is not set.            
-                if (!$sourceTypeExists || empty($sourceTypeValue)) {
-                    
-                    $frmEntry = [
-                        "Score" => 6,
-                        "Message" => "",
-                        "IP" => $data['customer_ip_address'],
-                        "Email" => sanitize_email($data['billing']['email']),
-                        "RawEntry" => $this->cleanSensitiveData($data),
-                        "FormId" => "WooCommerce",
-                    ];
-                    oopspam_store_spam_submission($frmEntry, "Unknown Order Attribution");
-
-                    $error_to_show = $this->get_error_message();
-                    wp_die($error_to_show);
-                }
-            }
         }
         
         // Now check with OOPSpam API
@@ -334,6 +292,15 @@ class WooSpamProtection
     }    
 
     function oopspam_checkout_process() {
+        $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return;
+        }
 
         $email = ""; $message = "";
         $message = isset($_POST['order_comments']) ? sanitize_text_field($_POST['order_comments']) : '';
@@ -413,8 +380,15 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_register_errors($validation_error, $username, $password, $email)
     {
-
         $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $validation_error;
+        }
 
         // Bypass honeypot check for allowed emails/IPs
         $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
@@ -454,8 +428,15 @@ class WooSpamProtection
      */
     public function oopspam_process_registration($username, $email, $errors)
     {
-
         $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $errors;
+        }
 
         $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
 
@@ -511,6 +492,16 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_login_errors($errors)
     {
+        $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return $errors;
+        }
+        
         $email = isset($_POST["username"]) && is_email($_POST["username"]) ? $_POST["username"] : "unknown";
 
         $hasAllowedEmail = $this->isEmailAllowed($email, $_POST);
@@ -564,16 +555,44 @@ class WooSpamProtection
 
     public function checkEmailAndIPInOOPSpam($email, $message)
     {
-
         $options = get_option('oopspamantispam_settings');
+        
+        // Check if WooCommerce integration is enabled
+        $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+        
+        // If WooCommerce integration is not enabled, don't perform any checks
+        if (!$woo_enabled) {
+            return false; // Return false to indicate no spam (allow the action)
+        }
+        
         $privacyOptions = get_option('oopspamantispam_privacy_settings');
         $userIP = "";
-
-        if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('woo')) {
-
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
             $userIP = oopspamantispam_get_ip();
         }
+
+        // First check if user has previous completed orders
+        if (!empty($email)) {
+            // If they have completed orders, consider them not spam
+            if ($this->hasCompletedOrders($email)) {
+                // Log this as ham automatically
+                $rawEntry = (object) array("IP" => $userIP, "email" => $email);
+                $frmEntry = [
+                    "Score" => 0, // Low score since we trust returning customers
+                    "Message" => $message,
+                    "IP" => $userIP,
+                    "Email" => $email,
+                    "RawEntry" => json_encode($rawEntry),
+                    "FormId" => "WooCommerce",
+                ];
+                
+                // Store as ham submission
+                oopspam_store_ham_submission($frmEntry);
+                return false; // Not spam
+            }
+        }
+
+        if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('woo')) {
 
         if (!empty($userIP) || !empty($email)) {
             $detectionResult = oopspamantispam_call_OOPSpam($message, $userIP, $email, true, "woo");
@@ -612,7 +631,7 @@ private function get_error_message()
     $options = get_option('oopspamantispam_settings', array());
     return (isset($options['oopspam_woo_spam_message']) && !empty($options['oopspam_woo_spam_message'])) 
         ? $options['oopspam_woo_spam_message'] 
-        : __('There was an error with your submission. Please try again.', 'woocommerce');
+        : __('Your order was detected as spam. Please try again or contact support.', 'woocommerce');
 }
 
 private function isEmailAllowed($email, $rawEntry)
@@ -639,5 +658,177 @@ private function isEmailAllowed($email, $rawEntry)
 private function should_check_honeypot() {
     $options = get_option('oopspamantispam_settings');
     return isset($options['oopspam_woo_check_honeypot']) && $options['oopspam_woo_check_honeypot'] == 1;
+}
+
+/**
+ * Blocks WooCommerce checkout endpoints in the REST API
+ * This helps prevent spam orders from automated tools and bots that bypass the normal checkout flow
+ * Can be enabled/disabled via the WooCommerce settings in the OOPSpam options
+ */
+public function oopspam_disable_wc_rest_checkout() {
+    $options = get_option('oopspamantispam_settings');
+    
+    // Check if WooCommerce integration is enabled
+    $woo_enabled = oopspam_is_spamprotection_enabled('woo');
+    
+    // If WooCommerce integration is not enabled, don't block anything
+    if (!$woo_enabled) {
+        return;
+    }
+    
+    $current_url = $_SERVER['REQUEST_URI'];
+    
+    // Block v1 endpoints
+    if (strpos($current_url, '/wp-json/wc/store/v1/checkout') !== false) {
+        // Get proper IP address using the plugin's method
+        $userIP = oopspamantispam_get_ip();
+        
+        // Try to extract email from request body
+        $email = '';
+        $request_body = file_get_contents('php://input');
+        if (!empty($request_body)) {
+            $json_data = json_decode($request_body, true);
+            if (is_array($json_data) && isset($json_data['billing_address']['email'])) {
+                $email = sanitize_email($json_data['billing_address']['email']);
+            }
+        }
+        
+        $request_details = [
+            'IP' => $userIP,
+            'User Agent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Not provided',
+            'Referer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'Not provided',
+            'URL' => $current_url,
+            'Request Body' => $request_body
+        ];
+        
+        $frmEntry = [
+            "Score" => 6,
+            "Message" => "",
+            "IP" => $userIP,
+            "Email" => $email,
+            "RawEntry" => json_encode($request_details),
+            "FormId" => "WooCommerce",
+        ];
+        oopspam_store_spam_submission($frmEntry, "Blocked WC REST API v1 checkout");
+        
+        wp_redirect(home_url('/404.php'));
+        exit;
+    }
+    
+    // Block v2 endpoints if they exist
+    if (strpos($current_url, '/wp-json/wc/store/v2/checkout') !== false) {
+        // Get proper IP address using the plugin's method
+        $userIP = oopspamantispam_get_ip();
+        
+        // Try to extract email from request body
+        $email = '';
+        $request_body = file_get_contents('php://input');
+        if (!empty($request_body)) {
+            $json_data = json_decode($request_body, true);
+            if (is_array($json_data) && isset($json_data['billing_address']['email'])) {
+                $email = sanitize_email($json_data['billing_address']['email']);
+            }
+        }
+        
+        $request_details = [
+            'IP' => $userIP,
+            'User Agent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Not provided',
+            'Referer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'Not provided',
+            'URL' => $current_url,
+            'Request Body' => $request_body
+        ];
+        
+        $frmEntry = [
+            "Score" => 6,
+            "Message" => "",
+            "IP" => $userIP,
+            "Email" => $email,
+            "RawEntry" => json_encode($request_details),
+            "FormId" => "WooCommerce",
+        ];
+        oopspam_store_spam_submission($frmEntry, "Blocked WC REST API v2 checkout");
+        
+        wp_redirect(home_url('/404.php'));
+        exit;
+    }
+    
+    // Block older checkout/payment endpoints
+    if (strpos($current_url, '/wp-json/wc/v') !== false && 
+        (strpos($current_url, '/checkout') !== false || strpos($current_url, '/payment') !== false)) {
+        // Get proper IP address using the plugin's method
+        $userIP = oopspamantispam_get_ip();
+        
+        // Try to extract email from request body
+        $email = '';
+        $request_body = file_get_contents('php://input');
+        if (!empty($request_body)) {
+            $json_data = json_decode($request_body, true);
+            // Legacy endpoints might have different structure - try to find email in various possible locations
+            if (is_array($json_data)) {
+                if (isset($json_data['billing_address']['email'])) {
+                    $email = sanitize_email($json_data['billing_address']['email']);
+                } elseif (isset($json_data['billing']['email'])) {
+                    $email = sanitize_email($json_data['billing']['email']);
+                } elseif (isset($json_data['email'])) {
+                    $email = sanitize_email($json_data['email']);
+                }
+            }
+        }
+        
+        $request_details = [
+            'IP' => $userIP,
+            'User Agent' => isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Not provided',
+            'Referer' => isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'Not provided',
+            'URL' => $current_url,
+            'Request Body' => $request_body
+        ];
+        
+        $frmEntry = [
+            "Score" => 6,
+            "Message" => "",
+            "IP" => $userIP,
+            "Email" => $email,
+            "RawEntry" => json_encode($request_details),
+            "FormId" => "WooCommerce",
+        ];
+        oopspam_store_spam_submission($frmEntry, "Blocked legacy WC REST API checkout");
+        
+        wp_redirect(home_url('/404.php'));
+        exit;
+    }
+}
+
+/**
+ * Check if a user has any completed orders
+ * 
+ * @param string $email Customer email address
+ * @param bool $debug Whether to log debug information
+ * @return boolean True if user has completed orders, false otherwise
+ */
+private function hasCompletedOrders($email, $debug = false) {
+    if (empty($email)) {
+        if ($debug) {
+            error_log("OOPSpam: hasCompletedOrders - Empty email provided");
+        }
+        return false;
+    }
+    
+    // Query for completed orders with this email
+    $args = array(
+        'customer' => $email,
+        'status' => array('wc-completed'),
+        'limit' => 1,
+    );
+    
+    $orders = wc_get_orders($args);
+    
+    $hasOrders = !empty($orders);
+    
+    if ($debug) {
+        error_log("OOPSpam: hasCompletedOrders - Email: $email, Has orders: " . ($hasOrders ? 'Yes' : 'No'));
+    }
+    
+    // Return true if at least one completed order exists
+    return $hasOrders;
 }
 }

@@ -45,6 +45,74 @@
    transform: translateX(2.5em) !important;
  }
 
+/* Tooltip styles */
+.oopspam-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+.oopspam-tooltip .dashicons {
+  color: #777;
+  cursor: pointer;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+  vertical-align: text-bottom;
+  margin-bottom: 1px;
+}
+
+.oopspam-tooltip .tooltip-text {
+  visibility: hidden;
+  width: 250px;
+  background-color: #555;
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 999;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.5;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+}
+
+.oopspam-tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.oopspam-tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Fix alignment in WordPress settings tables */
+.form-table th .oopspam-tooltip {
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+}
+
+.form-table th .oopspam-tooltip .dashicons {
+  vertical-align: text-bottom;
+  margin-top: -2px;
+}
 
 
 .ninja-forms {

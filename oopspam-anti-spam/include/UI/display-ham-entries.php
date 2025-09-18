@@ -716,8 +716,8 @@ class OOPSpam_Ham {
 
         $hook =  add_submenu_page(
             'wp_oopspam_settings_page',
-            __('Form Ham Entries', "oopspam"),
-            __('Form Ham Entries', "oopspam"),
+            __('Form Valid Entries', "oopspam"),
+            __('Form Valid Entries', "oopspam"),
             'edit_pages',
             'wp_oopspam_frm_ham_entries',
             [ $this, 'plugin_settings_page' ] );
@@ -734,13 +734,13 @@ class OOPSpam_Ham {
 		<div class="oopspam-wrap">
 			
             <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start;">
-				<h2 style="padding-right:0.5em;"><?php _e("Ham (Not Spam) Entries", "oopspam"); ?></h2>
+				<h2 style="padding-right:0.5em;"><?php _e("Form Valid Entries", "oopspam"); ?></h2>
 				<input type="button" id="empty-ham-entries" style="margin-right:0.5em;" class="button action" value="<?php _e("Empty the table", "oopspam"); ?>">
 				<input type="button" id="export-ham-entries" class="button action" value="<?php _e("Export CSV", "oopspam"); ?>">
             </div>
 			<div>
 				<p><?php _e("All submissions are stored locally in your WordPress database.", "oopspam"); ?></p>
-				<p><?php _e("In the below table you can view, delete, and report ham (not spam) entries.", "oopspam"); ?></p>
+				<p><?php _e("In the below table you can view, delete, and report approved entries.", "oopspam"); ?></p>
 				<p><?php _e("If you believe any of these SHOULD be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.", "oopspam"); ?> </p>
 				<ul>
 					<li><?php _e("1. Hover on an entry", "oopspam"); ?></li>

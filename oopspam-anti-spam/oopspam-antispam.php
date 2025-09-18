@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.47
+ * Version: 1.2.48
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -13,6 +13,9 @@
 if (!function_exists('add_action')) {
     die();
 }
+
+// Include the setup wizard
+require_once dirname(__FILE__) . '/setup-wizard.php';
 
 // Start session handling before any output
 function oopspam_start_session() {
@@ -66,6 +69,9 @@ use OOPSPAM\RateLimiting\OOPSpam_RateLimiter;
 
 if (is_admin()) { //if admin include the admin specific functions
     require_once dirname(__FILE__) . '/options.php';
+    
+    // Add admin notice if plugin is not set up
+    add_action('admin_notices', 'oopspam_admin_setup_notice');
 }
 
 // Include the plugin helpers.
@@ -286,6 +292,12 @@ function oopspam_plugin_activate() {
 
     // Set default settings
     do_action('oopspam_set_default_settings');
+    
+    // Set transient for redirect to setup wizard
+    if (!get_option('oopspam_wizard_completed', false)) {
+        // Set a transient to redirect to the setup wizard
+        set_transient('oopspam_activation_redirect', true, 30);
+    }
 }
 
 // Set default values
@@ -431,30 +443,78 @@ function oopspam_is_email_blocked($email) {
 // Check if an IP is blocked locally
 function oopspam_is_ip_blocked($ip) {
  
-    // Get email
+    // Get blocked IPs
     $manual_moderation_options = get_option('manual_moderation_settings');
-    $blocked_ips= isset($manual_moderation_options['mm_blocked_ips']) ? $manual_moderation_options['mm_blocked_ips'] : '';
+    $blocked_ips = isset($manual_moderation_options['mm_blocked_ips']) ? $manual_moderation_options['mm_blocked_ips'] : '';
 
     if ('' == $blocked_ips || empty($ip)) {
        return false;
-   }
+    }
    
+    // Convert IP to long format for range comparison
+    $ip_long = ip2long($ip);
+    
+    // If IP can't be converted, return false
+    if ($ip_long === false) {
+        return false;
+    }
 
     $ips = explode("\n", $blocked_ips);
 
     foreach ((array)$ips as $b_ip) {
-       $b_ip = trim($b_ip);
+        $b_ip = trim($b_ip);
        
-       // Skip empty lines.
-       if (empty($b_ip)) {
-           continue;
-       }
-       
-       if ($b_ip === $ip) {
-           return true;
-       }
-   }
-   return false;
+        // Skip empty lines
+        if (empty($b_ip)) {
+            continue;
+        }
+        
+        // Check for exact match
+        if ($b_ip === $ip) {
+            return true;
+        }
+        
+        // Check for IP range in CIDR notation (e.g., 192.168.1.0/24)
+        if (strpos($b_ip, '/') !== false) {
+            list($range, $netmask) = explode('/', $b_ip, 2);
+            
+            // If netmask is invalid or range is invalid, skip
+            if (!is_numeric($netmask) || $netmask < 0 || $netmask > 32 || ip2long($range) === false) {
+                continue;
+            }
+            
+            // Convert range to long format
+            $range_long = ip2long($range);
+            
+            // Calculate the mask
+            $mask = ~((1 << (32 - $netmask)) - 1);
+            
+            // Check if IP is in range
+            if (($ip_long & $mask) == ($range_long & $mask)) {
+                return true;
+            }
+        }
+        
+        // Check for IP range with hyphen (e.g., 192.168.1.1-192.168.1.10)
+        if (strpos($b_ip, '-') !== false) {
+            list($start, $end) = explode('-', $b_ip, 2);
+            
+            // Validate start and end IPs
+            $start_long = ip2long(trim($start));
+            $end_long = ip2long(trim($end));
+            
+            // If either IP is invalid, skip
+            if ($start_long === false || $end_long === false) {
+                continue;
+            }
+            
+            // Check if IP is in range
+            if ($ip_long >= $start_long && $ip_long <= $end_long) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 // Check if an email is allowed locally
@@ -503,14 +563,21 @@ function oopspam_is_email_allowed($email) {
 // Check if an IP is allowed locally
 function oopspam_is_ip_allowed($ip) {
  
-    // Get email
+    // Get allowed IPs
     $manual_moderation_options = get_option('manual_moderation_settings');
-    $allowed_ips= isset($manual_moderation_options['mm_allowed_ips']) ? $manual_moderation_options['mm_allowed_ips'] : '';
+    $allowed_ips = isset($manual_moderation_options['mm_allowed_ips']) ? $manual_moderation_options['mm_allowed_ips'] : '';
 
     if ('' == $allowed_ips || empty($ip)) {
        return false;
-   }
+    }
    
+    // Convert IP to long format for range comparison
+    $ip_long = ip2long($ip);
+    
+    // If IP can't be converted, return false
+    if ($ip_long === false) {
+        return false;
+    }
 
     $ips = explode("\n", $allowed_ips);
 
@@ -522,8 +589,49 @@ function oopspam_is_ip_allowed($ip) {
            continue;
        }
        
+       // Check for exact match
        if ($b_ip === $ip) {
            return true;
+       }
+       
+       // Check for IP range in CIDR notation (e.g., 192.168.1.0/24)
+       if (strpos($b_ip, '/') !== false) {
+           list($range, $netmask) = explode('/', $b_ip, 2);
+           
+           // If netmask is invalid or range is invalid, skip
+           if (!is_numeric($netmask) || $netmask < 0 || $netmask > 32 || ip2long($range) === false) {
+               continue;
+           }
+           
+           // Convert range to long format
+           $range_long = ip2long($range);
+           
+           // Calculate the mask
+           $mask = ~((1 << (32 - $netmask)) - 1);
+           
+           // Check if IP is in range
+           if (($ip_long & $mask) == ($range_long & $mask)) {
+               return true;
+           }
+       }
+       
+       // Check for IP range with hyphen (e.g., 192.168.1.1-192.168.1.10)
+       if (strpos($b_ip, '-') !== false) {
+           list($start, $end) = explode('-', $b_ip, 2);
+           
+           // Validate start and end IPs
+           $start_long = ip2long(trim($start));
+           $end_long = ip2long(trim($end));
+           
+           // If either IP is invalid, skip
+           if ($start_long === false || $end_long === false) {
+               continue;
+           }
+           
+           // Check if IP is in range
+           if ($ip_long >= $start_long && $ip_long <= $end_long) {
+               return true;
+           }
        }
    }
    return false;
@@ -719,10 +827,11 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 
     $ipFilteringOptions = get_option('oopspamantispam_ipfiltering_settings');
     
-    $countryallowlistSetting = (get_option('oopspam_countryallowlist') != null ? get_option('oopspam_countryallowlist') : [""]);
-    $countryblocklistSetting = (get_option('oopspam_countryblocklist') != null ? get_option('oopspam_countryblocklist') : [""]);
-    $countryAlwaysAllowSetting = (get_option('oopspam_country_always_allow') != null ? get_option('oopspam_country_always_allow') : [""]);
-    $languageallowlistSetting = (get_option('oopspam_languageallowlist') != null ? get_option('oopspam_languageallowlist') : [""]);
+    // Properly handle empty arrays by filtering out any empty strings
+    $countryallowlistSetting = array_filter((array)get_option('oopspam_countryallowlist', []));
+    $countryblocklistSetting = array_filter((array)get_option('oopspam_countryblocklist', []));
+    $countryAlwaysAllowSetting = array_filter((array)get_option('oopspam_country_always_allow', []));
+    $languageallowlistSetting = array_filter((array)get_option('oopspam_languageallowlist', []));
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
     $isLoggable = defined('OOPSPAM_ENABLE_REMOTE_LOGGING') ? OOPSPAM_ENABLE_REMOTE_LOGGING : (isset($options['oopspam_is_loggable']) ? $options['oopspam_is_loggable'] : false);
     
@@ -741,9 +850,9 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
             $body = wp_remote_retrieve_body($response);
             $data = json_decode($body, true);
-            if (isset($data['country_code'])) {
+            if (isset($data['country_code']) && !empty($data['country_code'])) {
                 $country_code = strtolower($data['country_code']);
-                if (in_array($country_code, $countryAlwaysAllowSetting)) {
+                if (!empty($country_code) && in_array($country_code, $countryAlwaysAllowSetting)) {
                     if ($returnReason) {
                         $reason = [
                             "Score" => 0,
@@ -942,8 +1051,9 @@ function extractReasonFromAPIResponse($response) {
             return 'Country blocked';
         }
     }
-
     
+
+       
     // If no specific reason found, use the overall score
     if (isset($response['Score']) && $response['Score'] >= 3 ) {
         return 'High spam score';
@@ -1258,4 +1368,29 @@ function oopspam_admin_style()
 {
     wp_enqueue_style('oopspam_stylesheet');
     wp_enqueue_style('tom-select');
+}
+
+/**
+ * Display admin notice if the plugin is not set up
+ */
+function oopspam_admin_setup_notice() {
+    // Don't show notice on the setup wizard page
+    if (isset($_GET['page']) && $_GET['page'] === 'oopspam_setup_wizard') {
+        return;
+    }
+    
+    // Check if the wizard is completed and an API key is set
+    if (!oopspam_is_wizard_completed() || !oopspam_has_api_key()) {
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p>
+                <strong><?php _e('OOPSpam Anti-Spam is not fully set up!', 'oopspam-anti-spam'); ?></strong>
+                <?php _e('Complete the setup wizard to protect your site from spam.', 'oopspam-anti-spam'); ?>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=oopspam_setup_wizard')); ?>" class="button button-primary">
+                    <?php _e('Run Setup Wizard', 'oopspam-anti-spam'); ?>
+                </a>
+            </p>
+        </div>
+        <?php
+    }
 }

@@ -1,0 +1,14 @@
+/* Styling for the Setup Wizard menu item */
+.toplevel_page_wp_oopspam_settings_page .wp-submenu li:last-child a {
+    color: #72aee6;
+    font-weight: 600;
+    padding-top: 8px;
+    border-top: 1px solid rgba(240, 246, 252, 0.1);
+    margin-top: 6px;
+}
+
+.toplevel_page_wp_oopspam_settings_page .wp-submenu li:last-child a:hover,
+.toplevel_page_wp_oopspam_settings_page .wp-submenu li:last-child a:focus {
+    color: #fff;
+    background-color: #2271b1;
+}

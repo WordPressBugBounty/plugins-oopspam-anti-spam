@@ -31,7 +31,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Ham Entries
+                // Don't log under Form Valid Entries
                 if ($values['form_id'] == $id) {
                     return $errors;
                 }

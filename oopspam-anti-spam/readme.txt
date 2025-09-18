@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.47
+Stable tag: 1.2.48
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -138,6 +138,17 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.48 =
+* **NEW:** Added interactive setup wizard for easier configuration
+* **NEW:** [WooCommerce] Added "Disable WooCommerce checkout via REST API" setting to prevent API-based attacks
+* **NEW:** [WooCommerce] Added "Minimum session page views" setting to enhance protection against card testing
+* **NEW:** [WooCommerce] Added "Require valid device type" setting to enhance protection against card testing
+* **IMPROVEMENT:** Added support for IP ranges in "Manual Moderation -> Blocked IPs" setting (e.g., 192.168.1.0/24)
+* **IMPROVEMENT:** Renamed "Form Ham Entries" to "Form Valid Entries" for better clarity
+* **IMPROVEMENT:** Verified compatibility with PHP 8.4 and fixed API usage update issues
+* **IMPROVEMENT:** [WooCommerce] Enhanced Order Attribution checks for more accurate spam detection
+* **FIX:** Spam checks now skip customers with previously completed orders to prevent false positives
+* **FIX:** Resolved issue where empty "Trusted Countries" setting incorrectly allowed submissions
 = 1.2.47 =
 * **NEW:** Added a new setting: "Trusted Countries (always bypasses spam checks)"
 * **IMPROVEMENT:** WooCommerce orders now use our IP detection method to capture the real IP instead of proxy IPs
@@ -181,7 +192,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 = 1.2.31 =
 * **NEW:** [WooCommerce] Added "Payment methods to check origin" setting to restrict origin checks to selected payment methods.
 * **NEW:** Automatically report comments as spam or ham to OOPSpam when flagged within the WordPress comment system.
-* **NEW:** Introduced "Disable local logging" setting to disable logging in the Form Spam and Form Ham Entries tables.
+* **NEW:** Introduced "Disable local logging" setting to disable logging in the Form Spam and Form Valid Entries tables.
 * **NEW:** Added global settings for "Log submissions to OOPSpam" and "Disable local logging" using constants:
   - `define('OOPSPAM_DISABLE_LOCAL_LOGGING', true);`
   - `define('OOPSPAM_ENABLE_REMOTE_LOGGING', true);`
@@ -238,7 +249,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 = 1.2.18 =
 * NEW: [WooCommerce] "Block orders from unknown origin" setting for the Block Checkout
 = 1.2.17 =
-* NEW: Added bulk reporting functionality for both Form Spam Entries and Form Ham Entries tables
+* NEW: Added bulk reporting functionality for both Form Spam Entries and Form Valid Entries tables
 * IMPROVEMENT: [WooCommerce] Enhanced detection of spam targeting the WooCommerce Block Checkout
 * IMPROVEMENT: Resolved layout shifts caused by notices from other plugins
 * IMPROVEMENT: [WooCommerce] Removed first name validation to prevent false positives
@@ -282,7 +293,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * FIX: Prevent duplicate entries in Blocked Emails and IPs settings
 = 1.2.7 =
 * NEW: Automatic local blocking of email and IP when an item is reported as spam
-* IMPROVEMENT: Truncate long messages in Form Ham Entries and Form Spam Entries tables
+* IMPROVEMENT: Truncate long messages in Form Valid Entries and Form Spam Entries tables
 * IMPROVEMENT: Clean up manual moderation data from the database when plugin is uninstalled
 * FIX: Correct usage of <label> elements in the settings fields for improved accessibility
 * FIX: Resolve dynamic property deprecation warnings
@@ -321,7 +332,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * NEW: Display a custom error message in Contact Form 7
 = 1.1.62 =
 * NEW: `Don't protect these forms` setting. Ability to exclude a form from spam protection
-* NEW: `Export CSV` in Form Spam Entries & Form Ham Entries tables
+* NEW: `Export CSV` in Form Spam Entries & Form Valid Entries tables
 * IMPROVEMENT: More reliable IP detection
 * IMPROVEMENT: Confirmation prompt before emptying Ham and Spam Entries table
 * IMPROVEMENT: Improved styling of the settings page

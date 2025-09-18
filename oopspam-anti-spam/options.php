@@ -171,13 +171,13 @@ function manual_moderation_blockedips_render() {
         <summary><?php echo __('View blocked IPs', 'oopspam'); ?></summary>
         <div style="margin-top: 10px;">
             <textarea name="manual_moderation_settings[mm_blocked_ips]" 
-                      placeholder="125.450.87.89&#10;127.0.0.1"  
+                      placeholder="125.450.87.89&#10;127.0.0.1&#10;192.168.1.0/24&#10;10.0.0.1-10.0.0.50"  
                       rows="10" 
                       cols="50" 
                       id="mm_blocked_ips" 
                       class="large-text code"><?php echo esc_textarea($mm_blocked_ips); ?></textarea>
             <p class="description">
-                <?php echo __('One IP per line', 'oopspam'); ?>
+                <?php echo __('One IP per line. Supports individual IPs (e.g., 127.0.0.1), CIDR notation (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.1-192.168.1.10)', 'oopspam'); ?>
             </p>
         </div>
     </details>
@@ -234,13 +234,13 @@ function manual_moderation_allowedips_render() {
         <summary><?php echo __('View allowed IPs', 'oopspam'); ?></summary>
         <div style="margin-top: 10px;">
             <textarea name="manual_moderation_settings[mm_allowed_ips]" 
-                      placeholder="125.450.87.89&#10;127.0.0.1"  
+                      placeholder="125.450.87.89&#10;127.0.0.1&#10;192.168.1.0/24&#10;10.0.0.1-10.0.0.50"  
                       rows="10" 
                       cols="50" 
                       id="mm_allowed_ips" 
                       class="large-text code"><?php echo esc_textarea($mm_allowed_ips); ?></textarea>
             <p class="description">
-                <?php echo __('One IP per line', 'oopspam'); ?>
+                <?php echo __('One IP per line. Supports individual IPs (e.g., 127.0.0.1), CIDR notation (e.g., 192.168.1.0/24), or IP ranges (e.g., 192.168.1.1-192.168.1.10)', 'oopspam'); ?>
             </p>
         </div>
     </details>
@@ -567,7 +567,7 @@ function oopspamantispam_settings_init()
     );
 
     add_settings_field('oopspam_clear_ham_entries',
-        __('Empty "Form Ham Entries" table every', 'oopspam'),
+        __('Empty "Form Valid Entries" table every', 'oopspam'),
         'oopspam_clear_ham_entries_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
@@ -599,21 +599,30 @@ function oopspamantispam_settings_init()
 
     if(!$isItAllowedToCheckIPs) {
         add_settings_field('oopspam_country_always_allow',
-            __('Trusted Countries (always bypasses spam checks):', 'oopspam'),
+            __('Trusted Countries:', 'oopspam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            __('Submissions from these countries will always bypass spam checks. Use this for countries you fully trust.', 'oopspam') . 
+            '</span></span>',
             'oopspam_country_always_allow_render',
             'oopspamantispam-settings-group',
             'oopspam_settings_section'
         );
 
         add_settings_field('oopspam_countryallowlist',
-            __('Country Allowlist (only accept from these countries):', 'oopspam'),
+            __('Country Allowlist:', 'oopspam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            __('Only accept submissions from these countries. All other countries will be blocked.', 'oopspam') . 
+            '</span></span>',
             'oopspam_countryallowlist_render',
             'oopspamantispam-settings-group',
             'oopspam_settings_section'
         );
 
         add_settings_field('oopspam_countryblocklist',
-            __('Country Blocklist (reject submissions from these countries):', 'oopspam'),
+            __('Country Blocklist:', 'oopspam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            __('Reject submissions from these countries. All other countries will be allowed.', 'oopspam') . 
+            '</span></span>',
             'oopspam_countryblocklist_render',
             'oopspamantispam-settings-group',
             'oopspam_settings_section'
@@ -622,7 +631,10 @@ function oopspamantispam_settings_init()
 
     
     add_settings_field('oopspam_languageallowlist',
-        __('Language Allowlist (only process messages in these languages):', 'oopspam'),
+        __('Language Allowlist:', 'oopspam') . 
+        '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+        __('Only process messages in these languages. Messages in other languages will be treated as spam.', 'oopspam') . 
+        '</span></span>',
         'oopspam_languageallowlist_render',
         'oopspamantispam-settings-group',
         'oopspam_settings_section'
@@ -1459,9 +1471,36 @@ function oopspam_jform_spam_message_render()
         );
 
         add_settings_field(
+            'oopspam_woo_min_session_pages',
+            __('Minimum session page views', 'oopspam'),
+            'oopspam_woo_min_session_pages_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+
+        add_settings_field(
+            'oopspam_woo_require_device_type',
+            __('Require valid device type', 'oopspam'),
+            'oopspam_woo_require_device_type_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+
+        add_settings_field(
             'oopspam_woo_check_honeypot',
             __('Enable honeypot protection', 'oopspam'),
             'oopspam_woo_check_honeypot_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+        
+        add_settings_field(
+            'oopspam_woo_disable_rest_checkout',
+            __('Disable WooCommerce checkout via REST API', 'oopspam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            __('Do not use if you have third-party integrations (Amazon, etc). Blocks REST API checkout endpoints to prevent automated spam orders.', 'oopspam') . 
+            '</span></span>',
+            'oopspam_woo_disable_rest_checkout_render',
             'oopspamantispam-woo-settings-group',
             'oopspam_woo_settings_section'
         );
@@ -1905,7 +1944,7 @@ function oopspam_disable_local_logging_render() {
                        name="oopspamantispam_settings[oopspam_disable_local_logging]"  
                        <?php checked(!isset($options['oopspam_disable_local_logging']), false, true); ?>
                        <?php echo $is_constant ? 'disabled' : ''; ?>/>
-                <p class="description"><?php echo __('Disables storing submissions in the Form Spam Entries and Form Ham Entries tables.', 'oopspam'); ?></p>
+                <p class="description"><?php echo __('Disables storing submissions in the Form Spam Entries and Form Valid Entries tables.', 'oopspam'); ?></p>
                 <?php if ($is_constant): ?>
                     <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
                 <?php endif; ?>
@@ -3781,6 +3820,53 @@ function oopspam_woo_check_honeypot_render()
     <?php
 }
 
+function oopspam_woo_disable_rest_checkout_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_disable_rest_checkout">
+            <input class="oopspam-toggle" type="checkbox" id="woo_disable_rest_checkout" 
+                   name="oopspamantispam_settings[oopspam_woo_disable_rest_checkout]" 
+                   value="1" <?php checked(isset($options['oopspam_woo_disable_rest_checkout']) && $options['oopspam_woo_disable_rest_checkout'] == 1); ?>/>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_min_session_pages_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_min_session_pages">
+            <input type="number" min="0" id="woo_min_session_pages" 
+                   name="oopspamantispam_settings[oopspam_woo_min_session_pages]" 
+                   value="<?php echo isset($options['oopspam_woo_min_session_pages']) && $options['oopspam_woo_min_session_pages'] !== '' ? esc_attr($options['oopspam_woo_min_session_pages']) : ''; ?>" 
+                   placeholder="0"/>
+            <p class="description"><?php echo __('Set the minimum number of unique pages a customer must view before placing an order. Leave empty or set to 0 to disable this check. This helps prevent automated bots that don\'t browse your site before checkout.', 'oopspam'); ?></p>
+            <p class="description"><?php echo __('Note: Requires WooCommerce Order Attribution to be enabled.', 'oopspam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_require_device_type_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_require_device_type">
+            <input class="oopspam-toggle" type="checkbox" id="woo_require_device_type" 
+                   name="oopspamantispam_settings[oopspam_woo_require_device_type]" 
+                   value="1" <?php checked(isset($options['oopspam_woo_require_device_type']) && $options['oopspam_woo_require_device_type'] == 1); ?>/>
+            <p class="description"><?php echo __('Block orders that don\'t have a valid device type. This helps prevent orders from bots that don\'t properly identify their device.', 'oopspam'); ?></p>
+            <p class="description"><?php echo __('Note: Requires WooCommerce Order Attribution to be enabled.', 'oopspam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
 /* WooCommerce settings section ends */
 
 /* WP Registration settings section starts */
@@ -3963,32 +4049,34 @@ function oopspam_mpress_exclude_form_render()
 function oopspamantispam_options_page()
 {
     ?>
-         <div style="display:flex; flex-direction:row; justify-content:space-around;">
-                    <p>Contact support via <a href="mailto:contact@oopspam.com">contact@oopspam.com</a> </p>
-                    <p>Need help with the plugin? <a href="https://wordpress.org/support/plugin/oopspam-anti-spam/">WordPress Plugin Support Forum</a> </p>
-                    <p><a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/#new-post">Support us with a review ♥️</a></p>
-                </div>
-        <?php
-$options = get_option('oopspamantispam_settings');
-$api_key = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
+    <div style="display:flex; flex-direction:row; justify-content:space-around;">
+        <p>Contact support via <a href="mailto:contact@oopspam.com">contact@oopspam.com</a> </p>
+        <p>Need help with the plugin? <a href="https://wordpress.org/support/plugin/oopspam-anti-spam/">WordPress Plugin Support Forum</a> </p>
+        <p><a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/#new-post">Support us with a review ♥️</a></p>
+    </div>
+    <?php
+    
+    $options = get_option('oopspamantispam_settings');
+    $api_key = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
 
+    // If API key is not set, redirect to setup wizard
     if (empty($api_key)) {
-        ?>
-            <h3><b><?php echo __('To use the OOPSpam Anti-Spam plugin, you need an OOPSpam Anti-Spam API key.'); ?></b></h3>
-            <h3><b><?php echo __('Register for an account on the OOPSpam dashboard to get your API key:'); ?></b></h3>
-            <a target="_blank" href="https://app.oopspam.com/Identity/Account/Register" class="button button-primary"><?php echo html_entity_decode('Get an API Key &nearhk;'); ?></a>
-            <br/>
-            <h4><b><?php echo __('Need help?'); ?></b></h4>
-            <p>If you have any questions or need assistance, please feel free to reach out to us at <a href="mailto:contact@oopspam.com">contact@oopspam.com</a>. We're here to help!</p>
-            <h4><b><?php echo __('How to get started:'); ?></b></h4>
-            <p>After obtaining your API key, you can either:</p>
-            <ul>
-                <li>1. Add <code>define('OOPSPAM_API_KEY', 'YOUR_KEY');</code> to your wp-config.php file, or</li>
-                <li>2. Paste it into the "My API Key" field below</li>
-            </ul>
-            <hr/><br/>
-        <?php
+        // Prevent redirect loops by checking if we're already coming from the wizard or have a redirect flag
+        $from_wizard = isset($_GET['from_wizard']) && $_GET['from_wizard'] == 1;
+        $redirect_flag = get_transient('oopspam_options_redirect');
+        
+        if (!$from_wizard && !$redirect_flag) {
+            // Set a transient to prevent multiple redirects
+            set_transient('oopspam_options_redirect', true, 30);
+            // Redirect to setup wizard if no API key is set
+            wp_redirect(admin_url('admin.php?page=oopspam_setup_wizard'));
+            exit;
+        }
     }
+    ?>
+    
+    <hr/><br/>
+    <?php
     ?>
 <?php
 $active_tab = isset( $_GET[ 'tab' ] ) ? $_GET[ 'tab' ] : 'general';

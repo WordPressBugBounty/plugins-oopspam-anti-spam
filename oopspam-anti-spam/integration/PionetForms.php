@@ -22,7 +22,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
 
         foreach ($excludedFormIds as $id) {
             // Don't check for spam for this form
-            // Don't log under Form Ham Entries
+            // Don't log under Form Valid Entries
             if ($form_id == $id) {
                 return;
             }

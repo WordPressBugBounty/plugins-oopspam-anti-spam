@@ -49,7 +49,7 @@ class OOPSpamAPI {
     * @return string $jsonreply
     */
     protected function RequestToOOPSpamAPI($POSTparameters) {
-        $options = get_option('oopspamantispam_settings');
+        $options = get_option('oopspamantispam_settings', array());
 
         // By default use OOPSpam API
         $apiEndpoint = "https://api.oopspam.com/";
@@ -59,7 +59,7 @@ class OOPSpamAPI {
             'X-Api-Key' => $this->api_key
         );
         
-        if ($options['oopspam_api_key_source'] == "RapidAPI") {
+        if (isset($options['oopspam_api_key_source']) && $options['oopspam_api_key_source'] == "RapidAPI") {
             $apiEndpoint = "https://oopspam.p.rapidapi.com/";
             $headers = array(
                 'content-type' => 'application/json',
@@ -83,7 +83,8 @@ class OOPSpamAPI {
         }
         
         // Update API usage before returning
-        $this->getAPIUsage($response, $options['oopspam_api_key_source']);
+        $apiKeySource = isset($options['oopspam_api_key_source']) ? $options['oopspam_api_key_source'] : 'OOPSpamDashboard';
+        $this->getAPIUsage($response, $apiKeySource);
 
         return $response;
     }
@@ -97,7 +98,7 @@ class OOPSpamAPI {
     */
     protected function RequestToOOPSpamReportingAPI($POSTparameters) {
 
-        $options = get_option('oopspamantispam_settings');
+        $options = get_option('oopspamantispam_settings', array());
 
             $apiEndpoint = "https://api.oopspam.com/";
             $headers = array(
@@ -113,7 +114,8 @@ class OOPSpamAPI {
         );
 
         $jsonreply = wp_remote_post( $apiEndpoint.self::version.'/spamdetection/report', $args );        
-        $this->getAPIUsage($jsonreply, $options['oopspam_api_key_source']);
+        $apiKeySource = isset($options['oopspam_api_key_source']) ? $options['oopspam_api_key_source'] : 'OOPSpamDashboard';
+        $this->getAPIUsage($jsonreply, $apiKeySource);
 
         return $jsonreply;
     }
@@ -160,12 +162,35 @@ class OOPSpamAPI {
             $limit = isset($headerResult['x-ratelimit-requests-limit']) ? $headerResult['x-ratelimit-requests-limit'] : '0';
         }
 
-        // Get existing options and update only the usage field
-        $options = get_option('oopspamantispam_settings', array());
-        $options['oopspam_api_key_usage'] = $remaining . '/' . $limit;
-        update_option('oopspamantispam_settings', $options);
+        // Direct database update for better performance
+        global $wpdb;
+        $usage_value = $remaining . '/' . $limit;
+        $option_name = 'oopspamantispam_settings';
         
-        return $remaining . '/' . $limit;
+        // Get the serialized option value
+        $serialized_options = $wpdb->get_var($wpdb->prepare(
+            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+            $option_name
+        ));
+        
+        if ($serialized_options) {
+            $options = maybe_unserialize($serialized_options);
+            $options['oopspam_api_key_usage'] = $usage_value;
+            
+            // Update the serialized value directly in the database
+            $wpdb->update(
+                $wpdb->options,
+                array('option_value' => maybe_serialize($options)),
+                array('option_name' => $option_name)
+            );
+            
+        } else {
+            // If option doesn't exist yet, create it using standard WordPress function
+            $options = array('oopspam_api_key_usage' => $usage_value);
+            add_option($option_name, $options);
+        }
+        
+        return $usage_value;
     }
 
     /**

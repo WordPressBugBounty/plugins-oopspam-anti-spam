@@ -37,7 +37,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Ham Entries
+                // Don't log under Form Valid Entries
                 if ($form_id["form_name"] === $id) {
                     return;
                 }

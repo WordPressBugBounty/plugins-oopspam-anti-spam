@@ -24,7 +24,7 @@ function oopspamantispam_forms_after_submission($form_data)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Ham Entries
+                // Don't log under Form Valid Entries
                 if ($form_data["id"] == $id) {
                     return $form_data;
                 }
