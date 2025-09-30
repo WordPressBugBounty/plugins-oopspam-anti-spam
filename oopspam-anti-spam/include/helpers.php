@@ -150,6 +150,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'buddypress':
+                if (is_plugin_active('buddypress/bp-loader.php') || function_exists('buddypress')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;
@@ -185,7 +190,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'surecart' => 'OOPSPAM_IS_SURECART_ACTIVATED',
         'jform' => 'OOPSPAM_IS_JFORM_ACTIVATED',
         'quform' => 'OOPSPAM_IS_QUFORM_ACTIVATED',
-        'happyforms' => 'OOPSPAM_IS_HAPPYFORMS_ACTIVATED'
+        'happyforms' => 'OOPSPAM_IS_HAPPYFORMS_ACTIVATED',
+        'buddypress' => 'OOPSPAM_IS_BUDDYPRESS_ACTIVATED'
     );
 
     // Check if there's a constant defined for this form builder
@@ -222,7 +228,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'surecart' => 'oopspam_is_surecart_activated',
         'jform' => 'oopspam_is_jform_activated',
         'quform' => 'oopspam_is_quform_activated',
-        'happyforms' => 'oopspam_is_happyforms_activated'
+        'happyforms' => 'oopspam_is_happyforms_activated',
+        'buddypress' => 'oopspam_is_buddypress_activated'
     );
 
     $option_name = isset($option_map[$form_builder]) ? $option_map[$form_builder] : $form_builder;

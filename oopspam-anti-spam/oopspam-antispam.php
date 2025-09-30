@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.49
+ * Version: 1.2.50
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -96,6 +96,7 @@ require_once dirname(__FILE__) . '/integration/WPForms.php';
 require_once dirname(__FILE__) . '/integration/FormidableForms.php';
 require_once dirname(__FILE__) . '/integration/GiveWP.php';
 require_once dirname(__FILE__) . '/integration/WPRegistration.php';
+require_once dirname(__FILE__) . '/integration/Buddypress.php';
 require_once dirname(__FILE__) . '/integration/BricksForm.php';
 require_once dirname(__FILE__) . '/integration/WSForm.php';
 require_once dirname(__FILE__) . '/integration/Toolset.php';
@@ -940,7 +941,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     if ($type === "give" || $type === "woo" || $type === "mc4wp"
     || $type === "mailpoet" || $type === "search" 
     || $type === "wpregister" || $type === "umember" || $type === "mpress"
-    || $type === "pmp" || $type === "surecart") {
+    || $type === "pmp" || $type === "surecart" || $type === "buddypress") {
         $checkForLength = false;
     }
 

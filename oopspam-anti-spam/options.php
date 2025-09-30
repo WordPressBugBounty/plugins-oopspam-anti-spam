@@ -399,6 +399,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-fable-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-give-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-wpregister-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-buddypress-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-woo-settings-group', 'oopspamantispam_settings', 'sanitize_oopspam_settings');
     register_setting('oopspamantispam-br-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ws-settings-group', 'oopspamantispam_settings');
@@ -1356,6 +1357,28 @@ function oopspam_jform_spam_message_render()
         );
     }
 
+    // BuddyPress settings section
+    if (oopspamantispam_plugin_check('buddypress') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_buddypress_settings_section',
+            __('BuddyPress Registration', 'oopspam'),
+            false,
+            'oopspamantispam-buddypress-settings-group'
+        );
+        add_settings_field('oopspam_is_buddypress_activated',
+            __('Activate Spam Protection', 'oopspam'),
+            'oopspam_is_buddypress_activated_render',
+            'oopspamantispam-buddypress-settings-group',
+            'oopspam_buddypress_settings_section'
+        );
+
+        add_settings_field('oopspam_buddypress_spam_message',
+            __('BuddyPress Registration Spam Message', 'oopspam'),
+            'oopspam_buddypress_spam_message_render',
+            'oopspamantispam-buddypress-settings-group',
+            'oopspam_buddypress_settings_section'
+        );
+    }
 
     // Ultimate Member settings section 
     if (oopspamantispam_plugin_check('umember') && !empty(oopspamantispam_get_key())) {
@@ -2022,6 +2045,10 @@ function oopspam_api_key_usage_render() {
         
         <p class="oopspam-usage-note description">
             <?php echo __('Usage updates automatically with new submissions. Changes to your plan limit will be reflected after the next submission.', 'oopspam'); ?>
+            <a href="#" id="oopspam-refresh-usage" class="oopspam-refresh-link" title="<?php echo esc_attr__('Refresh usage data now', 'oopspam'); ?>">
+                <span class="dashicons dashicons-update"></span>
+                <?php echo __('Refresh', 'oopspam'); ?>
+            </a>
         </p>
 
         <style>
@@ -2054,6 +2081,32 @@ function oopspam_api_key_usage_render() {
             .oopspam-usage-note {
                 margin-top: 8px;
                 font-style: italic;
+            }
+            .oopspam-refresh-link {
+                margin-left: 10px;
+                text-decoration: none;
+                color: #0073aa;
+                font-size: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                transition: color 0.2s ease;
+            }
+            .oopspam-refresh-link:hover {
+                color: #005a87;
+                text-decoration: none;
+            }
+            .oopspam-refresh-link .dashicons {
+                font-size: 14px;
+                width: 14px;
+                height: 14px;
+            }
+            .oopspam-refresh-link.loading .dashicons {
+                animation: oopspam-spin 1s linear infinite;
+            }
+            @keyframes oopspam-spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
             }
         </style>
     </div>
@@ -3909,6 +3962,46 @@ function oopspam_wpregister_spam_message_render()
 
 /* WP Registration settings section ends */
 
+/* BuddyPress settings section starts */
+
+function oopspam_is_buddypress_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_BUDDYPRESS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_BUDDYPRESS_ACTIVATED : (isset($options['oopspam_is_buddypress_activated']) && 1 == $options['oopspam_is_buddypress_activated']);
+    ?>
+    <div>
+        <label for="buddypress_support">
+            <input class="oopspam-toggle" type="checkbox" id="buddypress_support" 
+                   name="oopspamantispam_settings[oopspam_is_buddypress_activated]" 
+                   value="1" <?php echo $is_activated ? 'checked="checked"' : ''; ?> 
+                   <?php echo $is_constant ? 'disabled' : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo __('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_buddypress_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_buddypress_spam_message">
+                    <input id="oopspam_buddypress_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_buddypress_spam_message]" value="<?php if (isset($options['oopspam_buddypress_spam_message'])) {
+        esc_html_e($options['oopspam_buddypress_spam_message'], "oopspam");
+    }
+    ?>">
+                        <p class="description"><?php echo __('Enter a short message to display when a spam BuddyPress registration has been submitted. (e.g Our spam detection classified your registration as spam. Please contact via name@example.com)', 'oopspam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+/* BuddyPress settings section ends */
+
 /* Ultimate Member settings starts */
 
 function oopspam_is_umember_activated_render()
@@ -4190,6 +4283,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                 do_settings_sections('oopspamantispam-wpregister-settings-group');
                     ?>
                             </div>
+                            <div class="oopspam-buddypress form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-buddypress-settings-group');
+                    ?>
+                            </div>
                             <div class="ws-form form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-ws-settings-group');
@@ -4275,6 +4373,48 @@ if( isset( $_GET[ 'tab' ] ) ) {
         ?>
         <?php submit_button(); ?>
     </form>
+    
+    <script>
+    jQuery(document).ready(function($) {
+        $('#oopspam-refresh-usage').on('click', function(e) {
+            e.preventDefault();
+            
+            var $this = $(this);
+            var $icon = $this.find('.dashicons');
+            
+            // Add loading state
+            $this.addClass('loading');
+            $icon.addClass('oopspam-spin');
+            
+            // Make AJAX request
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'oopspam_refresh_usage',
+                    nonce: '<?php echo wp_create_nonce("oopspam_refresh_usage"); ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Reload the page to show updated usage
+                        location.reload();
+                    } else {
+                        alert('Error refreshing usage: ' + (response.data || 'Unknown error'));
+                    }
+                },
+                error: function() {
+                    alert('Error connecting to server. Please try again.');
+                },
+                complete: function() {
+                    // Remove loading state
+                    $this.removeClass('loading');
+                    $icon.removeClass('oopspam-spin');
+                }
+            });
+        });
+    });
+    </script>
+    
     <?php
 }
 
@@ -4305,3 +4445,65 @@ function oopspam_block_cloud_providers_render()
     </div>
     <?php
 }
+
+function oopspam_handle_usage_refresh() {
+
+    // Verify nonce for security
+    if (!check_ajax_referer('oopspam_refresh_usage', 'nonce', false)) {
+        wp_send_json_error('Invalid security token');
+        return;
+    }
+
+    // Check user permissions
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Insufficient permissions');
+        return;
+    }
+
+    // Include the API class
+    require_once dirname(__FILE__) . '/OOPSpamAPI.php';
+    
+    // Get API settings
+    $options = get_option('oopspamantispam_settings');
+    $apiKey = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
+    
+    if (empty($apiKey)) {
+        wp_send_json_error('API key not configured');
+        return;
+    }
+
+    try {
+        // Initialize API with minimal settings to avoid interference from user configuration
+        $OOPSpamAPI = new \OOPSPAM\API\OOPSpamAPI($apiKey, false, false, false, false, false);
+        
+        // Make simplified API call with only required data: content="Verify" and checkForLength=false
+        $result = $OOPSpamAPI->SpamDetection("Verify", "", "", array(), array(), array());
+
+        // Check if API call was successful
+        if (is_wp_error($result)) {
+            wp_send_json_error('API call failed: ' . $result->get_error_message());
+            return;
+        }
+
+        $response_code = wp_remote_retrieve_response_code($result);
+        if ($response_code === 200 || $response_code === 201) {
+            // API call was successful, usage data was automatically updated by getAPIUsage()
+            wp_send_json_success('Usage updated successfully');
+        } else {
+            $response_body = wp_remote_retrieve_body($result);
+            
+            // Check for invalid API key error
+            if ($response_code === 403 && strpos($response_body, 'API_KEY_INVALID') !== false) {
+                wp_send_json_error('Invalid API key. Please check your API key and paste it again. Note: Password managers may interfere when pasting the key.');
+            } else {
+                wp_send_json_error('API returned error code ' . $response_code . ': ' . $response_body);
+            }
+        }
+    } catch (Exception $e) {
+        error_log('OOPSpam usage refresh error: ' . $e->getMessage());
+        wp_send_json_error('Failed to refresh usage data');
+    }
+}
+
+// Register AJAX handler for usage refresh
+add_action('wp_ajax_oopspam_refresh_usage', 'oopspam_handle_usage_refresh');

@@ -88,6 +88,7 @@ class WooSpamProtection
     }
 
     function oopspam_check_order_attributes($order, $data ) {
+          
         $options = get_option('oopspamantispam_settings');
         
         // Check if WooCommerce integration is enabled
@@ -110,17 +111,22 @@ class WooSpamProtection
         $requireDeviceType = isset($options['oopspam_woo_require_device_type']) && $options['oopspam_woo_require_device_type'] == 1;
         $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
         
+        // Helper function to check if a value is valid (not empty, null, or "(none)")
+        $isValidValue = function($value) {
+            return !empty($value) && $value !== "(none)";
+        };
+        
         // Block order if any of the independent checks fail
         $blockOrder = false;
         $blockReason = "";
         
-        // 1. Device type check - block if user_agent doesn't exist and device type is required
-        if ($requireDeviceType && (!isset($data['user_agent']) || empty($data['user_agent']))) {
+        // 1. Device type check - block if user_agent doesn't exist, is empty, or is "(none)" and device type is required
+        if ($requireDeviceType && !$isValidValue($data['user_agent'] ?? '')) {
             $blockOrder = true;
             $blockReason = "Invalid Device Type";
         }
         
-        // 2. Origin check - block if source_type doesn't exist or is empty when required
+        // 2. Origin check - block if source_type doesn't exist, is empty, or is "(none)" when required
         if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
             $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
             $should_check_origin = false;
@@ -143,18 +149,26 @@ class WooSpamProtection
                 }
             }
 
-            if ($should_check_origin && (!isset($data['source_type']) || empty($data['source_type']))) {
+            if ($should_check_origin && !$isValidValue($data['source_type'] ?? '')) {
                 $blockOrder = true;
                 $blockReason = "Unknown Order Attribution";
             }
         }
         
-        // 3. Session pages check - block if session_pages is less than minimum required
+        // 3. Session pages check - block if session_pages is less than minimum required, is "(none)", or invalid
         if ($minSessionPages > 0) {
-            $sessionPagesValue = isset($data['session_pages']) ? intval($data['session_pages']) : 0;
-            if ($sessionPagesValue < $minSessionPages) {
+            $sessionPagesValue = $data['session_pages'] ?? '';
+            
+            // Check if session_pages is valid (not "(none)" and is a valid number)
+            if (!$isValidValue($sessionPagesValue) || !is_numeric($sessionPagesValue)) {
                 $blockOrder = true;
-                $blockReason = "Insufficient Session Pages: {$sessionPagesValue}/{$minSessionPages}";
+                $blockReason = "Invalid Session Pages: " . $sessionPagesValue;
+            } else {
+                $sessionPagesValue = intval($sessionPagesValue);
+                if ($sessionPagesValue < $minSessionPages) {
+                    $blockOrder = true;
+                    $blockReason = "Insufficient Session Pages: {$sessionPagesValue}/{$minSessionPages}";
+                }
             }
         }
         
@@ -179,14 +193,14 @@ class WooSpamProtection
                     "FormId" => "WooCommerce",
                 ];
                 oopspam_store_spam_submission($frmEntry, $blockReason);
-    
+
                 // Trash the order
                 if ($order) {
                     $order->delete(true); // 'true' deletes permanently
                 }
-    
+
                 $error_to_show = $this->get_error_message();
-                wp_die($error_to_show);
+                \wc_add_notice( esc_html__( $error_to_show ), 'error' );
             }
         }
         

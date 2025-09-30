@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.8
-Stable tag: 1.2.49
+Stable tag: 1.2.50
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -74,6 +74,7 @@ The plugin seamlessly protects your **comments**, **site search**, and **all maj
 ### Supported form & comment solutions:
 
 - WooCommerce Order & Registration
+- BuddyPress
 - Elementor Forms
 - Ninja Forms
 - Gravity Forms
@@ -139,6 +140,10 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.50 =
+* **NEW:** "Refresh" button to manually refresh usage numbers
+* **NEW:** Added support for BuddyPress
+* **IMPROVEMENT:** [WooCommerce] Prevent bypassing order attribution check in Classic Checkout
 = 1.2.49 =
 * **FIX:** Fixed issue where setup wizard would appear even when API key was already configured
 = 1.2.48 =
