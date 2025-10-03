@@ -1527,6 +1527,17 @@ function oopspam_jform_spam_message_render()
             'oopspamantispam-woo-settings-group',
             'oopspam_woo_settings_section'
         );
+        
+        add_settings_field(
+            'oopspam_woo_block_order_total',
+            __('Block orders with specific total amount', 'oopspam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            __('Block orders with this exact total amount. Useful as an additional spam protection method, especially when using older WooCommerce versions without Order Attribution features.', 'oopspam') . 
+            '</span></span>',
+            'oopspam_woo_block_order_total_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
     }
 
     // SureCart settings section
@@ -3915,6 +3926,23 @@ function oopspam_woo_require_device_type_render()
                    value="1" <?php checked(isset($options['oopspam_woo_require_device_type']) && $options['oopspam_woo_require_device_type'] == 1); ?>/>
             <p class="description"><?php echo __('Block orders that don\'t have a valid device type. This helps prevent orders from bots that don\'t properly identify their device.', 'oopspam'); ?></p>
             <p class="description"><?php echo __('Note: Requires WooCommerce Order Attribution to be enabled.', 'oopspam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_block_order_total_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_block_order_total">
+            <input type="number" step="0.01" min="0" id="woo_block_order_total" 
+                   name="oopspamantispam_settings[oopspam_woo_block_order_total]" 
+                   value="<?php echo isset($options['oopspam_woo_block_order_total']) && $options['oopspam_woo_block_order_total'] !== '' ? esc_attr($options['oopspam_woo_block_order_total']) : ''; ?>" 
+                   placeholder="5.95"/>
+            <p class="description"><?php echo __('Enter an amount to automatically block orders with that exact total. Leave empty to disable this check.', 'oopspam'); ?></p>
+            <p class="description"><?php echo __('Example: Enter 5.95 to block all orders with exactly $5.95 total.', 'oopspam'); ?></p>
         </label>
     </div>
     <?php
