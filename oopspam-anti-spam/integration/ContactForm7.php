@@ -18,7 +18,7 @@ function oopspamantispam_cf7_pre_submission($spam)
         $userIP = "";
         $email = "";
         $escapedMsg = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -88,7 +88,7 @@ function oopspamantispam_cf7_pre_submission($spam)
             } else {
                 $error_to_show = "Your submission has been flagged as spam.";
             }
-            add_filter('wpcf7_display_message', function($message, $status) use ($error_to_show) { return $error_to_show; }, 10, 2);
+            add_filter('wpcf7_display_message', function($message, $status) use ($error_to_show) { return esc_html($error_to_show); }, 10, 2);
 
         } else {
             // It's ham

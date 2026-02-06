@@ -29,7 +29,7 @@ function oopspamantispam_um_submission($post)
         }
 
         // Capture user's IP if allowed
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = um_user_ip();
         }
 
@@ -50,10 +50,10 @@ function oopspamantispam_um_submission($post)
         ];
 
         if (!$detectionResult["isItHam"]) {
-            // It's spam, store the submission in Form Spam Entries
+            // It's spam, store the submission in Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_umember_spam_message']) && !empty($options['oopspam_umember_spam_message'])) ? $options['oopspam_umember_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
-            UM()->form()->add_error( 'user_email', __( $error_to_show, 'oopspam' ) );
+            $error_to_show = (isset($options['oopspam_umember_spam_message']) && !empty($options['oopspam_umember_spam_message'])) ? $options['oopspam_umember_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
+            UM()->form()->add_error( 'user_email', esc_html( $error_to_show ) );
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

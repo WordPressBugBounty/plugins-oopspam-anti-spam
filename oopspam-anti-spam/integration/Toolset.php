@@ -31,7 +31,7 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
     }
 
     // Capture IP
-    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
         $userIP = oopspamantispam_get_ip();
     }
 
@@ -53,11 +53,11 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
         // It's spam, store the submission and show error
         oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
-        $error_to_show = (isset($options['oopspam_ts_spam_message']) && !empty($options['oopspam_ts_spam_message'])) ? $options['oopspam_ts_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+        $error_to_show = (isset($options['oopspam_ts_spam_message']) && !empty($options['oopspam_ts_spam_message'])) ? $options['oopspam_ts_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
 
         // Get first element in the form to display error message
         $keys = array_keys($fields);
-        $errors[$keys[0]] = $error_to_show;
+        $errors[$keys[0]] = esc_html($error_to_show);
     } else {
         // It's ham
         oopspam_store_ham_submission($frmEntry);

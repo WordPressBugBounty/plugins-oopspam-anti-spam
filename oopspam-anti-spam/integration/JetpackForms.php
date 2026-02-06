@@ -20,7 +20,7 @@ function oopspam_contact_form_is_spam_jetpack($_is_spam, $form) {
         $author = isset($form['comment_author']) ? sanitize_text_field($form['comment_author']) : "";
         $message = $author . ' ' . $message;
 
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = isset($form['user_ip']) ? sanitize_text_field($form['user_ip']) : "";
         }
 

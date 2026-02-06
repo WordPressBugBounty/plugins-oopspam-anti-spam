@@ -33,7 +33,7 @@ function oopspamantispam_mpress_validate_signup($errors)
         }
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -57,7 +57,15 @@ function oopspamantispam_mpress_validate_signup($errors)
             // It's spam, store the submission and add error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = (isset($options['oopspam_mpress_spam_message']) && !empty($options['oopspam_mpress_spam_message'])) ? $options['oopspam_mpress_spam_message'] : "Your submission has been flagged as spam.";
-            $errors[] = wp_kses($error_to_show, 'post');
+            $allowedEls = array(
+                'a' => array('href' => array(), 'title' => array()),
+                'br' => array(),
+                'em' => array(),
+                'strong' => array(),
+                'i' => array(),
+                'u' => array()
+            );
+            $errors[] = wp_kses($error_to_show, $allowedEls);
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

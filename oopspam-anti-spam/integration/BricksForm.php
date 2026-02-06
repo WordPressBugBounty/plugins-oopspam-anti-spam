@@ -23,7 +23,7 @@ function oopspam_spam_check($errors, $form)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($formId === $id) {
                     return $errors;
                 }
@@ -76,7 +76,7 @@ function oopspam_spam_check($errors, $form)
         $raw_entry = json_encode($fields);
         $userIP = "";
 
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -114,7 +114,7 @@ function oopspam_spam_check($errors, $form)
                 'i' => array(),
                 'u' => array()
             );
-            $errors[] = wp_kses($error_to_show, 'oopspam');
+            $errors[] = wp_kses($error_to_show, $allowedEls);
             return $errors;
         } else {
             // It's ham

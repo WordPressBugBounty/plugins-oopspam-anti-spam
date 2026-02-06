@@ -1,89 +1,184 @@
 .oopspam-toggle {
-   appearance: none !important;
-   position: relative !important;
-   display: inline-block !important;
-   box-sizing: content-box !important;
-   width: 4.5em !important;
-   height: 2em !important;
-   padding: 0.2em !important;
-   cursor: pointer !important;
-   border-radius: 1.5em !important;
-   overflow: hidden !important;
-   background-color: #707070 !important;
-   transition: background ease 0.3s !important;
-   font-size: 12px;
+    appearance: none !important;
+    position: relative !important;
+    display: inline-block !important;
+    box-sizing: border-box !important;
+    width: 48px !important;
+    height: 28px !important;
+    padding: 2px !important;
+    cursor: pointer !important;
+    border-radius: 999px !important;
+    overflow: hidden !important;
+    background: linear-gradient(180deg, #8b8b8b 0%, #707070 100%) !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+    font-size: 12px;
  }
- 
- .oopspam-toggle:before {
-   margin: unset !important;
-   content: "on off" !important;
-   display: block !important;
-   position: absolute !important;
-   z-index: 2 !important;
-   width: 2em !important;
-   height: 2em !important;
-   font-family: system-ui !important;
-   font-size: 1em !important;
-   line-height: 2em !important;
-   font-weight: 500 !important;
-   text-transform: uppercase !important;
-   text-indent: -2em !important;
-   word-spacing: 2.55em !important;
-   text-shadow: -1px -1px rgba(0,0,0,0.15) !important;
-   white-space: nowrap !important;
-   background: #fff !important;
-   color: #fff !important;
-   border-radius: 1.5em !important;
-   transition: transform cubic-bezier(0.3, 1.5, 0.7, 1) 0.3s !important;
+
+.oopspam-toggle:before {
+    margin: 0 !important;
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    z-index: 2 !important;
+    width: 24px !important;
+    height: 24px !important;
+    top: 1px !important;
+    left: 1px !important;
+    background: #ffffff !important;
+    border-radius: 999px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
  }
- 
- .oopspam-toggle:checked {
-   background-color: #0e9d26 !important;
+
+.oopspam-toggle:checked {
+    background: linear-gradient(135deg, #FCDD56 0%, #e5c338 100%) !important;
+    border-color: rgba(252, 221, 86, 0.6) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
  }
- 
- .oopspam-toggle:checked:before {
-   transform: translateX(2.5em) !important;
+
+.oopspam-toggle:checked:before {
+    transform: translateX(20px) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
  }
+
+.oopspam-toggle:focus-visible {
+    outline: 2px solid #FCDD56 !important;
+    outline-offset: 2px !important;
+ }
+
+.oopspam-toggle:hover:not(:checked) {
+    background: linear-gradient(180deg, #6b6b6b 0%, #505050 100%) !important;
+ }
+
+
+
+.oopspam-usage-stats {
+      margin: 20px 0;
+      max-width: 600px;
+      padding: 20px;
+      background: #FBF6ED;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.oopspam-usage-numbers {
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #1a1a1a;
+}
+.usage-label {
+      font-weight: 600;
+      margin-right: 8px;
+      color: #000000;
+}
+.usage-value {
+      font-family: 'SF Mono', Consolas, Monaco, monospace;
+      font-weight: 500;
+      color: #333333;
+}
+.oopspam-usage-bar-container {
+      height: 10px;
+      background: #ffffff;
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.oopspam-usage-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #FCDD56 0%, #e5c338 100%);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 999px;
+      box-shadow: 0 1px 3px rgba(252, 221, 86, 0.4);
+}
+.oopspam-usage-note {
+      margin-top: 12px;
+      font-style: italic;
+      font-size: 13px;
+      color: #666666;
+}
+.oopspam-refresh-link {
+      margin-left: 10px;
+      text-decoration: none;
+      color: #000000;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: #ffffff;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+}
+.oopspam-refresh-link:hover {
+      color: #000000;
+      background: #FCDD56;
+      border-color: #FCDD56;
+      text-decoration: none;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.oopspam-refresh-link .dashicons {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+}
+.oopspam-refresh-link.loading .dashicons {
+      animation: oopspam-spin 1s linear infinite;
+}
+@keyframes oopspam-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+}
 
 /* Tooltip styles */
 .oopspam-tooltip {
   position: relative;
   display: inline-flex;
   align-items: center;
-  margin-left: 5px;
+  margin-left: 6px;
   vertical-align: middle;
 }
 
 .oopspam-tooltip .dashicons {
-  color: #777;
+  color: #666666;
   cursor: pointer;
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
+  font-size: 17px;
+  width: 17px;
+  height: 17px;
   line-height: 1;
   vertical-align: text-bottom;
   margin-bottom: 1px;
+  transition: color 0.2s ease;
+}
+
+.oopspam-tooltip .dashicons:hover {
+  color: #000000;
 }
 
 .oopspam-tooltip .tooltip-text {
   visibility: hidden;
-  width: 250px;
-  background-color: #555;
-  color: #fff;
+  width: 280px;
+  background: #1a1a1a;
+  color: #ffffff;
   text-align: left;
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 10px;
+  padding: 12px 14px;
   position: absolute;
   z-index: 999;
-  bottom: 125%;
+  bottom: 135%;
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  transition: opacity 0.3s;
-  font-size: 12px;
-  font-weight: normal;
-  line-height: 1.5;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(252, 221, 86, 0.2);
 }
 
 .oopspam-tooltip .tooltip-text::after {
@@ -91,15 +186,16 @@
   position: absolute;
   top: 100%;
   left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
+  margin-left: -6px;
+  border-width: 6px;
   border-style: solid;
-  border-color: #555 transparent transparent transparent;
+  border-color: #1a1a1a transparent transparent transparent;
 }
 
 .oopspam-tooltip:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
 }
 
 /* Fix alignment in WordPress settings tables */
@@ -160,6 +256,30 @@
 .bb-forms h2 {
    border-bottom-style: solid;
    border-bottom-color: brown;
+}
+
+.metforms {
+   background-color: white;
+}
+.metforms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #fa213b;
+}
+
+.avada-forms {
+   background-color: white;
+}
+.avada-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #65bd7d;
+}
+
+.acf-forms {
+   background-color: white;
+}
+.acf-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #037dd6;
 }
 
 .wpdiscuz {
@@ -372,14 +492,1021 @@
    font-weight: bold;
 }
 
+.form-setting:empty {
+   display: none !important;
+}
+
 .form-setting {
-   box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px, rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+   background: #ffffff;
+   border-radius: 12px;
+   border: 1px solid rgba(0, 0, 0, 0.08);
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+   position: relative;
+   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+   margin-bottom: 20px;
+   overflow: visible;
+}
+
+.form-setting:hover {
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.06);
+   transform: translateY(-2px);
 }
 
 .form-setting h2 {
-   padding: 1em;
+   padding: 1.4em 1.5em;
+   position: relative;
+   background: linear-gradient(135deg, #FBF6ED 0%, #ffffff 100%);
+   margin: 0;
+   font-size: 18px;
+   font-weight: 600;
+   color: #000000;
+   border-bottom: 2px solid #f0f0f0;
 }
 
 .form-setting .form-table {
-   margin: 1em;
+   margin: 1.5em;
+}
+
+.form-setting .form-table th {
+   font-weight: 600;
+   color: #1a1a1a;
+   padding: 14px 10px;
+}
+
+.form-setting .form-table td {
+   padding: 14px 10px;
+}
+
+/* Inactive integration styles */
+.form-setting.oopspam-integration-inactive {
+   position: relative;
+   opacity: 0.65;
+   background: linear-gradient(135deg, #ffffff 0%, #FBF6ED 50%, #ffffff 100%);
+   border: 2px solid rgba(252, 221, 86, 0.3);
+   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-setting.oopspam-integration-inactive:hover {
+   opacity: 0.85;
+   border-color: rgba(252, 221, 86, 0.6);
+   box-shadow: 0 2px 8px rgba(252, 221, 86, 0.15), 0 12px 32px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Subtle overlay effect */
+.form-setting.oopspam-integration-inactive::before {
+   content: '';
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   bottom: 0;
+   background: linear-gradient(180deg, rgba(251, 246, 237, 0.3) 0%, transparent 60%);
+   z-index: 0;
+   pointer-events: none;
+   border-radius: 12px;
+}
+
+/* Helpful hint that appears on hover */
+.form-setting.oopspam-integration-inactive::after {
+   content: '⚙️ Enable to configure';
+   position: absolute;
+   bottom: 12px;
+   right: 12px;
+   background: rgba(0, 0, 0, 0.85);
+   color: #FCDD56;
+   padding: 6px 12px;
+   border-radius: 6px;
+   font-size: 12px;
+   font-weight: 500;
+   z-index: 1;
+   opacity: 0;
+   transition: opacity 0.2s ease;
+   pointer-events: none;
+   white-space: nowrap;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.form-setting.oopspam-integration-inactive:hover::after {
+   opacity: 1;
+}
+
+/* Keep heading and toggle fully interactive */
+.form-setting.oopspam-integration-inactive h2 {
+   position: relative;
+   z-index: 2;
+}
+
+.form-setting.oopspam-integration-inactive .form-table {
+   position: relative;
+   z-index: 1;
+}
+
+/* Disable other rows but keep first row enabled */
+.form-setting.oopspam-integration-inactive .form-table tr:not(:first-child) {
+   pointer-events: none;
+   opacity: 0.6;
+}
+
+.form-setting.oopspam-integration-inactive .form-table tr:first-child {
+   pointer-events: auto;
+}
+
+/* Status badge */
+.oopspam-status-badge {
+   position: absolute;
+   top: 50%;
+   right: 1.2em;
+   transform: translateY(-50%);
+   display: inline-flex;
+   align-items: center;
+   gap: 8px;
+   padding: 7px 14px;
+   font-size: 11px;
+   font-weight: 700;
+   border-radius: 999px;
+   text-transform: uppercase;
+   letter-spacing: 0.8px;
+   z-index: 2;
+   border: 1px solid transparent;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.oopspam-status-badge.active {
+   background: #FCDD56;
+   color: #000000;
+   border-color: rgba(252, 221, 86, 0.6);
+}
+
+.oopspam-status-badge.active:hover {
+   box-shadow: 0 3px 12px rgba(252, 221, 86, 0.4);
+   transform: translateY(-50%) scale(1.02);
+}
+
+.oopspam-status-badge.inactive {
+   background: #f5f5f5;
+   color: #666666;
+   border-color: rgba(0, 0, 0, 0.15);
+}
+
+.oopspam-status-badge::before {
+   content: '';
+   width: 8px;
+   height: 8px;
+   border-radius: 50%;
+   background: currentColor;
+   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+   animation: oopspam-pulse 2s ease-in-out infinite;
+}
+
+.oopspam-status-badge.inactive::before {
+   animation: none;
+   opacity: 0.5;
+}
+
+@keyframes oopspam-pulse {
+   0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+   }
+   50% {
+      opacity: 0.6;
+      transform: scale(1.1);
+   }
+}
+
+/* Smooth transition for activation */
+.form-setting {
+   animation: none;
+}
+
+.form-setting.oopspam-just-activated {
+   animation: oopspam-activate 0.6s ease-out;
+}
+
+@keyframes oopspam-activate {
+   0% {
+      transform: scale(0.98);
+      opacity: 0.5;
+   }
+   50% {
+      transform: scale(1.01);
+   }
+   100% {
+      transform: scale(1);
+      opacity: 1;
+   }
+}
+
+/* Modern input and button styling */
+.form-setting input[type="text"]:not(.ts-control input),
+.form-setting input[type="number"]:not(.ts-control input),
+.form-setting input[type="email"]:not(.ts-control input),
+.form-setting input[type="url"]:not(.ts-control input),
+.form-setting textarea:not(.ts-control textarea),
+.form-setting select:not(.ts-control select) {
+   border: 1px solid rgba(0, 0, 0, 0.15) !important;
+   border-radius: 8px !important;
+   padding: 10px 14px !important;
+   font-size: 14px !important;
+   transition: all 0.2s ease !important;
+   background: #ffffff !important;
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.form-setting input[type="text"]:focus:not(.ts-control input),
+.form-setting input[type="number"]:focus:not(.ts-control input),
+.form-setting input[type="email"]:focus:not(.ts-control input),
+.form-setting input[type="url"]:focus:not(.ts-control input),
+.form-setting textarea:focus:not(.ts-control textarea),
+.form-setting select:focus:not(.ts-control select) {
+   border-color: #FCDD56 !important;
+   outline: none !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.form-setting .button,
+.form-setting .button-primary,
+.form-setting input[type="submit"],
+.form-setting button[type="submit"] {
+   background: #000000 !important;
+   color: #FCDD56 !important;
+   border: 1px solid #000000 !important;
+   border-radius: 8px !important;
+   padding: 10px 20px !important;
+   font-weight: 600 !important;
+   font-size: 14px !important;
+   cursor: pointer !important;
+   transition: all 0.25s ease !important;
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+   text-shadow: none !important;
+}
+
+.form-setting .button:hover,
+.form-setting .button-primary:hover,
+.form-setting input[type="submit"]:hover,
+.form-setting button[type="submit"]:hover {
+   background: #1a1a1a !important;
+   transform: translateY(-1px) !important;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.form-setting .button:active,
+.form-setting .button-primary:active,
+.form-setting input[type="submit"]:active,
+.form-setting button[type="submit"]:active {
+   transform: translateY(0) !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+.form-setting .button-secondary {
+   background: #ffffff !important;
+   color: #000000 !important;
+   border: 1px solid rgba(0, 0, 0, 0.2) !important;
+   border-radius: 8px !important;
+   padding: 10px 20px !important;
+   font-weight: 500 !important;
+   font-size: 14px !important;
+   cursor: pointer !important;
+   transition: all 0.25s ease !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+.form-setting .button-secondary:hover {
+   background: #FBF6ED !important;
+   border-color: #FCDD56 !important;
+   transform: translateY(-1px) !important;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Improved form table rows */
+.form-setting .form-table tr {
+   transition: background-color 0.2s ease;
+}
+
+.form-setting .form-table tr:hover {
+   background: rgba(251, 246, 237, 0.3);
+}
+
+/* Better checkbox and radio styling */
+.form-setting input[type="checkbox"],
+.form-setting input[type="radio"] {
+   width: 18px !important;
+   height: 18px !important;
+   cursor: pointer !important;
+   accent-color: #FCDD56 !important;
+}
+
+/* Modern radio button styling */
+.form-setting input[type="radio"] {
+   appearance: none !important;
+   width: 20px !important;
+   height: 20px !important;
+   border: 2px solid rgba(0, 0, 0, 0.2) !important;
+   border-radius: 50% !important;
+   background: #ffffff !important;
+   cursor: pointer !important;
+   position: relative !important;
+   transition: all 0.2s ease !important;
+   margin: 0 8px 0 0 !important;
+   vertical-align: middle !important;
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.form-setting input[type="radio"]:hover {
+   border-color: #FCDD56 !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.form-setting input[type="radio"]:checked {
+   border-color: #FCDD56 !important;
+   background: #FCDD56 !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.form-setting input[type="radio"]:checked::after {
+   content: '' !important;
+   position: absolute !important;
+   top: 50% !important;
+   left: 50% !important;
+   transform: translate(-50%, -50%) !important;
+   width: 8px !important;
+   height: 8px !important;
+   border-radius: 50% !important;
+   background: #000000 !important;
+}
+
+.form-setting input[type="radio"]:focus-visible {
+   outline: none !important;
+   border-color: #FCDD56 !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.3) !important;
+}
+
+.form-setting input[type="radio"] + label {
+   cursor: pointer !important;
+   user-select: none !important;
+   transition: color 0.2s ease !important;
+}
+
+/* Description text styling */
+.form-setting .description {
+   color: #666666;
+   font-size: 13px;
+   line-height: 1.6;
+   margin-top: 6px;
+}
+
+/* Details/accordion styling */
+.form-setting details {
+   background: #FBF6ED;
+   border: 1px solid rgba(0, 0, 0, 0.08);
+   border-radius: 8px;
+   padding: 14px 16px;
+   margin-top: 10px;
+   transition: all 0.2s ease;
+}
+
+.form-setting details:hover {
+   border-color: #FCDD56;
+   box-shadow: 0 2px 8px rgba(252, 221, 86, 0.15);
+}
+
+.form-setting details summary {
+   cursor: pointer;
+   font-weight: 600;
+   color: #000000;
+   list-style: none;
+   user-select: none;
+}
+
+.form-setting details summary::-webkit-details-marker {
+   display: none;
+}
+
+.form-setting details summary::before {
+   content: '▶';
+   display: inline-block;
+   margin-right: 8px;
+   transition: transform 0.2s ease;
+   color: #FCDD56;
+}
+
+.form-setting details[open] summary::before {
+   transform: rotate(90deg);
+}
+
+/* Range slider styling */
+.form-setting input[type="range"] {
+   accent-color: #FCDD56;
+   height: 6px;
+   border-radius: 999px;
+}
+
+/* Code/pre blocks */
+.form-setting code,
+.form-setting pre {
+   background: #FBF6ED;
+   border: 1px solid rgba(0, 0, 0, 0.08);
+   border-radius: 6px;
+   padding: 2px 6px;
+   font-family: 'SF Mono', Consolas, Monaco, monospace;
+   font-size: 13px;
+   color: #1a1a1a;
+}
+
+/* Hide empty form-setting divs (including those with only whitespace) */
+.form-setting:empty,
+.form-setting:not(:has(*)) {
+   display: none !important;
+   border: none !important;
+   box-shadow: none !important;
+   margin: 0 !important;
+   padding: 0 !important;
+   height: 0 !important;
+   overflow: hidden !important;
+}
+
+/* Add Pair button styling */
+button[onclick*="addData"] {
+   background: #ffffff !important;
+   color: #000000 !important;
+   border: 1px solid rgba(0, 0, 0, 0.2) !important;
+   border-radius: 8px !important;
+   padding: 10px 20px !important;
+   font-weight: 500 !important;
+   font-size: 14px !important;
+   cursor: pointer !important;
+   transition: all 0.25s ease !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+   text-transform: uppercase !important;
+   letter-spacing: 0.5px !important;
+}
+
+button[onclick*="addData"]:hover {
+   background: #FBF6ED !important;
+   border-color: #FCDD56 !important;
+   transform: translateY(-1px) !important;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+button[onclick*="addData"]:active {
+   transform: translateY(0) !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Delete row buttons */
+table button[onclick*="deleteRow"] {
+   background: #ef4444 !important;
+   color: #ffffff !important;
+   border: 1px solid #ef4444 !important;
+   border-radius: 6px !important;
+   padding: 6px 12px !important;
+   font-weight: 500 !important;
+   font-size: 12px !important;
+   cursor: pointer !important;
+   transition: all 0.2s ease !important;
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+table button[onclick*="deleteRow"]:hover {
+   background: #dc2626 !important;
+   border-color: #dc2626 !important;
+   box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Modern nav tabs */
+.nav-tab-wrapper {
+   border: none !important;
+   border-bottom: 2px solid #f0f0f0 !important;
+   /* background: #ffffff !important; */
+   padding: 0 0 0 0 !important;
+   margin: 0 0 30px 0 !important;
+   display: flex !important;
+   gap: 8px !important;
+   flex-wrap: wrap !important;
+   border-radius: 12px 12px 0 0 !important;
+}
+
+.nav-tab {
+   background: #f5f5f5 !important;
+   border: none !important;
+   border-bottom: 3px solid transparent !important;
+   color: #666666 !important;
+   padding: 14px 20px !important;
+   margin: 0 !important;
+   font-weight: 500 !important;
+   font-size: 14px !important;
+   text-decoration: none !important;
+   transition: all 0.25s ease !important;
+   border-radius: 8px 8px 0 0 !important;
+   cursor: pointer !important;
+}
+
+.nav-tab:hover {
+   background: #FBF6ED !important;
+   color: #000000 !important;
+   border-bottom-color: #FCDD56 !important;
+}
+
+.nav-tab-active {
+   background: #ffffff !important;
+   color: #000000 !important;
+   border-bottom-color: #FCDD56 !important;
+   font-weight: 600 !important;
+}
+
+/* Setup Wizard styling */
+.oopspam-wizard-container {
+   background: #ffffff;
+   border-radius: 12px;
+   padding: 40px;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+   margin: 20px 0;
+}
+
+.oopspam-wizard-step {
+   margin-bottom: 30px;
+   padding: 20px;
+   background: #FBF6ED;
+   border-radius: 10px;
+   border: 1px solid rgba(252, 221, 86, 0.2);
+   transition: all 0.2s ease;
+}
+
+.oopspam-wizard-step:hover {
+   border-color: #FCDD56;
+   box-shadow: 0 2px 8px rgba(252, 221, 86, 0.15);
+}
+
+.oopspam-wizard-step h3 {
+   color: #000000;
+   font-size: 18px;
+   font-weight: 600;
+   margin: 0 0 12px 0;
+}
+
+.oopspam-wizard-step p {
+   color: #666666;
+   margin: 8px 0;
+   line-height: 1.6;
+}
+
+.oopspam-wizard-progress {
+   display: flex;
+   gap: 8px;
+   margin-bottom: 30px;
+}
+
+.oopspam-wizard-progress-item {
+   flex: 1;
+   height: 6px;
+   background: #e5e5e5;
+   border-radius: 999px;
+   overflow: hidden;
+}
+
+.oopspam-wizard-progress-item.active {
+   background: #FCDD56;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.2);
+}
+
+.oopspam-wizard-progress-item.completed {
+   background: #10b981;
+   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.oopspam-wizard-form-group {
+   margin-bottom: 20px;
+}
+
+.oopspam-wizard-form-group label {
+   display: block;
+   font-weight: 600;
+   margin-bottom: 8px;
+   color: #000000;
+}
+
+.oopspam-wizard-form-group input,
+.oopspam-wizard-form-group textarea,
+.oopspam-wizard-form-group select {
+   width: 100%;
+   padding: 10px 14px !important;
+   border: 1px solid rgba(0, 0, 0, 0.15) !important;
+   border-radius: 8px !important;
+   font-size: 14px !important;
+   transition: all 0.2s ease !important;
+}
+
+.oopspam-wizard-form-group input:focus,
+.oopspam-wizard-form-group textarea:focus,
+.oopspam-wizard-form-group select:focus {
+   border-color: #FCDD56 !important;
+   outline: none !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15) !important;
+}
+
+.oopspam-wizard-buttons {
+   display: flex;
+   gap: 12px;
+   margin-top: 30px;
+   justify-content: flex-end;
+}
+
+.oopspam-wizard-btn {
+   padding: 12px 28px;
+   border-radius: 8px;
+   font-weight: 600;
+   font-size: 14px;
+   cursor: pointer;
+   border: none;
+   transition: all 0.25s ease;
+}
+
+.oopspam-wizard-btn-primary {
+   background: #000000;
+   color: #FCDD56;
+   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.oopspam-wizard-btn-primary:hover {
+   background: #1a1a1a;
+   transform: translateY(-1px);
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.oopspam-wizard-btn-secondary {
+   background: #ffffff;
+   color: #000000;
+   border: 1px solid rgba(0, 0, 0, 0.2);
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.oopspam-wizard-btn-secondary:hover {
+   background: #FBF6ED;
+   border-color: #FCDD56;
+   transform: translateY(-1px);
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Field labels */
+.form-setting .form-table th label {
+   font-weight: 600;
+   color: #000000;
+   display: block;
+   margin-bottom: 6px;
+}
+
+/* Improved table cell styling */
+.form-setting .form-table th {
+   /* background: linear-gradient(135deg, #FBF6ED 0%, #ffffff 100%); */
+   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+   padding: 16px 12px;
+   font-size: 14px;
+}
+
+.form-setting .form-table td {
+   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+   padding: 16px 12px;
+   vertical-align: middle;
+}
+
+/* Radio and checkbox styling for better visibility */
+.form-setting input[type="radio"] + label {
+   display: inline !important;
+   margin-left: 4px !important;
+   font-weight: 400 !important;
+}
+
+.form-setting input[type="checkbox"] {
+   vertical-align: middle !important;
+}
+
+/* Better select styling */
+.form-setting select {
+   max-width: 100% !important;
+   appearance: none !important;
+   background: #ffffff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23000" d="M0 0l6 8 6-8z"/></svg>') no-repeat right 10px center !important;
+   padding-right: 28px !important;
+   background-size: 12px !important;
+}
+
+/* Textarea styling */
+.form-setting textarea {
+   font-family: 'SF Mono', Consolas, Monaco, monospace;
+   font-size: 13px !important;
+   resize: vertical;
+   min-height: 120px !important;
+}
+
+/* ========================================
+   Global WordPress Settings Table Styling
+   (Scoped to settings pages only - excludes entry tables)
+   ======================================== */
+
+/* Main form table container - only for settings forms, not WP_List_Table */
+form .form-table {
+   background: #ffffff;
+   border-radius: 12px;
+   border: 1px solid rgba(0, 0, 0, 0.08);
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+   margin: 20px 0;
+   border-collapse: separate;
+   border-spacing: 0;
+   overflow: visible;
+}
+
+form .form-table th {
+   /* background: linear-gradient(135deg, #FBF6ED 0%, #ffffff 100%); */
+   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+   padding: 16px 12px;
+   font-size: 14px;
+   font-weight: 600;
+   color: #000000;
+   text-align: left;
+   vertical-align: top;
+}
+
+form .form-table td {
+   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+   padding: 16px 12px;
+   vertical-align: middle;
+}
+
+form .form-table tr:last-child th,
+form .form-table tr:last-child td {
+   border-bottom: none;
+}
+
+form .form-table tr:hover {
+   background: rgba(251, 246, 237, 0.3);
+}
+
+/* Input fields in form tables - scoped to settings forms */
+form .form-table input[type="text"]:not(.ts-control input),
+form .form-table input[type="number"]:not(.ts-control input),
+form .form-table input[type="email"]:not(.ts-control input),
+form .form-table input[type="url"]:not(.ts-control input),
+form .form-table input[type="password"]:not(.ts-control input),
+form .form-table textarea:not(.ts-control textarea),
+form .form-table select:not(.ts-control select) {
+   border: 1px solid rgba(0, 0, 0, 0.15) !important;
+   border-radius: 8px !important;
+   padding: 10px 14px !important;
+   font-size: 14px !important;
+   transition: all 0.2s ease !important;
+   background: #ffffff !important;
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+form .form-table input[type="text"]:focus:not(.ts-control input),
+form .form-table input[type="number"]:focus:not(.ts-control input),
+form .form-table input[type="email"]:focus:not(.ts-control input),
+form .form-table input[type="url"]:focus:not(.ts-control input),
+form .form-table input[type="password"]:focus:not(.ts-control input),
+form .form-table textarea:focus:not(.ts-control textarea),
+form .form-table select:focus:not(.ts-control select) {
+   border-color: #FCDD56 !important;
+   outline: none !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Checkbox and radio styling - scoped */
+form .form-table input[type="checkbox"],
+form .form-table input[type="radio"] {
+   width: 20px !important;
+   height: 20px !important;
+   cursor: pointer !important;
+   accent-color: #FCDD56 !important;
+   vertical-align: middle !important;
+   margin-right: 8px !important;
+}
+
+/* Modern radio button styling for form tables */
+form .form-table input[type="radio"] {
+   appearance: none !important;
+   border: 2px solid rgba(0, 0, 0, 0.2) !important;
+   border-radius: 50% !important;
+   background: #ffffff !important;
+   position: relative !important;
+   transition: all 0.2s ease !important;
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+form .form-table input[type="radio"]:hover {
+   border-color: #FCDD56 !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+form .form-table input[type="radio"]:checked {
+   border-color: #FCDD56 !important;
+   background: #FCDD56 !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+form .form-table input[type="radio"]:checked::after {
+   content: '' !important;
+   position: absolute !important;
+   top: 50% !important;
+   left: 50% !important;
+   transform: translate(-50%, -50%) !important;
+   width: 8px !important;
+   height: 8px !important;
+   border-radius: 50% !important;
+   background: #000000 !important;
+}
+
+form .form-table input[type="radio"]:focus-visible {
+   outline: none !important;
+   border-color: #FCDD56 !important;
+   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.3) !important;
+}
+
+form .form-table input[type="radio"] + label {
+   cursor: pointer !important;
+   user-select: none !important;
+}
+
+/* Select dropdown styling - scoped */
+form .form-table select {
+   max-width: 100% !important;
+   appearance: none !important;
+   background: #ffffff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23000" d="M0 0l6 8 6-8z"/></svg>') no-repeat right 10px center !important;
+   padding-right: 28px !important;
+   background-size: 12px !important;
+}
+
+/* Textarea styling - scoped */
+form .form-table textarea {
+   font-family: 'SF Mono', Consolas, Monaco, monospace;
+   font-size: 13px !important;
+   resize: vertical;
+   min-height: 100px !important;
+}
+
+/* Description text - scoped */
+form .form-table .description {
+   color: #666666;
+   font-size: 13px;
+   line-height: 1.6;
+   margin-top: 6px;
+}
+
+/* Details/accordion in form tables - scoped */
+form .form-table details {
+   background: #FBF6ED;
+   border: 1px solid rgba(0, 0, 0, 0.08);
+   border-radius: 8px;
+   padding: 14px 16px;
+   margin-top: 10px;
+   transition: all 0.2s ease;
+}
+
+form .form-table details:hover {
+   border-color: #FCDD56;
+   box-shadow: 0 2px 8px rgba(252, 221, 86, 0.15);
+}
+
+form .form-table details summary {
+   cursor: pointer;
+   font-weight: 600;
+   color: #000000;
+   list-style: none;
+   user-select: none;
+}
+
+form .form-table details summary::-webkit-details-marker {
+   display: none;
+}
+
+form .form-table details summary::before {
+   content: '▶';
+   display: inline-block;
+   margin-right: 8px;
+   transition: transform 0.2s ease;
+   color: #FCDD56;
+}
+
+form .form-table details[open] summary::before {
+   transform: rotate(90deg);
+}
+
+/* Range slider styling - scoped */
+form .form-table input[type="range"] {
+   accent-color: #FCDD56;
+   height: 6px;
+   border-radius: 999px;
+}
+
+/* Code/pre blocks in form tables - scoped */
+form .form-table code,
+form .form-table pre {
+   background: #FBF6ED;
+   border: 1px solid rgba(0, 0, 0, 0.08);
+   border-radius: 6px;
+   padding: 2px 6px;
+   font-family: 'SF Mono', Consolas, Monaco, monospace;
+   font-size: 13px;
+   color: #1a1a1a;
+}
+
+/* Button styling - scoped to settings forms only (those containing .form-table) */
+form:has(.form-table) .button,
+form:has(.form-table) .button-primary,
+form:has(.form-table) input[type="submit"],
+form:has(.form-table) button[type="submit"],
+.form-setting .button,
+.form-setting .button-primary {
+   background: #ffffff !important;
+   color: #000000 !important;
+   border: 1px solid rgba(0, 0, 0, 0.2) !important;
+   border-radius: 8px !important;
+   padding: 10px 20px !important;
+   font-weight: 500 !important;
+   font-size: 14px !important;
+   cursor: pointer !important;
+   transition: all 0.25s ease !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+   text-shadow: none !important;
+}
+
+form:has(.form-table) .button:hover,
+form:has(.form-table) .button-primary:hover,
+form:has(.form-table) input[type="submit"]:hover,
+form:has(.form-table) button[type="submit"]:hover,
+.form-setting .button:hover,
+.form-setting .button-primary:hover {
+   background: #FBF6ED !important;
+   border-color: #FCDD56 !important;
+   transform: translateY(-1px) !important;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+form:has(.form-table) .button:active,
+form:has(.form-table) .button-primary:active,
+form:has(.form-table) input[type="submit"]:active,
+form:has(.form-table) button[type="submit"]:active,
+.form-setting .button:active,
+.form-setting .button-primary:active {
+   transform: translateY(0) !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+
+form:has(.form-table) .button-secondary,
+.form-setting .button-secondary {
+   background: #ffffff !important;
+   color: #000000 !important;
+   border: 1px solid rgba(0, 0, 0, 0.2) !important;
+   border-radius: 8px !important;
+   padding: 10px 20px !important;
+   font-weight: 500 !important;
+   font-size: 14px !important;
+   cursor: pointer !important;
+   transition: all 0.25s ease !important;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+form:has(.form-table) .button-secondary:hover,
+.form-setting .button-secondary:hover {
+   background: #FBF6ED !important;
+   border-color: #FCDD56 !important;
+   transform: translateY(-1px) !important;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* TomSelect adjustments */
+.ts-wrapper {
+   position: relative !important;
+}
+
+.ts-wrapper.focus,
+.ts-wrapper.dropdown-active {
+   z-index: 1000 !important;
+}
+
+/* Ensure parent container allows dropdown to show above sibling elements */
+.form-setting:has(.ts-wrapper.dropdown-active),
+.form-table tr:has(.ts-wrapper.dropdown-active),
+.form-table td:has(.ts-wrapper.dropdown-active) {
+   z-index: 100 !important;
+}
+
+.ts-wrapper .ts-control {
+   display: flex !important;
+   flex-wrap: wrap !important;
+   align-items: flex-start !important;
+   gap: 3px !important;
+   padding: 6px 8px !important;
+}
+
+.ts-wrapper.multi .ts-control {
+   padding: 6px 8px !important;
+}
+
+.ts-wrapper.multi.has-items .ts-control {
+   padding: 6px 8px !important;
+}
+
+.ts-dropdown {
+   z-index: 10000 !important;
+   position: absolute !important;
 }

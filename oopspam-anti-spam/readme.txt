@@ -3,8 +3,8 @@ Contributors: oopspam
 Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
-Tested up to: 6.8
-Stable tag: 1.2.51
+Tested up to: 6.9
+Stable tag: 1.2.61
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -102,6 +102,9 @@ The plugin seamlessly protects your **comments**, **site search**, and **all maj
 - SureCart
 - QuForm
 - HappyForms Pro
+- Avada Forms
+- MetForm
+- ACF Frontend Forms
 
 
 OOPSpam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -140,6 +143,44 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.61 =
+* **IMPROVEMENT:** Better contextual spam detection guide
+* **IMPROVEMENT:** New, clearer settings page design
+* **IMPROVEMENT:** Simplified setting names for easier understanding
+= 1.2.60 =
+* **NEW:** Added notice to encourage users behind proxies (e.g., Cloudflare) to enable "Trust proxy headers" for accurate IP detection
+* **IMPROVEMENT:** Better metadata in local logging for easier debugging
+* **IMPROVEMENT:** Display clear reason for the API error
+= 1.2.59 =
+* **IMPROVEMENT:** Wrapped all debug error_log() calls in WP_DEBUG checks for better production performance
+* **IMPROVEMENT:** Replaced wp_redirect() with wp_safe_redirect() for better security compliance
+* **FIX:** Addressed "too many requests" errors when the API key is not provided
+= 1.2.58 =
+* **NEW:** [WooCommerce] Order origin checks now respect Manual Moderation -> Allowed IPs settings
+* **IMPROVEMENT:** [WooCommerce] "Block orders with specific total amounts" setting now accepts multiple amounts (one per line)
+* **FIX:** [WooCommerce] Prevented duplicate spam entries when blocking orders with specific total amounts
+= 1.2.57 =
+* **FIX:** Prevented rate limiting notices from appearing after upgrade
+= 1.2.56 =
+* **IMPROVEMENT:** Added missing countries to Blocked and Allowed Countries lists
+* **IMPROVEMENT:** Manual Moderation settings now take precedence over rate limiting
+* **FIX:** General code quality improvements and bug fixes
+= 1.2.55 =
+* **FIX:** Fixed "Do not analyze IP addresses" and "Do not analyze Email addresses" settings not working
+* **FIX:** [Ninja Forms] Fixed spam error message not displaying
+= 1.2.54 =
+* **NEW:** Added support for ACF Frontend Forms
+* **NEW:** Added "Email admin when marked as not spam" setting
+* **NEW:** Added "Trust proxy headers" setting (required for proper IP detection behind proxies)
+* **FIX:** Enhanced security to prevent IP spoofing attacks - requires new "Trust proxy headers" setting
+* **FIX:** All the rate limiting features now require "Enable rate limiting" to be enabled
+= 1.2.53 =
+* **NEW:** Added support for MetForm
+* **IMPROVEMENT:** [Forminator] Stop other actions from running when a spam detected
+= 1.2.52 =
+* **NEW:** Added support for Avada Forms
+* **IMPROVEMENT:** Added missing Caribbean countries to the country lists.
+* **IMPROVEMENT:** UX improvements to the Setup Wizard.
 = 1.2.51 =
 * **NEW:** [WooCommerce] Added "Block orders with specific total amount" setting to prevent card testing on older WooCommerce versions
 * **FIX:** [WooCommerce] Stop payment processing immediately when validation fails
@@ -155,7 +196,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * **NEW:** [WooCommerce] Added "Minimum session page views" setting to enhance protection against card testing
 * **NEW:** [WooCommerce] Added "Require valid device type" setting to enhance protection against card testing
 * **IMPROVEMENT:** Added support for IP ranges in "Manual Moderation -> Blocked IPs" setting (e.g., 192.168.1.0/24)
-* **IMPROVEMENT:** Renamed "Form Ham Entries" to "Form Valid Entries" for better clarity
+* **IMPROVEMENT:** Renamed "Form Ham Entries" to "Valid Entries" for better clarity
 * **IMPROVEMENT:** Verified compatibility with PHP 8.4 and fixed API usage update issues
 * **IMPROVEMENT:** [WooCommerce] Enhanced Order Attribution checks for more accurate spam detection
 * **FIX:** Spam checks now skip customers with previously completed orders to prevent false positives
@@ -191,9 +232,9 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * **NEW:** Introduced "Contextual Spam Detection" to analyze spam based on content and website context.
 * **IMPROVEMENT:** Refined API usage metrics for tracking.
 = 1.2.35 =
-* **NEW:** Introduced the ability to filter Form Spam Entries by Form ID.
+* **NEW:** Introduced the ability to filter Spam Entries by Form ID.
 * **IMPROVEMENT:** Enhanced the user experience for displaying `Current usage`.
-* **FIX:** Addressed issues with the `Delete` and `Email admin` actions in the Form Spam Entries table.
+* **FIX:** Addressed issues with the `Delete` and `Email admin` actions in the Spam Entries table.
 = 1.2.34 =
 * **FIX:** Ensure sessions are initiated and terminated correctly only when the 'Minimum Time Between Page Load and Submission (in seconds)' setting is active.
 = 1.2.33 =
@@ -203,17 +244,17 @@ For advanced configuration options and detailed usage instructions, visit our [W
 = 1.2.31 =
 * **NEW:** [WooCommerce] Added "Payment methods to check origin" setting to restrict origin checks to selected payment methods.
 * **NEW:** Automatically report comments as spam or ham to OOPSpam when flagged within the WordPress comment system.
-* **NEW:** Introduced "Disable local logging" setting to disable logging in the Form Spam and Form Valid Entries tables.
+* **NEW:** Introduced "Disable local logging" setting to disable logging in the Form Spam and Valid Entries tables.
 * **NEW:** Added global settings for "Log submissions to OOPSpam" and "Disable local logging" using constants:
   - `define('OOPSPAM_DISABLE_LOCAL_LOGGING', true);`
   - `define('OOPSPAM_ENABLE_REMOTE_LOGGING', true);`
-* **IMPROVEMENT:** Enhanced Form Spam Entries table to display submissions not analyzed due to rate limiting or API errors.
+* **IMPROVEMENT:** Enhanced Spam Entries table to display submissions not analyzed due to rate limiting or API errors.
 * **IMPROVEMENT:** Removed the review request notice for a cleaner user experience. (But please consider leaving a review <3)
 * **IMPROVEMENT:** [SureForms] Added support for custom messages.
 * **IMPROVEMENT:** [Gravity Forms] Replaced anonymous functions with named functions for better integration support.
 = 1.2.29 =
 * **NEW:** Added support for Multi-site/Network installations
-* **NEW:** Added the ability to filter Form Spam Entries by detection reason
+* **NEW:** Added the ability to filter Spam Entries by detection reason
 * **IMPROVEMENT:** Manually blocked IPs and emails now take precedence over manually allowed ones
 * **FIX:** Prevented storing password field values in logs during WooCommerce registration
 = 1.2.28 =
@@ -260,7 +301,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 = 1.2.18 =
 * NEW: [WooCommerce] "Block orders from unknown origin" setting for the Block Checkout
 = 1.2.17 =
-* NEW: Added bulk reporting functionality for both Form Spam Entries and Form Valid Entries tables
+* NEW: Added bulk reporting functionality for both Spam Entries and Valid Entries tables
 * IMPROVEMENT: [WooCommerce] Enhanced detection of spam targeting the WooCommerce Block Checkout
 * IMPROVEMENT: Resolved layout shifts caused by notices from other plugins
 * IMPROVEMENT: [WooCommerce] Removed first name validation to prevent false positives
@@ -282,7 +323,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * IMPROVEMENT: General UX enhancements for a smoother experience
 * FIX: Resolved issue where WooCommerce blockings were not logged
 = 1.2.13 =
-* NEW: View spam detection reasons in the Form Spam Entries table
+* NEW: View spam detection reasons in the Spam Entries table
 * NEW: Report entries flagged as spam in Gravity Forms to OOPSpam
 * NEW: Report entries flagged as not spam in Gravity Forms to OOPSpam
 * IMPROVEMENT: Admin comments bypass spam checks
@@ -304,7 +345,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * FIX: Prevent duplicate entries in Blocked Emails and IPs settings
 = 1.2.7 =
 * NEW: Automatic local blocking of email and IP when an item is reported as spam
-* IMPROVEMENT: Truncate long messages in Form Valid Entries and Form Spam Entries tables
+* IMPROVEMENT: Truncate long messages in Valid Entries and Spam Entries tables
 * IMPROVEMENT: Clean up manual moderation data from the database when plugin is uninstalled
 * FIX: Correct usage of <label> elements in the settings fields for improved accessibility
 * FIX: Resolve dynamic property deprecation warnings
@@ -315,13 +356,13 @@ For advanced configuration options and detailed usage instructions, visit our [W
 = 1.2.5 =
 * NEW: [WS Form] Specify content field by Form ID and Field ID pair
 * NEW: [WS Form] Combine multiple field values for the 'The main content field' setting
-* FIX: Error when "Not Spam" is used in the Form Spam Entries table
+* FIX: Error when "Not Spam" is used in the Spam Entries table
 = 1.2.4 =
 * NEW: "Block disposable emails" setting
 * FIX: Broken "Move spam comments to" setting
 = 1.2.3 =
 * NEW: Basic HTML support for error messages in all integrations
-* NEW: Ability to set multiple recipients for `Email Admin` in the Form Spam Entries table
+* NEW: Ability to set multiple recipients for `Email Admin` in the Spam Entries table
 * NEW: [Gravity Forms] Specify content field by Form ID and Field ID pair
 * NEW: [Gravity Forms] Combine multiple field values for the `The main content field` setting
 * IMPROVEMENT: Improved security and accessibility by migrating to a modern <select> UI control library
@@ -343,14 +384,14 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * NEW: Display a custom error message in Contact Form 7
 = 1.1.62 =
 * NEW: `Don't protect these forms` setting. Ability to exclude a form from spam protection
-* NEW: `Export CSV` in Form Spam Entries & Form Valid Entries tables
+* NEW: `Export CSV` in Spam Entries & Valid Entries tables
 * IMPROVEMENT: More reliable IP detection
 * IMPROVEMENT: Confirmation prompt before emptying Ham and Spam Entries table
 * IMPROVEMENT: Improved styling of the settings page
 * IMPROVEMENT: Hide `Blocked countries` when `Do not analyze IP addresses` is enabled
 = 1.1.61 =
 * NEW: `Manual moderation` setting to manually block email, IP and exact keyword.
-* NEW: `Email admin` setting under `Form Spam Entries` to send submission data to the website admin
+* NEW: `Email admin` setting under `Spam Entries` to send submission data to the website admin
 * FIX: Load plugin Javascript and CSS files only in the plugin settings
 = 1.1.60 =
 * IMPROVEMENT: WS Form integration uses new pre-submission hook. No need to add an action anymore

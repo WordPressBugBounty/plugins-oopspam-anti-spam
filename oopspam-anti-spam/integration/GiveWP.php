@@ -44,7 +44,7 @@ function oopspamantispam_givewp_pre_submission($data)
             $raw_entry = json_encode($post_data);
         }
 
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = give_get_ip();
         }
 
@@ -60,7 +60,7 @@ function oopspamantispam_givewp_pre_submission($data)
             ];
             oopspam_store_spam_submission($frmEntry, "Gateway mismatch");
             $error_to_show = (isset($options['oopspam_give_spam_message']) && !empty($options['oopspam_give_spam_message'])) ? $options['oopspam_give_spam_message'] : 'Your submission has been flagged as spam.';
-            give_set_error('give_message', $error_to_show);
+            give_set_error('give_message', esc_html($error_to_show));
             return $data;
         }
 
@@ -83,7 +83,7 @@ function oopspamantispam_givewp_pre_submission($data)
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = (isset($options['oopspam_give_spam_message']) && !empty($options['oopspam_give_spam_message'])) ? $options['oopspam_give_spam_message'] : 'Your submission has been flagged as spam.';
-            give_set_error('give_message', $error_to_show);
+            give_set_error('give_message', esc_html($error_to_show));
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

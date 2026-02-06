@@ -62,7 +62,7 @@ function checkSpamBeforeEmail($canExecute, $action, $form) {
 
     if (!empty(oopspamantispam_get_key())) {
         $userIP = '';
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = $form['ip'];
         }
 

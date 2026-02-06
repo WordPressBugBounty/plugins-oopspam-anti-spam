@@ -5,6 +5,7 @@ add_filter('ninja_forms_submit_data', 'OOPSPAM\Integrations\oopspamantispam_form
 
 function oopspamantispam_forms_after_submission($form_data)
 {
+
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
@@ -24,7 +25,7 @@ function oopspamantispam_forms_after_submission($form_data)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($form_data["id"] == $id) {
                     return $form_data;
                 }
@@ -70,7 +71,7 @@ function oopspamantispam_forms_after_submission($form_data)
         }        
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -99,16 +100,17 @@ function oopspamantispam_forms_after_submission($form_data)
             if (empty($field_id)) {
                 $field_id = array_values($form_data['fields'])[0]['id'];
             }
-            $errors = [
-                'fields' => [
-                    $field_id => __($error_to_show, 'oopspam'),
-                ],
-            ];
-
-            $response = [
-                'errors' => $errors,
-            ];
-            return $response;
+            // Preserve the original form_data structure and add errors properly
+            if (!isset($form_data['errors'])) {
+                $form_data['errors'] = [];
+            }
+            if (!isset($form_data['errors']['fields'])) {
+                $form_data['errors']['fields'] = [];
+            }
+            
+            $form_data['errors']['fields'][$field_id] = esc_html($error_to_show);
+            
+            return $form_data;
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

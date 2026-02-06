@@ -7,7 +7,7 @@ namespace OOPSPAM\API;
  * 
  * @author OOPSpam LLC
  * @link   https://www.oopspam.com/
- * @copyright Copyright (c) 2017 - 2025, oopspam.com
+ * @copyright Copyright (c) 2017 - 2026, oopspam.com
  */
 class OOPSpamAPI {
     const version='v1';
@@ -136,7 +136,6 @@ class OOPSpamAPI {
 
         $response_code = wp_remote_retrieve_response_code($response);
         if ($response_code !== 200 && $response_code !== 201) {
-            error_log('OOPSpam getAPIUsage Error: Invalid response code ' . $response_code);
             return;
         }
 
@@ -168,8 +167,9 @@ class OOPSpamAPI {
         $option_name = 'oopspamantispam_settings';
         
         // Get the serialized option value
+        $options_table = esc_sql($wpdb->options);
         $serialized_options = $wpdb->get_var($wpdb->prepare(
-            "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s LIMIT 1",
+            "SELECT option_value FROM {$options_table} WHERE option_name = %s LIMIT 1",
             $option_name
         ));
         
@@ -234,10 +234,11 @@ class OOPSpamAPI {
     * Submit a request to OOPSpam API
     * 
     * @param string $content The content that we evaluate.
+    * @param string $metadata Optional JSON metadata containing form fields and HTTP headers for fraud detection.
     * 
     * @return string {message: "success"} in case of successful request
     */
-    public function Report($content, $sender_ip, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $isSpam) {
+    public function Report($content, $sender_ip, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $isSpam, $metadata = '') {
 
         $options = get_option('oopspamantispam_settings');
         $currentSensitivityLevel = $options["oopspam_spam_score_threshold"];
@@ -266,7 +267,19 @@ class OOPSpamAPI {
             'blockVPN' => $this->oopspam_block_vpns,
             "shouldBeSpam" => $isSpam,
             "sensitivityLevel" => $currentSensitivityLevel
-        );        
+        );
+
+        // Add metadata if provided (contains form fields and HTTP headers for fraud detection)
+        if (!empty($metadata)) {
+            // If metadata is a JSON string, decode it to include as object
+            $decodedMetadata = json_decode($metadata, true);
+            if ($decodedMetadata !== null) {
+                $parameters['metadata'] = $decodedMetadata;
+            } else {
+                // If not valid JSON, include as-is
+                $parameters['metadata'] = $metadata;
+            }
+        }
 
         $jsonreply=$this->RequestToOOPSpamReportingAPI(json_encode($parameters));
         

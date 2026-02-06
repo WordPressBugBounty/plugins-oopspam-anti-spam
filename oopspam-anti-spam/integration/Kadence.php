@@ -33,7 +33,7 @@ function oopspamantispam_kb_adv_pre_submission($reject, $form_args, $processed_f
     if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('kb')) {
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
         $escapedMsg = sanitize_textarea_field($message);
@@ -74,7 +74,7 @@ function oopspam_kadence_reject_message($message, $form_args, $processed_fields,
     // Customize the rejection message
     $options = get_option('oopspamantispam_settings');
     $error_to_show = (isset($options['oopspam_kb_spam_message']) && !empty($options['oopspam_kb_spam_message'])) ? $options['oopspam_kb_spam_message'] : 'Your submission has been flagged as spam.';
-    return __($error_to_show, 'oopspam');
+    return esc_html($error_to_show);
 }
 // Filter function
 function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_id)
@@ -103,7 +103,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
     if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('kb')) {
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
         $escapedMsg = sanitize_textarea_field($message);
@@ -126,7 +126,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = (isset($options['oopspam_kb_spam_message']) && !empty($options['oopspam_kb_spam_message'])) ? $options['oopspam_kb_spam_message'] : 'Your submission has been flagged as spam.';
             $kb = new \KB_Ajax_Form();
-            $kb -> process_bail( __( $error_to_show, 'oopspam' ), __( 'Spam Detected by OOPSpam', 'oopspam' ) );
+            $kb -> process_bail( esc_html( $error_to_show ), __( 'Spam Detected by OOPSpam', 'oopspam-anti-spam' ) );
             return;
         } else {
             // It's ham

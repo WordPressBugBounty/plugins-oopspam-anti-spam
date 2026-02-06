@@ -26,7 +26,7 @@ function oopspam_wpdis_pre_submission()
         $raw_entry = json_encode($_POST);
         $form_id = "wpDiscuz";
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -49,8 +49,8 @@ function oopspam_wpdis_pre_submission()
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_wpdis_spam_message']) && !empty($options['oopspam_wpdis_spam_message'])) ? $options['oopspam_wpdis_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
-            wp_die( __( $error_to_show, 'oopspam' ) );
+            $error_to_show = (isset($options['oopspam_wpdis_spam_message']) && !empty($options['oopspam_wpdis_spam_message'])) ? $options['oopspam_wpdis_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
+            wp_die( esc_html( $error_to_show ) );
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

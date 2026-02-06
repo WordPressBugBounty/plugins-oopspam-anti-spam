@@ -2,14 +2,82 @@ jQuery(document).ready(function($) {
 
 
     document.querySelectorAll('.select').forEach((el)=>{
-        let settings = {};
+        let settings = {
+            plugins: ['remove_button', 'clear_button']
+        };
          new TomSelect(el, settings);
     });
 
     let adminEmailList = document.getElementById('admin-email-list');
     if (adminEmailList) {
-         const settings = {create: true};
+         const settings = {
+            create: true,
+            plugins: ['remove_button', 'clear_button']
+         };
          adminEmailList = new TomSelect(adminEmailList, settings);
+    }
+
+    // Initialize integration activation status
+    initializeIntegrationStates();
+
+    function initializeIntegrationStates() {
+        // Find all integration sections
+        const integrationSections = document.querySelectorAll('.form-setting');
+        
+        integrationSections.forEach(section => {
+            // Find the activation toggle in this section
+            const activationToggle = section.querySelector('.oopspam-toggle');
+            
+            if (activationToggle) {
+                // Add status badge if it doesn't exist
+                const heading = section.querySelector('h2');
+                if (heading && !heading.querySelector('.oopspam-status-badge')) {
+                    const badge = createStatusBadge(activationToggle.checked);
+                    heading.appendChild(badge);
+                }
+                
+                // Set initial state
+                updateIntegrationState(section, activationToggle.checked);
+                
+                // Listen for changes
+                activationToggle.addEventListener('change', function() {
+                    const isActive = this.checked;
+                    updateIntegrationState(section, isActive);
+                    updateStatusBadge(section, isActive);
+                    
+                    // Add activation animation
+                    if (isActive) {
+                        section.classList.add('oopspam-just-activated');
+                        setTimeout(() => {
+                            section.classList.remove('oopspam-just-activated');
+                        }, 600);
+                    }
+                });
+            }
+        });
+    }
+
+    function createStatusBadge(isActive) {
+        const badge = document.createElement('span');
+        badge.className = 'oopspam-status-badge ' + (isActive ? 'active' : 'inactive');
+        badge.textContent = isActive ? 'Active' : 'Inactive';
+        return badge;
+    }
+
+    function updateStatusBadge(section, isActive) {
+        const badge = section.querySelector('.oopspam-status-badge');
+        if (badge) {
+            badge.className = 'oopspam-status-badge ' + (isActive ? 'active' : 'inactive');
+            badge.textContent = isActive ? 'Active' : 'Inactive';
+        }
+    }
+
+    function updateIntegrationState(section, isActive) {
+        if (isActive) {
+            section.classList.remove('oopspam-integration-inactive');
+        } else {
+            section.classList.add('oopspam-integration-inactive');
+        }
     }
 
     $("#empty-ham-entries").click(function (e) {
@@ -205,17 +273,11 @@ jQuery(document).ready(function($) {
 
     function hideRateLimitSettings() {
         if ($("#rt_enabled").is(":checked")) {
-            // Hide settings related to rate limiting
-            // Adjust this selector based on your actual HTML structure
+            // Show all rate limiting related settings when enabled
             $("#rt_enabled").closest('tr').nextAll('tr').show();
         } else {
-            // Show settings related to rate limiting
-            // Show all related rows, adjust selector as necessary
-            $("#rt_enabled").closest('tr').nextAll('tr').each(function() {
-                if (!$(this).find('#oopspamantispam_ratelimit_gclid_limit').length && !$(this).find('#oopspamantispam_min_submission_time').length) {
-                    $(this).hide();
-                }
-            });
+            // Hide all rate limiting related settings when disabled
+            $("#rt_enabled").closest('tr').nextAll('tr').hide();
         }
     }
 

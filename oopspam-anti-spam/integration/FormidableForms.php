@@ -31,7 +31,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($values['form_id'] == $id) {
                     return $errors;
                 }
@@ -70,7 +70,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
             return $errors;
         }
 
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = \FrmAppHelper::get_ip_address();
         }
 
@@ -94,7 +94,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = (isset($options['oopspam_fable_spam_message']) && !empty($options['oopspam_fable_spam_message'])) ? $options['oopspam_fable_spam_message'] : 'Your submission has been flagged as spam.';
-            $errors['spam'] = $error_to_show;
+            $errors['spam'] = esc_html($error_to_show);
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

@@ -16,7 +16,7 @@ function oopspamantispam_surecart_pre_order( $errors, $args, $request ) {
         }
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -39,8 +39,8 @@ function oopspamantispam_surecart_pre_order( $errors, $args, $request ) {
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_surecart_spam_message']) && !empty($options['oopspam_surecart_spam_message'])) ? $options['oopspam_surecart_spam_message'] : __('Your order has been flagged as spam.', 'oopspam');
-            $errors->add( 'blocked', $error_to_show );
+            $error_to_show = (isset($options['oopspam_surecart_spam_message']) && !empty($options['oopspam_surecart_spam_message'])) ? $options['oopspam_surecart_spam_message'] : __('Your order has been flagged as spam.', 'oopspam-anti-spam');
+            $errors->add( 'blocked', esc_html($error_to_show) );
 
         } else {
             // It's ham

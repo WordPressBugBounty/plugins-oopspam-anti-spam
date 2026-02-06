@@ -59,7 +59,7 @@ function oopspamantispam_sure_pre_submission($submission_data) {
         }
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -83,10 +83,10 @@ function oopspamantispam_sure_pre_submission($submission_data) {
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_sure_spam_message']) && !empty($options['oopspam_sure_spam_message'])) ? $options['oopspam_sure_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+            $error_to_show = (isset($options['oopspam_sure_spam_message']) && !empty($options['oopspam_sure_spam_message'])) ? $options['oopspam_sure_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
             
             wp_send_json_error([
-                'message'  => $error_to_show,
+                'message'  => esc_html($error_to_show),
                 'position' => 'header'
             ]);
     

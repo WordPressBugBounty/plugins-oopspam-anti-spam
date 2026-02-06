@@ -21,7 +21,7 @@ function oopspamantispam_buddypress_validate_signup()
         if (!empty($user_email)) {
             
             $userIP = "";
-            if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+            if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
                 $userIP = oopspamantispam_get_ip();
             }
 
@@ -64,7 +64,7 @@ function oopspamantispam_buddypress_validate_signup()
                 
                 $error_to_show = (isset($options['oopspam_buddypress_spam_message']) && !empty($options['oopspam_buddypress_spam_message'])) 
                     ? $options['oopspam_buddypress_spam_message'] 
-                    : __('Your registration has been flagged as spam.', 'oopspam');
+                    : __('Your registration has been flagged as spam.', 'oopspam-anti-spam');
                 
                 // Block the registration with wp_die
                 wp_die(esc_html($error_to_show));

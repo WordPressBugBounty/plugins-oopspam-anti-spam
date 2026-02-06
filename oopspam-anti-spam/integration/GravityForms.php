@@ -158,7 +158,7 @@ function extractData($form, $entry)
     }
 
     // Capture the IP
-    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
         $userIP = rgar($entry, 'ip');
     }
 

@@ -82,7 +82,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($form_data['id'] == $id) {
                     return;
                 }
@@ -90,7 +90,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
         }
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = wpforms_get_ip();
         }
         $escapedMsg = sanitize_textarea_field($message);
@@ -112,7 +112,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
 
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_wpf_spam_message']) && !empty($options['oopspam_wpf_spam_message'])) ? $options['oopspam_wpf_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+            $error_to_show = (isset($options['oopspam_wpf_spam_message']) && !empty($options['oopspam_wpf_spam_message'])) ? $options['oopspam_wpf_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
             $allowedEls = array(
                 'a' => array(
                     'href' => array(),

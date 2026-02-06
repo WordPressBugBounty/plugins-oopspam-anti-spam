@@ -67,7 +67,7 @@ function my_pre_validate(array $result, \Quform_Form $form)
         }
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -93,13 +93,13 @@ function my_pre_validate(array $result, \Quform_Form $form)
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = (isset($options['oopspam_quform_spam_message']) && !empty($options['oopspam_quform_spam_message'])) ? 
                             $options['oopspam_quform_spam_message'] : 
-                            __('Your submission has been flagged as spam.', 'oopspam');
+                            __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
             
             return array(
                 'type' => 'error',
                 'error' => array(
                     'enabled' => true,
-                    'content' => $error_to_show
+                    'content' => esc_html($error_to_show)
                 )
             );
         } else {

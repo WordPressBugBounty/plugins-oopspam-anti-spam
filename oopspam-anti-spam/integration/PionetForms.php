@@ -22,7 +22,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
 
         foreach ($excludedFormIds as $id) {
             // Don't check for spam for this form
-            // Don't log under Form Valid Entries
+            // Don't log under Valid Entries
             if ($form_id == $id) {
                 return;
             }
@@ -60,7 +60,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
 
     if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('pionet')) {
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
         $escapedMsg = sanitize_textarea_field($message);
@@ -82,7 +82,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
             // It's spam, store the submission and show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = isset($options['oopspam_pionet_spam_message']) && !empty($options['oopspam_pionet_spam_message']) ? $options['oopspam_pionet_spam_message'] : "Your submission has been flagged as spam.";
-            return $error_to_show;
+            return esc_html($error_to_show);
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

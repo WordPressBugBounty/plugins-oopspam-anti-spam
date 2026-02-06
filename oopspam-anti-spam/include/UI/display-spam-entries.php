@@ -18,7 +18,7 @@ function empty_spam_entries(){
 	    }
 	
 		// Verify the nonce
-	    $nonce = $_POST['nonce'];
+	    $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
 	    if ( ! wp_verify_nonce( $nonce, 'empty_spam_entries_nonce' ) ) {
 	        wp_send_json_error( array(
 	            'error'   => true,
@@ -29,16 +29,18 @@ function empty_spam_entries(){
 	    global $wpdb; 
 	    $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
 	
-		$action_type = $_POST['action_type'];
+		$action_type = isset($_POST['action_type']) ? $_POST['action_type'] : '';
 	    if ($action_type === "empty-entries") {
-	        $wpdb->query("TRUNCATE TABLE $table");
+	        $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
 	        wp_send_json_success( array( 
 	            'success' => true
 	        ), 200 );
 	    }
 	 } catch (Exception $e) {
         // Handle the exception
-        error_log('empty_spam_entries: ' . $e->getMessage());
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('empty_spam_entries: ' . $e->getMessage());
+        }
 	 }
 
 	wp_die(); // this is required to terminate immediately and return a proper response
@@ -57,7 +59,7 @@ function export_spam_entries(){
         }
     
         // Verify the nonce
-        $nonce = $_POST['nonce'];
+        $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
         if ( ! wp_verify_nonce( $nonce, 'export_spam_entries_nonce' ) ) {
             wp_send_json_error( array(
                 'error'   => true,
@@ -76,10 +78,8 @@ function export_spam_entries(){
         ));
 
         // Get rows securely
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM %i",
-            $table
-        ), ARRAY_A);
+        $rows = $wpdb->get_results(
+            "SELECT * FROM " . esc_sql($table), ARRAY_A);
 
         // Filter out columns to ignore (e.g., 'id')
         $columns_to_ignore = array('id', 'reported');
@@ -125,7 +125,9 @@ function export_spam_entries(){
 
     } catch (Exception $e) {
         // Handle the exception
-        error_log('export_spam_entries: ' . $e->getMessage());
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('export_spam_entries: ' . $e->getMessage());
+        }
     }
 
     wp_die(); // this is required to terminate immediately and return a proper response
@@ -140,8 +142,8 @@ class Spam_Entries extends \WP_List_Table {
 	public function __construct() {
 
 		parent::__construct( [
-			'singular' => __( 'Entry', 'sp' ), //singular name of the listed records
-			'plural'   => __( 'Entries', 'sp' ), //plural name of the listed records
+			'singular' => __( 'Entry',  'oopspam-anti-spam' ), //singular name of the listed records
+			'plural'   => __( 'Entries',  'oopspam-anti-spam' ), //plural name of the listed records
 			'ajax'     => false //does this table support ajax?
 		] );
 
@@ -196,18 +198,20 @@ class Spam_Entries extends \WP_List_Table {
 		// Combine WHERE clauses
 		$where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
-		// Add ordering
+		// Add ordering (already sanitized with sanitize_sql_orderby)
 		$orderby = !empty($_REQUEST['orderby']) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'date';
 		$order = !empty($_REQUEST['order']) ? sanitize_sql_orderby($_REQUEST['order']) : 'DESC';
 		
 		// Calculate offset
 		$offset = ($page_number - 1) * $per_page;
 
-		// Prepare the complete query
+		// Build the complete SQL query
+		$sql = "SELECT * FROM " . esc_sql($table) . " $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d";
+		
+		// Prepare the query with parameters
 		$query = $wpdb->prepare(
-			"SELECT * FROM %i $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d",
+			$sql,
 			array_merge(
-				array($table),
 				$values,
 				array($per_page, $offset)
 			)
@@ -222,10 +226,9 @@ class Spam_Entries extends \WP_List_Table {
 	private function get_unique_reasons() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
-		return $wpdb->get_col($wpdb->prepare(
-			"SELECT DISTINCT reason FROM %i WHERE reason IS NOT NULL AND reason != ''",
-			$table
-		));
+		return $wpdb->get_col(
+			"SELECT DISTINCT reason FROM " . esc_sql($table) . " WHERE reason IS NOT NULL AND reason != ''"
+		);
 	}
 
 	/**
@@ -234,10 +237,9 @@ class Spam_Entries extends \WP_List_Table {
 	private function get_unique_form_ids() {
 		global $wpdb;
 		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
-		return $wpdb->get_col($wpdb->prepare(
-			"SELECT DISTINCT form_id FROM %i WHERE form_id IS NOT NULL AND form_id != '' ORDER BY form_id ASC",
-			$table
-		));
+		return $wpdb->get_col(
+			"SELECT DISTINCT form_id FROM " . esc_sql($table) . " WHERE form_id IS NOT NULL AND form_id != '' ORDER BY form_id ASC"
+		);
 	}
 
 	/**
@@ -252,7 +254,7 @@ class Spam_Entries extends \WP_List_Table {
 			?>
 			<div class="alignleft actions">
 				<select name="filter_reason" class="postform" id="filter-by-reason">
-					<option value=""><?php _e('All Reasons', 'sp'); ?></option>
+					<option value=""><?php esc_html_e('All Reasons', 'oopspam-anti-spam'); ?></option>
 					<?php foreach ($reasons as $reason): ?>
 						<option value="<?php echo esc_attr($reason); ?>" <?php selected($current_reason, $reason); ?>>
 							<?php echo esc_html($reason); ?>
@@ -260,7 +262,7 @@ class Spam_Entries extends \WP_List_Table {
 					<?php endforeach; ?>
 				</select>
 
-				<select name="filter_form_id[]" multiple id="form-id-filter" class="form-id-select" placeholder="<?php _e('Select Form IDs', 'sp'); ?>">
+				<select name="filter_form_id[]" multiple id="form-id-filter" class="form-id-select" placeholder="<?php esc_attr_e('Select Form IDs', 'oopspam-anti-spam'); ?>">
 					<?php foreach ($form_ids as $form_id): ?>
 						<option value="<?php echo esc_attr($form_id); ?>" 
 							<?php echo in_array($form_id, $current_form_ids) ? 'selected' : ''; ?>>
@@ -269,7 +271,7 @@ class Spam_Entries extends \WP_List_Table {
 					<?php endforeach; ?>
 				</select>
 
-				<?php submit_button(__('Filter', 'sp'), '', 'filter_action', false); ?>
+				<?php submit_button(__('Filter',  'oopspam-anti-spam'), '', 'filter_action', false); ?>
 			</div>
 
 			<style>
@@ -303,7 +305,7 @@ class Spam_Entries extends \WP_List_Table {
 					maxItems: null,
 					persist: false,
 					create: false,
-					placeholder: '<?php _e('Select Form IDs', 'sp'); ?>',
+					placeholder: '<?php esc_attr_e('Select Form IDs', 'oopspam-anti-spam'); ?>',
 				});
 			});
 			</script>
@@ -418,10 +420,254 @@ public static function notify_spam_entry($id) {
         
         // Show success/failure message
         if (!empty($sent_to)) {
-            $recipient_list = esc_js(implode(', ', $sent_to));
-            echo "<script type='text/javascript'>alert('Notification sent to: " . $recipient_list . "');</script>";
+            $recipient_list = implode(', ', $sent_to);
+            // Notification sent successfully
         } else {
-            echo "<script type='text/javascript'>alert('Failed to send notification.');</script>";
+            // Failed to send notification
+        }
+    }
+}
+
+/**
+ * Check if admin email should be sent when entry is marked as not spam
+ *
+ * @param int $id entry ID
+ */
+public static function maybe_notify_not_spam($id) {
+    $misc_options = get_option('oopspamantispam_misc_settings');
+    
+    // Skip individual notifications if disabled (e.g., during bulk operations)
+    if (apply_filters('oopspam_disable_individual_not_spam_email', false)) {
+        return;
+    }
+    
+    // Only send email if the setting is enabled
+    if (isset($misc_options['oopspam_email_admin_on_not_spam'])) {
+        self::notify_not_spam_entry($id);
+    }
+}
+
+/**
+ * Send an email notification when entry is marked as not spam
+ *
+ * @param int $id entry ID
+ */
+public static function notify_not_spam_entry($id) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+    $spamEntry = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT message, ip, email, raw_entry, date
+            FROM $table
+            WHERE id = %s",
+            $id
+        )
+    );
+
+    if (!$spamEntry) {
+        return;
+    }
+
+    // Start building the email body
+    $body = "<div style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;'>";
+    $body .= "<h2 style='color: #28a745;'>Entry Marked as Not Spam</h2>";
+    $body .= "<p style='background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 4px;'>";
+    $body .= "<strong>Notice:</strong> The following form submission was marked as 'not spam' and has been added to your allowlist.";
+    $body .= "</p>";
+    
+    // Initialize sender email from database
+    $sender_email = $spamEntry->email;
+    
+    // Process form fields
+    if (!empty($spamEntry->raw_entry)) {
+        $processed_fields = self::process_form_fields($spamEntry->raw_entry);
+        
+        if (!empty($processed_fields)) {
+            $body .= "<table style='border-collapse: collapse; width: 100%; margin: 20px 0;'>";
+            $body .= "<tr style='background-color: #f5f5f5;'>
+                        <th style='border: 1px solid #ddd; padding: 12px; text-align: left;'>Field</th>
+                        <th style='border: 1px solid #ddd; padding: 12px; text-align: left;'>Value</th>
+                    </tr>";
+            
+            foreach ($processed_fields as $field) {
+                $formatted_value = self::format_field_value($field['value']);
+                
+                $body .= "<tr>
+                            <td style='border: 1px solid #ddd; padding: 12px;'><strong>" . esc_html($field['name']) . "</strong></td>
+                            <td style='border: 1px solid #ddd; padding: 12px;'>{$formatted_value}</td>
+                        </tr>";
+            }
+            
+            $body .= "</table>";
+        }
+    }
+    
+    // Add submission metadata
+    $body .= "<div style='background-color: #f9f9f9; padding: 15px; margin-top: 20px; border-radius: 5px;'>";
+    $body .= "<h3 style='color: #666; margin-top: 0;'>Submission Details</h3>";
+    $body .= "<p style='margin: 5px 0;'><strong>IP Address:</strong> " . esc_html($spamEntry->ip) . "</p>";
+    $body .= "<p style='margin: 5px 0;'><strong>Submission Time:</strong> " . esc_html($spamEntry->date) . "</p>";
+    $body .= "<p style='margin: 5px 0;'><strong>Action:</strong> <span style='color: #28a745; font-weight: bold;'>Marked as Not Spam</span></p>";
+    $body .= "</div>";
+    
+    $body .= "</div>";
+    
+    // Get the list of email addresses
+    $to = get_option('oopspam_admin_emails');
+    
+    // If the option is empty, get the default admin email
+    if (empty($to)) {
+        $to = get_option('admin_email');
+    }
+    
+    // Convert the email addresses to an array
+    $to_array = is_string($to) ? explode(',', $to) : (array) $to;
+    
+    // Remove any invalid email addresses
+    $to_array = array_filter($to_array, 'is_email');
+    
+    // Send emails
+    if (!empty($to_array)) {
+        $subject = "Entry Marked as Not Spam - " . get_bloginfo('name');
+        $sent_to = [];
+        
+        foreach ($to_array as $recipient) {
+            $headers = [
+                'From: ' . get_bloginfo('name') . ' <' . $recipient . '>',
+                'Reply-To: ' . $sender_email,
+                'Content-Type: text/html; charset=UTF-8'
+            ];
+            
+            $sent = wp_mail($recipient, $subject, $body, $headers);
+            if ($sent) {
+                $sent_to[] = $recipient;
+            }
+        }
+        
+        // Show success/failure message
+        if (!empty($sent_to)) {
+            $recipient_list = implode(', ', $sent_to);
+            // Not spam notification sent successfully
+        } else {
+            // Failed to send not spam notification
+        }
+    }
+}
+
+/**
+ * Send bulk not spam notifications
+ *
+ * @param array $entry_ids Array of entry IDs
+ */
+public static function notify_bulk_not_spam($entry_ids) {
+    $misc_options = get_option('oopspamantispam_misc_settings');
+    
+    // Only send email if the setting is enabled
+    if (!isset($misc_options['oopspam_email_admin_on_not_spam']) || empty($entry_ids)) {
+        return;
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+    
+    // Get all entries in one query
+    $placeholders = implode(',', array_fill(0, count($entry_ids), '%d'));
+    $spamEntries = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, message, ip, email, raw_entry, date
+            FROM $table
+            WHERE id IN ($placeholders)",
+            ...$entry_ids
+        )
+    );
+
+    if (empty($spamEntries)) {
+        return;
+    }
+
+    // Start building the email body
+    $body = "<div style='font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;'>";
+    $body .= "<h2 style='color: #28a745;'>Bulk Entries Marked as Not Spam</h2>";
+    $body .= "<p style='background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 4px;'>";
+    $body .= "<strong>Notice:</strong> " . count($spamEntries) . " form submissions were marked as 'not spam' and have been added to your allowlist.";
+    $body .= "</p>";
+
+    foreach ($spamEntries as $index => $spamEntry) {
+        $body .= "<div style='border: 1px solid #ddd; margin: 20px 0; padding: 15px; border-radius: 5px;'>";
+        $body .= "<h3 style='color: #333; margin-top: 0;'>Entry #" . ($index + 1) . " (ID: {$spamEntry->id})</h3>";
+        
+        // Process form fields
+        if (!empty($spamEntry->raw_entry)) {
+            $processed_fields = self::process_form_fields($spamEntry->raw_entry);
+            
+            if (!empty($processed_fields)) {
+                $body .= "<table style='border-collapse: collapse; width: 100%; margin: 10px 0;'>";
+                $body .= "<tr style='background-color: #f5f5f5;'>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Field</th>
+                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Value</th>
+                        </tr>";
+                
+                foreach ($processed_fields as $field) {
+                    $formatted_value = self::format_field_value($field['value']);
+                    
+                    $body .= "<tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'><strong>" . esc_html($field['name']) . "</strong></td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>{$formatted_value}</td>
+                            </tr>";
+                }
+                
+                $body .= "</table>";
+            }
+        }
+
+        // Add submission metadata
+        $body .= "<div style='background-color: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 3px;'>";
+        $body .= "<p style='margin: 2px 0; font-size: 12px;'><strong>IP:</strong> " . esc_html($spamEntry->ip) . " | ";
+        $body .= "<strong>Date:</strong> " . esc_html($spamEntry->date) . "</p>";
+        $body .= "</div>";
+        
+        $body .= "</div>";
+    }
+    
+    $body .= "</div>";
+    
+    // Get the list of email addresses
+    $to = get_option('oopspam_admin_emails');
+    
+    // If the option is empty, get the default admin email
+    if (empty($to)) {
+        $to = get_option('admin_email');
+    }
+    
+    // Convert the email addresses to an array
+    $to_array = is_string($to) ? explode(',', $to) : (array) $to;
+    
+    // Remove any invalid email addresses
+    $to_array = array_filter($to_array, 'is_email');
+    
+    // Send emails
+    if (!empty($to_array)) {
+        $subject = "Bulk Entries Marked as Not Spam (" . count($spamEntries) . " entries) - " . get_bloginfo('name');
+        $sent_to = [];
+        
+        foreach ($to_array as $recipient) {
+            $headers = [
+                'From: ' . get_bloginfo('name') . ' <' . $recipient . '>',
+                'Content-Type: text/html; charset=UTF-8'
+            ];
+            
+            $sent = wp_mail($recipient, $subject, $body, $headers);
+            if ($sent) {
+                $sent_to[] = $recipient;
+            }
+        }
+        
+        // Show success/failure message
+        if (!empty($sent_to)) {
+            $recipient_list = implode(', ', $sent_to);
+            // Bulk not spam notification sent successfully
+        } else {
+            // Failed to send bulk not spam notification
         }
     }
 }
@@ -580,62 +826,102 @@ private static function process_form_fields($raw_entry) {
 	 * @param int $id entry ID
 	 */
 	public static function report_spam_entry( $id ) {
-		global $wpdb;
-        $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+		try {
+			global $wpdb;
+			$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
 
-		$spamEntry = $wpdb->get_row(
-			$wpdb->prepare(
-				"
-					SELECT message, ip, email
-					FROM $table
-					WHERE id = %s
-				",
-				$id
+			$spamEntry = $wpdb->get_row(
+				$wpdb->prepare(
+					"
+						SELECT message, ip, email, raw_entry
+						FROM $table
+						WHERE id = %s
+					",
+					$id
 			)
 		);
 
-		$submitReport  = oopspamantispam_report_OOPSpam($spamEntry->message, $spamEntry->ip, $spamEntry->email, false);
-
-		if ($submitReport === "success") {
-			$wpdb->update( 
-				$table, 
-				array(
-					'reported' => true
-				), 
-				array( 'ID' => $id ), 
-				array( 
-					'%d' 
-				), 
-				array( '%d' ) 
-			);
-
-			// Get the current settings
-			$manual_moderation_settings = get_option('manual_moderation_settings', array());
-
-			// Add email to allowed emails if it doesn't already exist
-			if (isset($spamEntry->email) && !empty($spamEntry->email)) {
-				$allowed_emails = isset($manual_moderation_settings['mm_allowed_emails']) ? $manual_moderation_settings['mm_allowed_emails'] : '';
-				$email_list = array_map('trim', explode("\n", $allowed_emails));
-				if (!in_array($spamEntry->email, $email_list)) {
-					$email_list[] = $spamEntry->email;
-					$manual_moderation_settings['mm_allowed_emails'] = implode("\n", $email_list);
+			if (!$spamEntry) {
+				if (defined('WP_DEBUG') && WP_DEBUG) {
+					error_log("report_spam_entry: Entry with ID $id not found");
 				}
+				return false;
 			}
 
-			// Add IP to allowed IPs if it doesn't already exist
-			if (isset($spamEntry->ip) && !empty($spamEntry->ip)) {
-				$allowed_ips = isset($manual_moderation_settings['mm_allowed_ips']) ? $manual_moderation_settings['mm_allowed_ips'] : '';
-				$ip_list = array_map('trim', explode("\n", $allowed_ips));
-				if (!in_array($spamEntry->ip, $ip_list)) {
-					$ip_list[] = $spamEntry->ip;
-					$manual_moderation_settings['mm_allowed_ips'] = implode("\n", $ip_list);
+			// Check if the required function exists
+			if (!function_exists('oopspamantispam_report_OOPSpam')) {
+				if (defined('WP_DEBUG') && WP_DEBUG) {
+					error_log("report_spam_entry: Function oopspamantispam_report_OOPSpam not found");
 				}
+				return false;
+			}
+			
+			// Pass raw_entry as metadata for fraud detection analysis
+			$metadata = isset($spamEntry->raw_entry) ? $spamEntry->raw_entry : '';
+			$submitReport = oopspamantispam_report_OOPSpam($spamEntry->message, $spamEntry->ip, $spamEntry->email, false, $metadata);
+
+			if ($submitReport === "success") {
+				$wpdb->update( 
+					$table, 
+					array(
+						'reported' => true
+					), 
+					array( 'ID' => $id ), 
+					array( 
+						'%d' 
+					), 
+					array( '%d' ) 
+				);
+
+				// Get the current settings
+				$manual_moderation_settings = get_option('manual_moderation_settings', array());
+
+				// Add email to allowed emails if it doesn't already exist
+				if (isset($spamEntry->email) && !empty($spamEntry->email)) {
+					$allowed_emails = isset($manual_moderation_settings['mm_allowed_emails']) ? $manual_moderation_settings['mm_allowed_emails'] : '';
+					$email_list = array_map('trim', explode("\n", $allowed_emails));
+					if (!in_array($spamEntry->email, $email_list)) {
+						$email_list[] = $spamEntry->email;
+						$manual_moderation_settings['mm_allowed_emails'] = implode("\n", $email_list);
+					}
+				}
+
+				// Add IP to allowed IPs if it doesn't already exist
+				if (isset($spamEntry->ip) && !empty($spamEntry->ip)) {
+					$allowed_ips = isset($manual_moderation_settings['mm_allowed_ips']) ? $manual_moderation_settings['mm_allowed_ips'] : '';
+					$ip_list = array_map('trim', explode("\n", $allowed_ips));
+					if (!in_array($spamEntry->ip, $ip_list)) {
+						$ip_list[] = $spamEntry->ip;
+						$manual_moderation_settings['mm_allowed_ips'] = implode("\n", $ip_list);
+					}
+				}
+
+				// Update the settings only if changes were made
+				if (isset($manual_moderation_settings['mm_allowed_emails']) || isset($manual_moderation_settings['mm_allowed_ips'])) {
+					update_option('manual_moderation_settings', $manual_moderation_settings);
+				}
+
+				// Send admin email notification if enabled
+				self::maybe_notify_not_spam($id);
+				
+				return true;
+			} else {
+				if (defined('WP_DEBUG') && WP_DEBUG) {
+					error_log("report_spam_entry: Failed to submit report to OOPSpam API. Response: " . $submitReport);
+				}
+				return false;
 			}
 
-			// Update the settings only if changes were made
-			if (isset($manual_moderation_settings['mm_allowed_emails']) || isset($manual_moderation_settings['mm_allowed_ips'])) {
-				update_option('manual_moderation_settings', $manual_moderation_settings);
+		} catch (Exception $e) {
+			if (defined('WP_DEBUG') && WP_DEBUG) {
+				error_log('report_spam_entry Error: ' . $e->getMessage());
 			}
+			return false;
+		} catch (Error $e) {
+			if (defined('WP_DEBUG') && WP_DEBUG) {
+				error_log('report_spam_entry Fatal Error: ' . $e->getMessage());
+			}
+			return false;
 		}
 	}
 
@@ -649,9 +935,9 @@ private static function process_form_fields($raw_entry) {
 		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
 		
 		$where = array();
-		$values = array($table);
+		$values = array();
 		
-		$sql = "SELECT COUNT(*) FROM %i";
+		$sql = "SELECT COUNT(*) FROM " . esc_sql($table);
 		
 		// Add search condition if search term is provided
 		if (!empty($_REQUEST['s'])) {
@@ -682,12 +968,17 @@ private static function process_form_fields($raw_entry) {
 			$sql .= " WHERE " . implode(" AND ", $where);
 		}
 		
-		return $wpdb->get_var($wpdb->prepare($sql, $values));
+		// Use prepare only if there are values to prepare
+		if (!empty($values)) {
+			return $wpdb->get_var($wpdb->prepare($sql, $values));
+		} else {
+			return $wpdb->get_var($sql);
+		}
 	}
 
 	/** Text displayed when no spam entry is available */
 	public function no_items() {
-		_e( 'No spam entries available.', 'sp' );
+		esc_html_e( 'No spam entries available.', 'oopspam-anti-spam' );
 	}
 
 	/**
@@ -804,15 +1095,15 @@ private static function process_form_fields($raw_entry) {
 	function get_columns() {
 		$columns = [
 			'cb'      => '<input type="checkbox" />',
-			'reported'    => __( 'Status', 'sp' ),
-			'message'    => __( 'Message', 'sp' ),
-			'ip' => __( 'IP', 'sp' ),
-			'email' => __( 'Email', 'sp' ),
-			'score'    => __( 'Score', 'sp' ),
-            'form_id'    => __( 'Form Id', 'sp' ),
-            'raw_entry'    => __( 'Raw fields', 'sp' ),
-			'reason'    => __( 'Reason', 'sp' ),
-            'date'    => __( 'Date', 'sp' )
+			'reported'    => __( 'Status',  'oopspam-anti-spam' ),
+			'message'    => __( 'Message',  'oopspam-anti-spam' ),
+			'ip' => __( 'IP',  'oopspam-anti-spam' ),
+			'email' => __( 'Email',  'oopspam-anti-spam' ),
+			'score'    => __( 'Score',  'oopspam-anti-spam' ),
+            'form_id'    => __( 'Form Id',  'oopspam-anti-spam' ),
+            'raw_entry'    => __( 'Raw fields',  'oopspam-anti-spam' ),
+			'reason'    => __( 'Reason',  'oopspam-anti-spam' ),
+            'date'    => __( 'Date',  'oopspam-anti-spam' )
 		];
 
 		return $columns;
@@ -845,7 +1136,7 @@ private static function process_form_fields($raw_entry) {
 	public function get_bulk_actions() {
 		$actions = [
 			'bulk-delete' => 'Delete',
-			'bulk-report' => 'Report as ham'
+			'bulk-report' => 'Report as not spam'
 		];
 
 		return $actions;
@@ -867,7 +1158,7 @@ private static function process_form_fields($raw_entry) {
                 case 'report':
                     if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_spam')) {
                         self::report_spam_entry($entry_id);
-                        wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                        wp_safe_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
                         exit;
                     }
                     break;
@@ -875,7 +1166,7 @@ private static function process_form_fields($raw_entry) {
                 case 'delete':
                     if (wp_verify_nonce($_GET['_wpnonce'], 'sp_delete_spam')) {
                         self::delete_spam_entry($entry_id);
-                        wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                        wp_safe_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
                         exit;
                     }
                     break;
@@ -883,7 +1174,7 @@ private static function process_form_fields($raw_entry) {
                 case 'notify':
                     if (wp_verify_nonce($_GET['_wpnonce'], 'sp_notify_spam')) {
                         self::notify_spam_entry($entry_id);
-                        wp_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+                        wp_safe_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
                         exit;
                     }
                     break;
@@ -982,6 +1273,19 @@ private static function process_form_fields($raw_entry) {
                                     
                                     if (response.data.complete) {
                                         $progressText.html('Processing complete! Reloading page...');
+                                        <?php if ($action === 'bulk-report'): ?>
+                                        // Show success message for bulk not spam
+                                        setTimeout(function() {
+                                            <?php 
+                                            $misc_options = get_option('oopspamantispam_misc_settings');
+                                            $email_enabled = isset($misc_options['oopspam_email_admin_on_not_spam']);
+                                            if ($email_enabled): ?>
+                                            alert('Bulk "not spam" processing completed successfully. Email notifications have been sent.');
+                                            <?php else: ?>
+                                            alert('Bulk "not spam" processing completed successfully.');
+                                            <?php endif; ?>
+                                        }, 100);
+                                        <?php endif; ?>
                                         setTimeout(function() {
                                             location.reload();
                                         }, 1000);
@@ -989,11 +1293,13 @@ private static function process_form_fields($raw_entry) {
                                         processNextEntry();
                                     }
                                 } else {
-                                    $progressText.html('Error occurred during processing.');
+                                    console.error('AJAX Error:', response);
+                                    $progressText.html('Error: ' + (response.data || 'Unknown error occurred during processing.'));
                                 }
                             },
-                            error: function() {
-                                $progressText.html('Error occurred during processing.');
+                            error: function(xhr, status, error) {
+                                console.error('AJAX Request Failed:', xhr, status, error);
+                                $progressText.html('Network error: ' + error + ' (Status: ' + status + ')');
                             }
                         });
                     }
@@ -1014,6 +1320,11 @@ private static function process_form_fields($raw_entry) {
     }
 
 	private function get_country_by_ip($ip) {
+
+		if (empty($ip)) {
+			return '';
+		}
+
 		// Ignore local IPs
 		if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
 			return 'Local IP';
@@ -1030,12 +1341,16 @@ private static function process_form_fields($raw_entry) {
 		$response = wp_remote_get("https://reallyfreegeoip.org/json/{$ip}", $args);
 		
 		if (is_wp_error($response)) {
-			error_log('IP Geolocation Error: ' . $response->get_error_message());
+			if (defined('WP_DEBUG') && WP_DEBUG) {
+				error_log('IP Geolocation Error: ' . $response->get_error_message());
+			}
 			return '';
 		}
 
 		if (wp_remote_retrieve_response_code($response) !== 200) {
-			error_log('IP Geolocation Error: Non-200 response code');
+			if (defined('WP_DEBUG') && WP_DEBUG) {
+				error_log('IP Geolocation Error: Non-200 response code');
+			}
 			return '';
 		}
 
@@ -1078,12 +1393,12 @@ class OOPSpam_Spam {
 
 	public function plugin_menu() {
 
-        add_submenu_page( 'wp_oopspam_settings_page', __('Settings', "oopspam"),  __('Settings', "oopspam"), 'manage_options', 'wp_oopspam_settings_page');
+        add_submenu_page( 'wp_oopspam_settings_page', __('Settings', "oopspam-anti-spam"),  __('Settings', "oopspam-anti-spam"), 'manage_options', 'wp_oopspam_settings_page');
 
         $hook =  add_submenu_page(
             'wp_oopspam_settings_page',
-            __('Form Spam Entries', "oopspam"),
-            __('Form Spam Entries', "oopspam"),
+            __('Spam Entries', "oopspam-anti-spam"),
+            __('Spam Entries', "oopspam-anti-spam"),
             'edit_pages',
             'wp_oopspam_frm_spam_entries',
             [ $this, 'plugin_settings_page' ] );
@@ -1099,18 +1414,18 @@ class OOPSpam_Spam {
 		?>
 		<div class="oopspam-wrap">
 		<div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start;">
-				<h2 style="padding-right:0.5em;"><?php _e("Spam Entries", "oopspam"); ?></h2>
-				<input type="button" id="empty-spam-entries" style="margin-right:0.5em;" class="button action" value="<?php _e("Empty the table", "oopspam"); ?>">
-				<input type="button" id="export-spam-entries" class="button action" value="<?php _e("Export CSV", "oopspam"); ?>">
+				<h2 style="padding-right:0.5em;"><?php esc_html_e("Spam Entries", "oopspam-anti-spam"); ?></h2>
+				<input type="button" id="empty-spam-entries" style="margin-right:0.5em;" class="button action" value="<?php esc_attr_e("Empty the table", "oopspam-anti-spam"); ?>">
+				<input type="button" id="export-spam-entries" class="button action" value="<?php esc_attr_e("Export CSV", "oopspam-anti-spam"); ?>">
             </div>
 			<div>
-				<p><?php _e("All submissions are stored locally in your WordPress database.", "oopspam"); ?></p>
-				<p><?php _e("In the below table you can view, delete, and report spam entries.", "oopspam"); ?></p>
-				<p><?php _e("If you believe any of these should NOT be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.  ", "oopspam"); ?> </p>
+				<p><?php esc_html_e("All submissions are stored locally in your WordPress database.", "oopspam-anti-spam"); ?></p>
+				<p><?php esc_html_e("In the below table you can view, delete, and report spam entries.", "oopspam-anti-spam"); ?></p>
+				<p><?php esc_html_e("If you believe any of these should NOT be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.  ", "oopspam-anti-spam"); ?> </p>
 				<ul>
-					<li><?php _e("1. Hover on an entry", "oopspam"); ?></li>
-					<li><?php _e('2. Click the <span style="color:green;">"Not Spam"</span> link', 'oopspam'); ?></li>
-					<li><?php _e('3. Page will be refreshed and Status (first column) will display  <span style="color:green;">"Reported as not spam"</span>', 'oopspam'); ?></li>
+					<li><?php esc_html_e("1. Hover on an entry", "oopspam-anti-spam"); ?></li>
+					<li><?php echo wp_kses(__('2. Click the <span style="color:green;">"Not Spam"</span> link', 'oopspam-anti-spam'), array('span' => array('style' => array()))); ?></li>
+					<li><?php echo wp_kses(__('3. Page will be refreshed and Status (first column) will display  <span style="color:green;">"Reported as not spam"</span>', 'oopspam-anti-spam'), array('span' => array('style' => array()))); ?></li>
 				</ul>
 			</div>
 			<div id="entries">

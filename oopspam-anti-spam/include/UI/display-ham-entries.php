@@ -17,7 +17,7 @@ function empty_ham_entries(){
     }
 
 	// Verify the nonce
-    $nonce = $_POST['nonce'];
+    $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
     if ( ! wp_verify_nonce( $nonce, 'empty_ham_entries_nonce' ) ) {
         wp_send_json_error( array(
             'error'   => true,
@@ -28,9 +28,9 @@ function empty_ham_entries(){
     global $wpdb; 
     $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
 
-	$action_type = $_POST['action_type'];
+	$action_type = isset($_POST['action_type']) ? $_POST['action_type'] : '';
     if ($action_type === "empty-entries") {
-        $wpdb->query($wpdb->prepare("TRUNCATE TABLE %i", $table));
+        $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
         wp_send_json_success( array( 
             'success' => true
         ), 200 );
@@ -52,7 +52,7 @@ function export_ham_entries(){
         }
     
         // Verify the nonce
-        $nonce = $_POST['nonce'];
+        $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
         if ( ! wp_verify_nonce( $nonce, 'export_ham_entries_nonce' ) ) {
             wp_send_json_error( array(
                 'error'   => true,
@@ -71,10 +71,8 @@ function export_ham_entries(){
         ));
 
         // Get rows securely
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM %i",
-            $table
-        ), ARRAY_A);
+        $rows = $wpdb->get_results(
+            "SELECT * FROM " . esc_sql($table), ARRAY_A);
 
         // Filter out columns to ignore (e.g., 'id')
         $columns_to_ignore = array('id', 'reported');
@@ -120,7 +118,9 @@ function export_ham_entries(){
 
     } catch (Exception $e) {
         // Handle the exception
-        error_log('export_ham_entries: ' . $e->getMessage());
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('export_ham_entries: ' . $e->getMessage());
+        }
     }
 
     wp_die(); // this is required to terminate immediately and return a proper response
@@ -134,8 +134,8 @@ class Ham_Entries extends \WP_List_Table {
 	public function __construct() {
 
 		parent::__construct( [
-			'singular' => __( 'Entry', 'sp' ), //singular name of the listed records
-			'plural'   => __( 'Entries', 'sp' ), //plural name of the listed records
+			'singular' => __( 'Entry',  'oopspam-anti-spam' ), //singular name of the listed records
+			'plural'   => __( 'Entries',  'oopspam-anti-spam' ), //plural name of the listed records
 			'ajax'     => false //does this table support ajax?
 		] );
 
@@ -174,18 +174,20 @@ class Ham_Entries extends \WP_List_Table {
 		 // Combine WHERE clauses
 		 $where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 	 
-		 // Add ordering
+		 // Add ordering (already sanitized with sanitize_sql_orderby)
 		 $orderby = !empty($_GET['orderby']) ? sanitize_sql_orderby($_GET['orderby']) : 'date';
 		 $order = !empty($_GET['order']) ? sanitize_sql_orderby($_GET['order']) : 'DESC';
 		 
 		 // Calculate offset
 		 $offset = ($page_number - 1) * $per_page;
 	 
-		 // Prepare the complete query
+		 // Build the complete SQL query
+		 $sql = "SELECT * FROM " . esc_sql($table) . " $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d";
+		 
+		 // Prepare the query with parameters
 		 $query = $wpdb->prepare(
-			 "SELECT * FROM %i $where_clause ORDER BY $orderby $order LIMIT %d OFFSET %d",
+			 $sql,
 			 array_merge(
-				 array($table),
 				 $values,
 				 array($per_page, $offset)
 			 )
@@ -223,7 +225,7 @@ class Ham_Entries extends \WP_List_Table {
 		$spamEntry = $wpdb->get_row(
 			$wpdb->prepare(
 				"
-					SELECT message, ip, email
+					SELECT message, ip, email, raw_entry
 					FROM $table
 					WHERE id = %s
 				",
@@ -231,7 +233,9 @@ class Ham_Entries extends \WP_List_Table {
 			)
 		);
 
-		$submitReport  = oopspamantispam_report_OOPSpam($spamEntry->message, $spamEntry->ip, $spamEntry->email, true);
+		// Pass raw_entry as metadata for fraud detection analysis
+		$metadata = isset($spamEntry->raw_entry) ? $spamEntry->raw_entry : '';
+		$submitReport  = oopspamantispam_report_OOPSpam($spamEntry->message, $spamEntry->ip, $spamEntry->email, true, $metadata);
 
 		if ($submitReport === "success") {
 			$wpdb->update( 
@@ -286,9 +290,9 @@ class Ham_Entries extends \WP_List_Table {
 		$table = $wpdb->prefix . 'oopspam_frm_ham_entries';
 		
 		$where = array();
-		$values = array($table);
+		$values = array();
 		
-		$sql = "SELECT COUNT(*) FROM %i";
+		$sql = "SELECT COUNT(*) FROM " . esc_sql($table);
 		
 		// Add search condition if search term is provided
 		if (!empty($_REQUEST['s'])) {
@@ -303,13 +307,18 @@ class Ham_Entries extends \WP_List_Table {
 			$sql .= " WHERE " . implode(" AND ", $where);
 		}
 		
-		return $wpdb->get_var($wpdb->prepare($sql, $values));
+		// Use prepare only if there are values to prepare
+		if (!empty($values)) {
+			return $wpdb->get_var($wpdb->prepare($sql, $values));
+		} else {
+			return $wpdb->get_var($sql);
+		}
 	}
 
 
 	/** Text displayed when no ham entry is available */
 	public function no_items() {
-		_e( 'No ham entries available.', 'sp' );
+		esc_html_e( 'No ham entries available.', 'oopspam-anti-spam' );
 	}
 
 	/**
@@ -340,10 +349,36 @@ class Ham_Entries extends \WP_List_Table {
 	function column_score( $item ) {
         $score = intval($item['score']);
         
+        // Score meanings:
+        // -1: Rate limit reached
+        // -2: Generic API/connection error
+        // -3: API key disabled
+        // -4: API key invalid
+        // -5: API key missing
+        // -6: Connection timeout
+        // -7: Server error (5xx)
+        // -8: Bad request (400)
+        // -9: Unauthorized (401)
+        // -10: Not found (404)
+        
+        $error_labels = array(
+            -1 => 'Rate limit reached',
+            -2 => 'Connection error',
+            -3 => 'API key disabled',
+            -4 => 'Invalid API key',
+            -5 => 'API key missing',
+            -6 => 'Connection timeout',
+            -7 => 'Server error',
+            -8 => 'Bad request',
+            -9 => 'Unauthorized',
+            -10 => 'API endpoint not found'
+        );
+        
         if ($score === -1) {
             return '<span title="This entry was automatically allowed because the API rate limit was reached" style="color: #856404; background-color: #fff3cd; padding: 3px 8px; border-radius: 3px;">Rate Limited</span>';
-        } else if ($score === -2) {
-            return '<span title="This entry was automatically allowed because an API error occurred" style="color: #721c24; background-color: #f8d7da; padding: 3px 8px; border-radius: 3px;">API Error</span>';
+        } else if ($score < 0) {
+            $error_label = isset($error_labels[$score]) ? $error_labels[$score] : 'Unknown error';
+            return '<span title="This entry was automatically allowed due to an API error" style="color: #721c24; background-color: #f8d7da; padding: 3px 8px; border-radius: 3px; cursor: help;">API Error: ' . esc_html($error_label) . '</span>';
         }
         
         return esc_html($score);
@@ -430,6 +465,10 @@ class Ham_Entries extends \WP_List_Table {
     }
 
     private function get_country_by_ip($ip) {
+
+		if (empty($ip)) {
+			return '';
+		}
         // Ignore local IPs
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
             return 'Local IP';
@@ -446,12 +485,16 @@ class Ham_Entries extends \WP_List_Table {
         $response = wp_remote_get("https://reallyfreegeoip.org/json/{$ip}", $args);
         
         if (is_wp_error($response)) {
-            error_log('IP Geolocation Error: ' . $response->get_error_message());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('IP Geolocation Error: ' . $response->get_error_message());
+            }
             return '';
         }
 
         if (wp_remote_retrieve_response_code($response) !== 200) {
-            error_log('IP Geolocation Error: Non-200 response code');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('IP Geolocation Error: Non-200 response code');
+            }
             return '';
         }
 
@@ -496,14 +539,14 @@ class Ham_Entries extends \WP_List_Table {
 	function get_columns() {
 		$columns = [
 			'cb'      => '<input type="checkbox" />',
-			'reported'    => __( 'Status', 'sp' ),
-			'message'    => __( 'Message', 'sp' ),
-			'ip' => __( 'IP', 'sp' ),
-			'email' => __( 'Email', 'sp' ),
-			'score'    => __( 'Score', 'sp' ),
-            'form_id'    => __( 'Form Id', 'sp' ),
-            'raw_entry'    => __( 'Raw fields', 'sp' ),
-            'date'    => __( 'Date', 'sp' )
+			'reported'    => __( 'Status',  'oopspam-anti-spam' ),
+			'message'    => __( 'Message',  'oopspam-anti-spam' ),
+			'ip' => __( 'IP',  'oopspam-anti-spam' ),
+			'email' => __( 'Email',  'oopspam-anti-spam' ),
+			'score'    => __( 'Score',  'oopspam-anti-spam' ),
+            'form_id'    => __( 'Form Id',  'oopspam-anti-spam' ),
+            'raw_entry'    => __( 'Raw fields',  'oopspam-anti-spam' ),
+            'date'    => __( 'Date',  'oopspam-anti-spam' )
 		];
 
 		return $columns;
@@ -558,7 +601,7 @@ class Ham_Entries extends \WP_List_Table {
                 case 'report':
                     if (wp_verify_nonce($_GET['_wpnonce'], 'sp_report_ham')) {
                         self::report_ham_entry($entry_id);
-                        wp_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
+                        wp_safe_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
                         exit;
                     }
                     break;
@@ -566,7 +609,7 @@ class Ham_Entries extends \WP_List_Table {
                 case 'delete':
                     if (wp_verify_nonce($_GET['_wpnonce'], 'sp_delete_ham')) {
                         self::delete_ham_entry($entry_id);
-                        wp_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
+                        wp_safe_redirect(remove_query_arg(['action', 'ham', '_wpnonce']));
                         exit;
                     }
                     break;
@@ -716,8 +759,8 @@ class OOPSpam_Ham {
 
         $hook =  add_submenu_page(
             'wp_oopspam_settings_page',
-            __('Form Valid Entries', "oopspam"),
-            __('Form Valid Entries', "oopspam"),
+            __('Valid Entries', "oopspam-anti-spam"),
+            __('Valid Entries', "oopspam-anti-spam"),
             'edit_pages',
             'wp_oopspam_frm_ham_entries',
             [ $this, 'plugin_settings_page' ] );
@@ -734,18 +777,18 @@ class OOPSpam_Ham {
 		<div class="oopspam-wrap">
 			
             <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-start;">
-				<h2 style="padding-right:0.5em;"><?php _e("Form Valid Entries", "oopspam"); ?></h2>
-				<input type="button" id="empty-ham-entries" style="margin-right:0.5em;" class="button action" value="<?php _e("Empty the table", "oopspam"); ?>">
-				<input type="button" id="export-ham-entries" class="button action" value="<?php _e("Export CSV", "oopspam"); ?>">
+				<h2 style="padding-right:0.5em;"><?php esc_html_e("Valid Entries", "oopspam-anti-spam"); ?></h2>
+				<input type="button" id="empty-ham-entries" style="margin-right:0.5em;" class="button action" value="<?php esc_attr_e("Empty the table", "oopspam-anti-spam"); ?>">
+				<input type="button" id="export-ham-entries" class="button action" value="<?php esc_attr_e("Export CSV", "oopspam-anti-spam"); ?>">
             </div>
 			<div>
-				<p><?php _e("All submissions are stored locally in your WordPress database.", "oopspam"); ?></p>
-				<p><?php _e("In the below table you can view, delete, and report approved entries.", "oopspam"); ?></p>
-				<p><?php _e("If you believe any of these SHOULD be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.", "oopspam"); ?> </p>
+				<p><?php esc_html_e("All submissions are stored locally in your WordPress database.", "oopspam-anti-spam"); ?></p>
+				<p><?php esc_html_e("In the below table you can view, delete, and report approved entries.", "oopspam-anti-spam"); ?></p>
+				<p><?php esc_html_e("If you believe any of these SHOULD be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.", "oopspam-anti-spam"); ?> </p>
 				<ul>
-					<li><?php _e("1. Hover on an entry", "oopspam"); ?></li>
-					<li><?php _e('2. Click the <span style="color:#996800;">"Report as spam"</span> link', 'oopspam'); ?></li>
-					<li><?php _e('3. Page will be refreshed and Status (first column) will display  <span style="color:#996800;">"Reported as spam"</span>', 'oopspam'); ?></li>
+					<li><?php esc_html_e("1. Hover on an entry", "oopspam-anti-spam"); ?></li>
+					<li><?php echo wp_kses(__('2. Click the <span style="color:#996800;">"Report as spam"</span> link', 'oopspam-anti-spam'), array('span' => array('style' => array()))); ?></li>
+					<li><?php echo wp_kses(__('3. Page will be refreshed and Status (first column) will display  <span style="color:#996800;">"Reported as spam"</span>', 'oopspam-anti-spam'), array('span' => array('style' => array()))); ?></li>
 				</ul>
 			</div>
 			<div id="entries">

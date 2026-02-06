@@ -32,7 +32,7 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($form_id == $id) {
                     return $field_error_action_array;
                 }
@@ -97,7 +97,7 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
         $escapedMsg = sanitize_textarea_field($message);
 
         // Capture user's IP if allowed
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -118,12 +118,12 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
         ];
 
         if (!$detectionResult["isItHam"]) {
-            // It's spam, store the submission in Form Spam Entries
+            // It's spam, store the submission in Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_ws_spam_message']) && !empty($options['oopspam_ws_spam_message'])) ? $options['oopspam_ws_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
+            $error_to_show = (isset($options['oopspam_ws_spam_message']) && !empty($options['oopspam_ws_spam_message'])) ? $options['oopspam_ws_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
             $field_error_action_array[] = array(
                 'action' => 'message',
-                'message' => $error_to_show,
+                'message' => esc_html($error_to_show),
                 'type' => 'danger'
             );
             return $field_error_action_array;

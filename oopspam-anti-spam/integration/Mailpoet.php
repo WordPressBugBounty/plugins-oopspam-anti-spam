@@ -15,7 +15,7 @@ function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_
         $raw_entry = json_encode($subscriber_data);
         $form_id = "MailPoet: "  . sanitize_text_field($form_data->getName());
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -38,7 +38,7 @@ function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_
             // It's spam, show error
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = (isset($options['oopspam_mpoet_spam_message']) && !empty($options['oopspam_mpoet_spam_message'])) ? $options['oopspam_mpoet_spam_message'] : 'Your submission has been flagged as spam.';
-            throw new \MailPoet\UnexpectedValueException($error_to_show);
+            throw new \MailPoet\UnexpectedValueException(esc_html($error_to_show));
         } else {
             // It's ham, continue with the subscription
             oopspam_store_ham_submission($frmEntry);

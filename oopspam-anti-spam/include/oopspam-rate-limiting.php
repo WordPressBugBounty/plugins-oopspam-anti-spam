@@ -79,13 +79,14 @@ class OOPSpam_RateLimiter {
         
         $one_hour_ago = $this->getDateTimeWithOffset(-1);
     
+        $table_name = esc_sql($wpdb->prefix . $this->db_table);
         $result = $wpdb->get_var($wpdb->prepare(
             "SELECT 
                 CASE 
                     WHEN last_attempt > %s THEN attempts
                     ELSE 0
                 END as current_attempts
-            FROM {$wpdb->prefix}{$this->db_table} 
+            FROM {$table_name}
             WHERE identifier = %s 
             AND type = %s",
             $one_hour_ago,
@@ -102,13 +103,14 @@ class OOPSpam_RateLimiter {
         $now = $this->getCurrentDateTime();
         $one_hour_ago = $this->getDateTimeWithOffset(-1);
     
+        $table_name = esc_sql($wpdb->prefix . $this->db_table);
         $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT id, last_attempt, 
             CASE 
                 WHEN last_attempt > %s THEN attempts
                 ELSE 0
             END as current_attempts
-            FROM {$wpdb->prefix}{$this->db_table} 
+            FROM {$table_name}
             WHERE identifier = %s AND type = %s",
             $one_hour_ago,
             $identifier,
@@ -116,8 +118,9 @@ class OOPSpam_RateLimiter {
         ));
         
         if ($existing) {
+            $table_name = esc_sql($wpdb->prefix . $this->db_table);
             $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}{$this->db_table} 
+                "UPDATE {$table_name}
                 SET 
                     attempts = CASE 
                         WHEN last_attempt > %s THEN attempts + 1
@@ -170,8 +173,9 @@ class OOPSpam_RateLimiter {
         
         $now = $this->getCurrentDateTime();
         
+        $table_name = esc_sql($wpdb->prefix . $this->db_table);
         $is_blocked = $wpdb->get_var($wpdb->prepare(
-            "SELECT 1 FROM {$wpdb->prefix}{$this->db_table} 
+            "SELECT 1 FROM {$table_name}
             WHERE identifier = %s 
             AND type = %s 
             AND is_blocked = 1 
@@ -193,8 +197,9 @@ class OOPSpam_RateLimiter {
             $cleanup_hours = isset($this->config['cleanup_older_than']) ? intval($this->config['cleanup_older_than']) : 48; // 48 as default
             $cleanup_date = $this->getDateTimeWithOffset(-$cleanup_hours);
             
+            $table_name = esc_sql($wpdb->prefix . $this->db_table);
             $deleted = $wpdb->query($wpdb->prepare(
-                "DELETE FROM {$wpdb->prefix}{$this->db_table} 
+                "DELETE FROM {$table_name}
                 WHERE last_attempt < %s",
                 $cleanup_date
             ));
@@ -214,8 +219,9 @@ class OOPSpam_RateLimiter {
         try {
             global $wpdb;
                         
+            $table_name = $wpdb->prefix . $this->db_table;
             $deleted = $wpdb->query(
-                "TRUNCATE {$wpdb->prefix}{$this->db_table}"
+                "TRUNCATE TABLE " . esc_sql($table_name)
             );
             
         } catch (\Exception $e) {

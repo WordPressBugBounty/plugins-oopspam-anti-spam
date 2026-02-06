@@ -3,11 +3,11 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.51
+ * Version: 1.2.61
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
- * Copyright: (c) 2017 - 2025, OOPSpam LLC
+ * Copyright: (c) 2017 - 2026, OOPSpam LLC
  * License: GPL3
  */
 if (!function_exists('add_action')) {
@@ -72,6 +72,9 @@ if (is_admin()) { //if admin include the admin specific functions
     
     // Add admin notice if plugin is not set up
     add_action('admin_notices', 'oopspam_admin_setup_notice');
+    
+    // Add admin notice if proxy headers detected but setting not enabled
+    add_action('admin_notices', 'oopspam_proxy_headers_notice');
 }
 
 // Include the plugin helpers.
@@ -116,7 +119,9 @@ require_once dirname(__FILE__) . '/integration/SureCart.php';
 require_once dirname(__FILE__) . '/integration/BreakdanceForm.php';
 require_once dirname(__FILE__) . '/integration/Quform.php';
 require_once dirname(__FILE__) . '/integration/HappyForms.php';
-
+require_once dirname(__FILE__) . '/integration/AvadaForm.php';
+require_once dirname(__FILE__) . '/integration/Metform.php';
+require_once dirname(__FILE__) . '/integration/AcfFrontEndForm.php';
 
 require_once dirname(__FILE__) . '/integration/WooCommerce.php';
 add_action('plugins_loaded', array('\OOPSPAM\WOOCOMMERCE\WooSpamProtection', 'getInstance'));
@@ -249,7 +254,7 @@ function oopspam_cleanup_ham_entries() {
         // Delete entries older than the calculated date
         $wpdb->query(
             $wpdb->prepare(
-                "DELETE FROM $table WHERE `date` < %s",
+                "DELETE FROM " . esc_sql($table) . " WHERE `date` < %s",
                 $date_threshold
             )
         );
@@ -277,7 +282,7 @@ function oopspam_cleanup_spam_entries() {
         // Delete entries older than the calculated date
         $wpdb->query(
             $wpdb->prepare(
-                "DELETE FROM $table WHERE `date` < %s",
+                "DELETE FROM " . esc_sql($table) . " WHERE `date` < %s",
                 $date_threshold
             )
         );
@@ -700,29 +705,6 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 {
     // Get rate limiting settings
     $rtOptions = get_option('oopspamantispam_ratelimit_settings');
-    
-    // Only check submission speed if min_submission_time is set
-    if (isset($rtOptions['oopspamantispam_min_submission_time'])) {
-        $submissionSpeed = 0;
-        if (isset($_SESSION['oopspam_entry_time'])) {
-            $submissionSpeed = time() - $_SESSION['oopspam_entry_time'];
-        }
-
-        // Get minimum submission time from settings
-        $minSubmissionTime = intval($rtOptions['oopspamantispam_min_submission_time']);
-
-        // If submission is too fast, mark as spam
-        if ($submissionSpeed < $minSubmissionTime && $submissionSpeed > 0) {
-            if ($returnReason) {
-                return [
-                    "Score" => 6,
-                    "isItHam" => false,
-                    "Reason" => "Submission too fast - " . $submissionSpeed . " seconds"
-                ];
-            }
-            return false;
-        }
-    }
 
     // Check blocked emails, IPs, keywords locally
     $hasBlockedKeyword = oopspam_is_keyword_blocked($commentText);
@@ -773,6 +755,30 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
             return false;
     }
 
+     // Only check submission speed if rate limiting is enabled and min_submission_time is set
+    if (isset($rtOptions['oopspam_is_rt_enabled']) && $rtOptions['oopspam_is_rt_enabled'] && 
+        isset($rtOptions['oopspamantispam_min_submission_time'])) {
+        $submissionSpeed = 0;
+        if (isset($_SESSION['oopspam_entry_time'])) {
+            $submissionSpeed = time() - $_SESSION['oopspam_entry_time'];
+        }
+
+        // Get minimum submission time from settings
+        $minSubmissionTime = intval($rtOptions['oopspamantispam_min_submission_time']);
+
+        // If submission is too fast, mark as spam
+        if ($submissionSpeed < $minSubmissionTime && $submissionSpeed > 0) {
+            if ($returnReason) {
+                return [
+                    "Score" => 6,
+                    "isItHam" => false,
+                    "Reason" => "Submission too fast - " . $submissionSpeed . " seconds"
+                ];
+            }
+            return false;
+        }
+    }
+    
     // Run rate limiting check
     try {
         if($type !== "search") {
@@ -807,14 +813,15 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         }
         }
 
-        // Check for unique Google Ads lead per submission
+        // Check for unique Google Ads lead per submission (only if rate limiting is enabled)
         $gclid = oopspam_get_gclid_from_url();
         $gclidLimit = isset($rtOptions['oopspamantispam_ratelimit_gclid_limit']) ? $rtOptions['oopspamantispam_ratelimit_gclid_limit'] : '';
         
-        if (!empty($gclid) && !empty($gclidLimit)) {
+        if (isset($rtOptions['oopspam_is_rt_enabled']) && $rtOptions['oopspam_is_rt_enabled'] && 
+            !empty($gclid) && !empty($gclidLimit)) {
             global $wpdb;
             $table_name = $wpdb->prefix . 'oopspam_frm_ham_entries';
-            $gclid_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_name WHERE gclid = %s", $gclid));
+            $gclid_count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM " . esc_sql($table_name) . " WHERE gclid = %s", $gclid));
             if ($gclid_count >= $gclidLimit) {
             if ($returnReason) {
                 $reason = [
@@ -916,7 +923,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     }
 
     // Don't send Email if not allowed by user
-    if (isset($privacyOptions['oopspam_is_check_for_email']) && $privacyOptions['oopspam_is_check_for_email']) {
+    if (isset($privacyOptions['oopspam_is_check_for_email']) && 
+        ($privacyOptions['oopspam_is_check_for_email'] === true || $privacyOptions['oopspam_is_check_for_email'] === 'on')) {
         $email = "";
     }
 
@@ -1036,16 +1044,92 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
             }
 
         } else if (!is_wp_error($response) && $response_code == "429") {
-            // The API limit is reached or some other errors
+            // The API limit is reached
             update_option('over_rate_limit', true);
             // Return special score -1 to indicate rate limit
             return $returnReason ? ["Score" => -1, "isItHam" => true, "Reason" => "Rate limit reached"] : true;
         } else {
-            // Allow all submission as no analyses are done but mark with special score -2
+            // Allow all submissions as no analyses are done but mark with special negative scores
+            // Score meanings:
+            // -1: Rate limit reached (handled above)
+            // -2: Generic API/connection error
+            // -3: API key disabled
+            // -4: API key invalid
+            // -5: API key missing
+            // -6: Connection timeout
+            // -7: Server error (5xx)
+            // -8: Bad request (400)
+            // -9: Unauthorized (401)
+            // -10: Not found (404)
+            
+            $error_score = -2; // Default generic error
+            $error_reason = "Unknown error";
+            
             if (is_wp_error($response)) {
-                error_log($response->get_error_message());
+                $error_message = $response->get_error_message();
+                error_log('OOPSpam API Error: ' . $error_message);
+                
+                // Categorize the error type
+                if (stripos($error_message, 'timed out') !== false || stripos($error_message, 'timeout') !== false) {
+                    $error_score = -6;
+                    $error_reason = "Connection timeout";
+                } elseif (stripos($error_message, 'Could not resolve host') !== false || stripos($error_message, 'DNS') !== false) {
+                    $error_score = -2;
+                    $error_reason = "DNS resolution failed";
+                } elseif (stripos($error_message, 'Connection refused') !== false) {
+                    $error_score = -2;
+                    $error_reason = "Connection refused";
+                } elseif (stripos($error_message, 'SSL') !== false || stripos($error_message, 'certificate') !== false) {
+                    $error_score = -2;
+                    $error_reason = "SSL/TLS error";
+                } else {
+                    $error_score = -2;
+                    $error_reason = "Connection error";
+                }
+            } else {
+                // HTTP error response (non-200, non-429)
+                $response_body = wp_remote_retrieve_body($response);
+                $decoded_body = json_decode($response_body, true);
+                
+                // Extract error code and message from API response
+                $api_error_code = isset($decoded_body['error']['code']) ? $decoded_body['error']['code'] : '';
+                $api_error_message = isset($decoded_body['error']['message']) ? $decoded_body['error']['message'] : '';
+                
+                if ($response_code == "403") {
+                    // Handle specific 403 error codes
+                    if ($api_error_code === 'API_KEY_DISABLED') {
+                        $error_score = -3;
+                        $error_reason = "API key disabled";
+                    } elseif ($api_error_code === 'API_KEY_INVALID') {
+                        $error_score = -4;
+                        $error_reason = "Invalid API key";
+                    } elseif ($api_error_code === 'API_KEY_MISSING') {
+                        $error_score = -5;
+                        $error_reason = "API key missing";
+                    } else {
+                        $error_score = -4;
+                        $error_reason = !empty($api_error_message) ? substr($api_error_message, 0, 50) : "Forbidden";
+                    }
+                } elseif ($response_code == "401") {
+                    $error_score = -9;
+                    $error_reason = !empty($api_error_message) ? substr($api_error_message, 0, 50) : "Unauthorized";
+                } elseif ($response_code == "400") {
+                    $error_score = -8;
+                    $error_reason = !empty($api_error_message) ? substr($api_error_message, 0, 50) : "Bad request";
+                } elseif ($response_code == "404") {
+                    $error_score = -10;
+                    $error_reason = "API endpoint not found";
+                } elseif ($response_code >= 500 && $response_code < 600) {
+                    $error_score = -7;
+                    $error_reason = "Server error (HTTP " . $response_code . ")";
+                } else {
+                    $error_score = -2;
+                    $error_reason = !empty($api_error_message) ? substr($api_error_message, 0, 50) : "HTTP error " . $response_code;
+                }
+                
             }
-            return $returnReason ? ["Score" => -2, "isItHam" => true, "Reason" => "API error occurred"] : true;
+            
+            return $returnReason ? ["Score" => $error_score, "isItHam" => true, "Reason" => $error_reason] : true;
         }
         unset($OOPSpamAPI);
     }
@@ -1094,7 +1178,7 @@ function extractReasonFromAPIResponse($response) {
     return 'Multiple spam indicators';
 }
 
-function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpam)
+function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpam, $metadata = '')
 {
 
     $apiKey = oopspamantispam_checkIfValidKey();
@@ -1114,7 +1198,7 @@ function oopspamantispam_report_OOPSpam($commentText, $commentIP, $email, $isSpa
     if (oopspamantispam_checkIfValidKey()) {
 
         $OOPSpamAPI = new OOPSpamAPI($apiKey, $checkForLength, 0, $blockTempEmail, $blockVPNs, $blockDC);
-        $response = $OOPSpamAPI->Report($commentText, $commentIP, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $isSpam);
+        $response = $OOPSpamAPI->Report($commentText, $commentIP, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $isSpam, $metadata);
 
         $response_code = wp_remote_retrieve_response_code($response);
         if (!is_wp_error($response) && $response_code == "201") {
@@ -1165,11 +1249,13 @@ function oopspamantispam_check_comment($approved, $commentdata)
 
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
 
-    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || 
+        ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
         $senderIp = oopspamantispam_get_ip();
     }
 
-    if (!isset($options['oopspam_is_check_for_email']) || $options['oopspam_is_check_for_email'] != true) {
+    if (!isset($privacyOptions['oopspam_is_check_for_email']) || 
+        ($privacyOptions['oopspam_is_check_for_email'] !== true && $privacyOptions['oopspam_is_check_for_email'] !== 'on')) {
         $email = sanitize_email($commentdata['comment_author_email']);
     }
 
@@ -1222,7 +1308,7 @@ function oopspamantispam_check_comment($approved, $commentdata)
         $processed_comments[$comment_identifier] = $currentSpamFolder;
         return $currentSpamFolder;
         // TODO: Allow UI customization for this message
-        // wp_die(__('Your comment has been flagged as spam.', 'oopspam'));
+        // wp_die(__('Your comment has been flagged as spam.', 'oopspam-anti-spam'));
     } else {
         // It's ham
         oopspam_store_ham_submission($frmEntry);
@@ -1249,11 +1335,13 @@ function oopspamantispam_check_pingback($approved, $commentdata)
 
         $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
 
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || 
+            ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $senderIp = $commentdata['comment_author_IP'];
         }
 
-        if (!isset($options['oopspam_is_check_for_email']) || $options['oopspam_is_check_for_email'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_email']) || 
+            ($privacyOptions['oopspam_is_check_for_email'] !== true && $privacyOptions['oopspam_is_check_for_email'] !== 'on')) {
             $email = sanitize_email($commentdata['comment_author_email']);
         }
 
@@ -1340,7 +1428,8 @@ function oopspam_check_search_for_spam($query)
 
         // WP Site Search is enabled only if IP check is allowed
         {
-            if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+            if (!isset($privacyOptions['oopspam_is_check_for_ip']) || 
+                ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
 
                 // Get the user's IP address
                 $userIP = oopspamantispam_get_ip();
@@ -1364,7 +1453,7 @@ function oopspam_check_search_for_spam($query)
                 if (!$detectionResult["isItHam"]) {
                     // block search
                     oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-                    wp_redirect(home_url('/')); // Redirect to the homepage
+                    wp_safe_redirect(home_url('/')); // Redirect to the homepage
                     exit();
 
                 }
@@ -1458,13 +1547,227 @@ function oopspam_admin_setup_notice() {
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>
-                <strong><?php _e('OOPSpam Anti-Spam is not fully set up!', 'oopspam-anti-spam'); ?></strong>
-                <?php _e('Complete the setup wizard to protect your site from spam.', 'oopspam-anti-spam'); ?>
+                <strong><?php esc_html_e('OOPSpam Anti-Spam is not fully set up!', 'oopspam-anti-spam'); ?></strong>
+                <?php esc_html_e('Complete the setup wizard to protect your site from spam.', 'oopspam-anti-spam'); ?>
                 <a href="<?php echo esc_url(admin_url('admin.php?page=oopspam_setup_wizard')); ?>" class="button button-primary">
-                    <?php _e('Run Setup Wizard', 'oopspam-anti-spam'); ?>
+                    <?php esc_html_e('Run Setup Wizard', 'oopspam-anti-spam'); ?>
                 </a>
             </p>
         </div>
         <?php
     }
+}
+
+/**
+ * Display admin notice when proxy headers are detected but Trust Proxy Headers is not enabled
+ */
+function oopspam_proxy_headers_notice() {
+    // Only show to users who can manage options
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+    
+    // Don't show if already dismissed
+    if (get_option('oopspam_proxy_notice_dismissed', false)) {
+        return;
+    }
+    
+    // Check if Trust Proxy Headers is already enabled (via constant or setting)
+    if (defined('OOPSPAM_TRUST_PROXY_HEADERS') && OOPSPAM_TRUST_PROXY_HEADERS) {
+        return;
+    }
+    
+    $misc_options = get_option('oopspamantispam_misc_settings');
+    if (isset($misc_options['oopspam_trust_proxy_headers'])) {
+        return;
+    }
+    
+    // Detect common proxy headers
+    $detected_proxy = oopspam_detect_proxy_service();
+    
+    if (!$detected_proxy) {
+        return;
+    }
+    
+    // Handle dismiss action
+    if (isset($_GET['oopspam_dismiss_proxy_notice']) && $_GET['oopspam_dismiss_proxy_notice'] === '1') {
+        if (wp_verify_nonce($_GET['_wpnonce'] ?? '', 'oopspam_dismiss_proxy_notice')) {
+            update_option('oopspam_proxy_notice_dismissed', true);
+            return;
+        }
+    }
+    
+    $settings_url = admin_url('admin.php?page=wp_oopspam_settings_page&tab=misc');
+    $dismiss_url = wp_nonce_url(add_query_arg('oopspam_dismiss_proxy_notice', '1'), 'oopspam_dismiss_proxy_notice');
+    ?>
+    <div class="notice notice-warning" style="position: relative;">
+        <p>
+            <strong><?php esc_html_e('OOPSpam: Proxy/CDN Detected!', 'oopspam-anti-spam'); ?></strong>
+            <?php 
+            printf(
+                /* translators: %s: detected proxy service name */
+                esc_html__('Your site appears to be behind %s. To ensure accurate IP detection for spam filtering, please enable the "Trust proxy headers" setting.', 'oopspam-anti-spam'),
+                '<strong>' . esc_html($detected_proxy) . '</strong>'
+            ); 
+            ?>
+        </p>
+        <p>
+            <a href="<?php echo esc_url($settings_url); ?>" class="button button-primary">
+                <?php esc_html_e('Enable Trust Proxy Headers', 'oopspam-anti-spam'); ?>
+            </a>
+            <a href="<?php echo esc_url($dismiss_url); ?>" class="button button-secondary" style="margin-left: 10px;">
+                <?php esc_html_e('Dismiss', 'oopspam-anti-spam'); ?>
+            </a>
+        </p>
+        <p class="description" style="margin-top: 5px;">
+            <?php esc_html_e('Without this setting, OOPSpam may capture the proxy IP instead of the real visitor IP, reducing spam detection accuracy.', 'oopspam-anti-spam'); ?>
+        </p>
+    </div>
+    <?php
+}
+
+/**
+ * Detect if the site is behind a known proxy/CDN service
+ * 
+ * @return string|false The name of the detected proxy service, or false if none detected
+ */
+function oopspam_detect_proxy_service() {
+    $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+    $is_localhost = oopspam_is_localhost($remote_addr);
+    
+    // Always check for specific CDN headers (even on localhost for testing/staging)
+    // These are definitive indicators of a CDN, not just generic proxy headers
+    
+    // Check for Cloudflare (most common)
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP']) || !empty($_SERVER['HTTP_CF_RAY'])) {
+        return 'Cloudflare';
+    }
+    
+    // Check for Sucuri
+    if (!empty($_SERVER['HTTP_X_SUCURI_CLIENTIP'])) {
+        return 'Sucuri';
+    }
+    
+    // Check for Fastly
+    if (!empty($_SERVER['HTTP_FASTLY_CLIENT_IP'])) {
+        return 'Fastly';
+    }
+    
+    // Check for Akamai (True-Client-IP is commonly used by Akamai)
+    if (!empty($_SERVER['HTTP_TRUE_CLIENT_IP'])) {
+        return 'Akamai';
+    }
+    
+    // Check for AWS CloudFront
+    if (!empty($_SERVER['HTTP_X_AMZN_TRACE_ID']) || !empty($_SERVER['HTTP_CLOUDFRONT_VIEWER_ADDRESS'])) {
+        return 'AWS CloudFront';
+    }
+    
+    // Check for Azure CDN / Azure Front Door
+    if (!empty($_SERVER['HTTP_X_AZURE_REF']) || !empty($_SERVER['HTTP_X_AZURE_CLIENTIP'])) {
+        return 'Azure CDN';
+    }
+    
+    // Check for Google Cloud Load Balancer
+    if (!empty($_SERVER['HTTP_X_CLOUD_TRACE_CONTEXT'])) {
+        return 'Google Cloud';
+    }
+    
+    // Check for KeyCDN
+    if (!empty($_SERVER['HTTP_X_PULL'])) {
+        return 'KeyCDN';
+    }
+    
+    // Check for StackPath / MaxCDN
+    if (!empty($_SERVER['HTTP_X_SP_EDGE_HOST'])) {
+        return 'StackPath';
+    }
+    
+    // Check for Incapsula / Imperva
+    if (!empty($_SERVER['HTTP_INCAP_CLIENT_IP'])) {
+        return 'Imperva (Incapsula)';
+    }
+    
+    // Skip generic proxy header detection for localhost/local development
+    // Local dev servers (MAMP, Local, Docker) often set these headers internally
+    if ($is_localhost) {
+        return false;
+    }
+    
+    // Check for common proxy headers (generic detection)
+    $proxy_headers = [
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_X_REAL_IP',
+        'HTTP_X_CLUSTER_CLIENT_IP',
+        'HTTP_FORWARDED_FOR',
+        'HTTP_FORWARDED',
+        'HTTP_CLIENT_IP'
+    ];
+    
+    foreach ($proxy_headers as $header) {
+        if (!empty($_SERVER[$header])) {
+            $remote_addr = $_SERVER['REMOTE_ADDR'] ?? '';
+            $forwarded_ip = trim(explode(',', $_SERVER[$header])[0]);
+            
+            // Only show notice if the forwarded IP is different from REMOTE_ADDR
+            // This indicates we're actually behind a proxy
+            if ($forwarded_ip !== $remote_addr && filter_var($forwarded_ip, FILTER_VALIDATE_IP)) {
+                // Check for Nginx proxy
+                if ($header === 'HTTP_X_REAL_IP') {
+                    return 'Nginx reverse proxy';
+                }
+                // Check for load balancer / cluster
+                if ($header === 'HTTP_X_CLUSTER_CLIENT_IP') {
+                    return 'a load balancer';
+                }
+                // Generic proxy detection
+                return __('a reverse proxy or CDN', 'oopspam-anti-spam');
+            }
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Check if the given IP address is a localhost/local development environment
+ * 
+ * @param string $ip The IP address to check
+ * @return bool True if localhost, false otherwise
+ */
+function oopspam_is_localhost($ip) {
+    $localhost_ips = [
+        '127.0.0.1',
+        '::1',
+        'localhost',
+        '0.0.0.0',
+    ];
+    
+    // Check exact match
+    if (in_array($ip, $localhost_ips, true)) {
+        return true;
+    }
+    
+    // Check for 127.x.x.x range
+    if (strpos($ip, '127.') === 0) {
+        return true;
+    }
+    
+    // Check for private network ranges commonly used in local dev (Docker, etc.)
+    // 10.x.x.x, 172.16-31.x.x, 192.168.x.x
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+        // IP is in private or reserved range - likely local dev
+        // But we only want to skip for truly local environments
+        // Check if the site URL contains common local dev indicators
+        $site_url = get_site_url();
+        $local_indicators = ['.local', '.test', '.localhost', 'localhost', '.dev', '.invalid', ':10'];
+        
+        foreach ($local_indicators as $indicator) {
+            if (stripos($site_url, $indicator) !== false) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }

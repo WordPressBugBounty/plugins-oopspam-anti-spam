@@ -27,7 +27,7 @@ function oopspamantispam_happyforms_pre_submission($is_valid, $request, $_form)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($form_id == $id) {
                     return $is_valid;
                 }
@@ -93,7 +93,7 @@ function oopspamantispam_happyforms_pre_submission($is_valid, $request, $_form)
         $escapedMsg = sanitize_textarea_field($message);
 
         // Capture user's IP if allowed
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -114,18 +114,18 @@ function oopspamantispam_happyforms_pre_submission($is_valid, $request, $_form)
         ];
 
         if (!$detectionResult["isItHam"]) {
-            // It's spam, store the submission in Form Spam Entries
+            // It's spam, store the submission in Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
             $error_to_show = isset($options['oopspam_happyforms_spam_message']) && !empty($options['oopspam_happyforms_spam_message']) 
             ? $options['oopspam_happyforms_spam_message'] 
-            : __('Your submission has been flagged as spam.', 'oopspam');
+            : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
             
             wp_send_json_error(array(
                     'html' => '<div class="happyforms-form happyforms-styles">
                                 <form action="" method="post" novalidate="true">
                                 <div class="happyforms-flex"><div class="happyforms-message-notices">
                                 <div class="happyforms-message-notice error">
-                                <h2>' . $error_to_show . '</h2></div></div>
+                                <h2>' . esc_html($error_to_show) . '</h2></div></div>
                                 </form></div>'
                 ));
             $is_valid = false;

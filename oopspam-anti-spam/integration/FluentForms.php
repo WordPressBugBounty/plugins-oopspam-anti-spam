@@ -95,7 +95,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
     
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($insertData["form_id"] == $id) {
                     return;
                 }
@@ -103,7 +103,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
         }
 
         $userIP = "";
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -131,7 +131,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
             $error_to_show = (isset($options['oopspam_ff_spam_message']) && !empty($options['oopspam_ff_spam_message'])) ? $options['oopspam_ff_spam_message'] : 'Your submission has been flagged as spam.';
             wp_send_json(['errors' => [
                 'restricted' => [
-                    $error_to_show,
+                    esc_html($error_to_show),
                 ],
             ]], 422);
         } else {

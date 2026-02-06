@@ -2,11 +2,27 @@
 
 namespace OOPSPAM\Integrations;
 
-add_action('forminator_custom_form_submit_before_set_fields', 'OOPSPAM\Integrations\oopspam_forminator_pre_submission', 10, 3);
+add_filter('forminator_spam_protection', 'OOPSPAM\Integrations\oopspam_forminator_spam_check', 10, 4);
 
-function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) {
+function oopspam_forminator_spam_check($is_spam, $field_data_array, $form_id, $form_type) {
+
+    // If already marked as spam by another filter, don't override
+    if ($is_spam) {
+        return $is_spam;
+    }
+
+    // Only process custom forms
+    if ($form_type !== 'form') {
+        return $is_spam;
+    }
+    
+
     $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
+
+    if (empty(oopspamantispam_get_key()) || !oopspam_is_spamprotection_enabled('forminator')) {
+        return $is_spam;
+    }
 
     $userIP = ''; 
     $email = ''; 
@@ -64,49 +80,46 @@ function oopspam_forminator_pre_submission($entry, $form_id, $field_data_array) 
         }
     }
 
-    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('forminator')) {
-        $escapedMsg = sanitize_textarea_field($message);
+    $escapedMsg = sanitize_textarea_field($message);
 
-        // Capture message and email
-        foreach ($field_data_array as $field) {
-            if (!isset($field["field_type"])) continue;
+    // Capture email
+    foreach ($field_data_array as $field) {
+        if (!isset($field["field_type"])) continue;
 
-            if ($field["field_type"] == "email") {
-                $email = sanitize_email($field["value"]);
-            }
-        }
-
-        // Capture IP
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
-            $userIP = oopspamantispam_get_ip();
-        }
-
-        // Perform spam check using OOPSpam
-        $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "forminator");
-
-        if (!isset($detectionResult['isItHam'])) {
-            return $entry;
-        }
-
-        $frmEntry = [
-            "Score" => $detectionResult["Score"],
-            "Message" => $escapedMsg,
-            "IP" => $userIP,
-            "Email" => $email,
-            "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
-        ];
-
-        if (!$detectionResult['isItHam']) {
-            // It's spam, store the submission and show error
-            oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_forminator_spam_message']) && !empty($options['oopspam_forminator_spam_message'])) ? $options['oopspam_forminator_spam_message'] : "Your submission has been flagged as spam.";
-            wp_send_json_error($error_to_show);
-        } else {
-            // It's ham
-            oopspam_store_ham_submission($frmEntry);
+        if ($field["field_type"] == "email") {
+            $email = sanitize_email($field["value"]);
+            break;
         }
     }
 
-    return $entry;
+    // Capture IP
+    if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
+        $userIP = oopspamantispam_get_ip();
+    }
+
+    // Perform spam check using OOPSpam
+    $detectionResult = oopspamantispam_call_OOPSpam($escapedMsg, $userIP, $email, true, "forminator");
+
+    if (!isset($detectionResult['isItHam'])) {
+        return $is_spam;
+    }
+
+    $frmEntry = [
+        "Score" => $detectionResult["Score"],
+        "Message" => $escapedMsg,
+        "IP" => $userIP,
+        "Email" => $email,
+        "RawEntry" => $raw_entry,
+        "FormId" => $form_id,
+    ];
+
+    if (!$detectionResult['isItHam']) {
+        // It's spam, store the submission
+        oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
+        return true; // Return true to mark as spam
+    } else {
+        // It's ham
+        oopspam_store_ham_submission($frmEntry);
+        return false; // Return false to allow submission
+    }
 }

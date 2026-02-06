@@ -37,7 +37,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
 
             foreach ($excludedFormIds as $id) {
                 // Don't check for spam for this form
-                // Don't log under Form Valid Entries
+                // Don't log under Valid Entries
                 if ($form_id["form_name"] === $id) {
                     return;
                 }
@@ -108,7 +108,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
 
         $userIP = "";
 
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -142,7 +142,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
             }
 
             $error_to_show = (isset($options['oopspam_el_spam_message']) && !empty($options['oopspam_el_spam_message'])) ? $options['oopspam_el_spam_message'] : 'Your submission has been flagged as spam.';
-            $ajax_handler->add_error($field_id, $error_to_show);
+            $ajax_handler->add_error($field_id, esc_html($error_to_show));
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

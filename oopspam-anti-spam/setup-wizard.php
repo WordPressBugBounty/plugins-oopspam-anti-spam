@@ -56,6 +56,16 @@ add_action('admin_enqueue_scripts', 'oopspam_admin_menu_styles');
  * Redirect to setup wizard on plugin activation if not completed
  */
 function oopspam_maybe_redirect_to_wizard() {
+    // Prevent redirect loop if already on the wizard page
+    if (isset($_GET['page']) && $_GET['page'] === 'oopspam_setup_wizard') {
+        return;
+    }
+
+    // Prevent redirect during AJAX requests
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        return;
+    }
+
     // Check and mark wizard completed first if API key exists
     if (oopspam_has_api_key() && !oopspam_is_wizard_completed()) {
         update_option('oopspam_wizard_completed', true);
@@ -73,7 +83,7 @@ function oopspam_maybe_redirect_to_wizard() {
     set_transient('oopspam_activation_redirect', true, 30);
     
     // Redirect to setup wizard
-    wp_redirect(admin_url('admin.php?page=oopspam_setup_wizard'));
+    wp_safe_redirect(admin_url('admin.php?page=oopspam_setup_wizard'));
     exit;
 }
 add_action('admin_init', 'oopspam_maybe_redirect_to_wizard');
@@ -124,6 +134,7 @@ function oopspam_get_active_form_plugins() {
         'quform' => 'Quform',
         'surecart' => 'SureCart',
         'sure' => 'SureForms',
+        'avada' => 'Avada Forms',
     );
     
     foreach ($supported_plugins as $key => $name) {
@@ -168,7 +179,10 @@ function oopspam_process_wizard_step() {
             if (isset($_POST['forms']) && is_array($_POST['forms'])) {
                 foreach ($_POST['forms'] as $form_id) {
                     $form_id = sanitize_text_field($form_id);
-                    $option_name = 'oopspam_is_' . $form_id . '_activated';
+                    
+                    // Handle special case for wp-register which should be wpregister in option name
+                    $option_form_id = ($form_id === 'wp-register') ? 'wpregister' : $form_id;
+                    $option_name = 'oopspam_is_' . $option_form_id . '_activated';
                     $options[$option_name] = 1;
                     
                     // Handle WooCommerce enhanced protection options
@@ -331,6 +345,9 @@ function oopspam_setup_wizard_content() {
                             </div>
                             <?php endforeach; ?>
                         </div>
+                        <?php if (count($form_plugins) > 4): ?>
+                        <p class="oopspam-scroll-hint"><span class="dashicons dashicons-arrow-down-alt2"></span> Scroll up to see all available form plugins</p>
+                        <?php endif; ?>
                         
                         <!-- WooCommerce enhanced protection options -->
                         <div id="oopspam-woocommerce-options" style="display:none; margin-top: 20px; background-color: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 4px solid #2271b1;">
@@ -491,7 +508,7 @@ function oopspam_setup_wizard_content() {
                     <ul>
                         <li><p><span class="dashicons dashicons-admin-settings"></span> <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page')); ?>">Visit the settings page</a> to fine-tune your configuration</p></li>
                         <li><p><span class="dashicons dashicons-shield"></span> Learn more about <a href="https://help.oopspam.com/wordpress/" target="_blank">advanced protection options</a></p></li>
-                        <li><p><span class="dashicons dashicons-chart-area"></span> Monitor submissions in the local <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_spam_entries')); ?>">Form Spam Entries</a> and <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_ham_entries')); ?>">Form Valid Entries</a> tables. You can also enable <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page')); ?>">Log submissions to OOPSpam</a> setting to track submissions in the OOPSpam dashboard</p></li>
+                        <li><p><span class="dashicons dashicons-chart-area"></span> Monitor submissions in the local <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_spam_entries')); ?>">Spam Entries</a> and <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_ham_entries')); ?>">Valid Entries</a> tables. You can also enable <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page')); ?>">Log submissions to OOPSpam</a> setting to track submissions in the OOPSpam dashboard</p></li>
                     </ul>
                 </div>
                 
@@ -503,7 +520,7 @@ function oopspam_setup_wizard_content() {
         </div>
         
         <div class="oopspam-wizard-footer">
-            <p>Need help? Visit our <a href="https://help.oopspam.com/wordpress/" target="_blank">documentation</a> or contact <a href="mailto:support@oopspam.com">support@oopspam.com</a></p>
+            <p>Need help? Visit our <a href="https://help.oopspam.com/wordpress/" target="_blank">documentation</a> or contact <a href="mailto:contact@oopspam.com">contact@oopspam.com</a></p>
         </div>
     </div>
     <?php

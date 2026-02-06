@@ -42,7 +42,7 @@ function oopspamantispam_pmp_submission( $continue )
         }
 
         // Capture user's IP if allowed
-        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || $privacyOptions['oopspam_is_check_for_ip'] != true) {
+        if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();
         }
 
@@ -63,10 +63,10 @@ function oopspamantispam_pmp_submission( $continue )
         ];
 
         if (!$detectionResult["isItHam"]) {
-            // It's spam, store the submission in Form Spam Entries
+            // It's spam, store the submission in Spam Entries
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
-            $error_to_show = (isset($options['oopspam_pmp_spam_message']) && !empty($options['oopspam_pmp_spam_message'])) ? $options['oopspam_pmp_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam');
-            pmpro_setMessage( esc_html__( $error_to_show, 'pmpro-oopspam' ), 'pmpro_error' );
+            $error_to_show = (isset($options['oopspam_pmp_spam_message']) && !empty($options['oopspam_pmp_spam_message'])) ? $options['oopspam_pmp_spam_message'] : __('Your submission has been flagged as spam.', 'oopspam-anti-spam');
+            pmpro_setMessage( esc_html( $error_to_show ), 'pmpro_error' );
             return $continue;
         } else {
             // It's ham
