@@ -1566,6 +1566,17 @@ function oopspam_jform_spam_message_render()
             'oopspamantispam-woo-settings-group',
             'oopspam_woo_settings_section'
         );
+
+        add_settings_field(
+            'oopspam_woo_block_billing_address',
+            esc_html__('Block orders with specific billing addresses',  'oopspam-anti-spam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            esc_html__('Block orders that contain any of these billing addresses (one per line). Matches against the full billing address (address line 1 and 2 combined). Case-insensitive partial matching is used.',  'oopspam-anti-spam') . 
+            '</span></span>',
+            'oopspam_woo_block_billing_address_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
     }
 
     // SureCart settings section
@@ -4083,6 +4094,24 @@ function oopspam_woo_block_order_total_render()
                       placeholder="5.95&#10;19.99&#10;29.95"><?php echo isset($options['oopspam_woo_block_order_total']) && $options['oopspam_woo_block_order_total'] !== '' ? esc_textarea($options['oopspam_woo_block_order_total']) : ''; ?></textarea>
             <p class="description"><?php echo esc_html__('Enter amounts (one per line) to automatically block orders with those exact totals. Leave empty to disable this check.', 'oopspam-anti-spam'); ?></p>
             <p class="description"><?php echo esc_html__('Example: Enter multiple amounts like 5.95, 19.99, 29.95 each on a separate line.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_block_billing_address_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_block_billing_address">
+            <textarea id="woo_block_billing_address" 
+                      name="oopspamantispam_settings[oopspam_woo_block_billing_address]" 
+                      rows="5" 
+                      cols="30" 
+                      placeholder="123 Fake Street&#10;456 Spam Avenue, Suite 100&#10;PO Box 999"><?php echo isset($options['oopspam_woo_block_billing_address']) && $options['oopspam_woo_block_billing_address'] !== '' ? esc_textarea($options['oopspam_woo_block_billing_address']) : ''; ?></textarea>
+            <p class="description"><?php echo esc_html__('Enter billing addresses to block (one per line). Orders with a billing address containing any of these values will be blocked. Matching is case-insensitive.', 'oopspam-anti-spam'); ?></p>
+            <p class="description"><?php echo esc_html__('Example: Enter "123 Fake Street" to block any order whose billing address contains that text.', 'oopspam-anti-spam'); ?></p>
         </label>
     </div>
     <?php

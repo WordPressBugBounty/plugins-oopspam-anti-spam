@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.61
+Stable tag: 1.2.62
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -143,6 +143,9 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.62 =
+* **NEW:** [WooCommerce] Added "Block orders with specific billing addresses" setting to block orders matching known fraudulent addresses
+* **FIX:** [WooCommerce] Fixed JSON parse error ("SyntaxError: Unexpected token") on block-based checkout when an order is blocked
 = 1.2.61 =
 * **IMPROVEMENT:** Better contextual spam detection guide
 * **IMPROVEMENT:** New, clearer settings page design
@@ -473,8 +476,11 @@ Yes! OOPSpam is fully GDPR compliant:
 
 == Screenshots ==
 
-1. **Intuitive Dashboard** - OOPSpam's admin settings provide easy access to all protection features with clear organization
-2. **Comprehensive Spam Management** - View, analyze, and manage spam entries with detailed detection reasons
-3. **Advanced Manual Controls** - Fine-tune your protection with IP, email, and keyword blocking options
-4. **Smart Rate Limiting** - Prevent abuse with intelligent submission rate controls
-5. **Privacy-First Settings** - Configure data handling and privacy options to match your requirements
+1. **Easy-to-Use Dashboard** - Access all spam protection features in one organized place
+2. **Spam Management** - View and manage spam with clear explanations of why each entry was blocked
+3. **Manual Controls** - Block specific IPs, emails, and keywords when needed
+4. **Rate Limiting** - Stop spam bots by limiting how often forms can be submitted
+5. **Privacy Controls** - Choose how your data is handled and stored
+6. **One-Click Setup** - Enable protection for your forms and WooCommerce store instantly
+7. **IP Blocking** - Block VPNs and cloud providers with a single click
+8. **Contextual Spam Detection** - Use AI to identify spam based on your website's content (optional)

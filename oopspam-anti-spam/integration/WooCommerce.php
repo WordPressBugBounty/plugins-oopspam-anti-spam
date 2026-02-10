@@ -145,6 +145,77 @@ class WooSpamProtection
         return false;
     }
 
+    /**
+     * Check if billing address matches blocked addresses and handle accordingly
+     * Returns true if order was blocked, false otherwise
+     */
+    private function checkBlockedBillingAddress($order, $order_id = null, $log_entry = true) {
+        $options = get_option('oopspamantispam_settings');
+        $blocked_addresses_input = isset($options['oopspam_woo_block_billing_address']) && $options['oopspam_woo_block_billing_address'] !== '' ? $options['oopspam_woo_block_billing_address'] : '';
+        
+        if (empty($blocked_addresses_input)) {
+            return false;
+        }
+        
+        $blocked_addresses = array_map('trim', preg_split('/\r\n|\r|\n/', $blocked_addresses_input));
+        $blocked_addresses = array_filter($blocked_addresses);
+        
+        if (empty($blocked_addresses)) {
+            return false;
+        }
+        
+        // Build the full billing address from the order
+        $address_parts = [];
+        if (is_a($order, 'WC_Order')) {
+            $address_parts[] = $order->get_billing_address_1();
+            $address_parts[] = $order->get_billing_address_2();
+            $email = $order->get_billing_email();
+        } else {
+            return false;
+        }
+        
+        $full_address = strtolower(implode(' ', array_filter($address_parts)));
+        
+        if (empty($full_address)) {
+            return false;
+        }
+        
+        foreach ($blocked_addresses as $blocked_address) {
+            $blocked_address_lower = strtolower($blocked_address);
+            if (strpos($full_address, $blocked_address_lower) !== false) {
+                // Check if user has completed orders before - don't block if they do
+                if (!empty($email) && $this->hasCompletedOrders($email)) {
+                    return false;
+                }
+                
+                // Check if we've already logged this order to prevent duplicates
+                $transient_key = 'oopspam_blocked_address_' . ($order_id ? $order_id : md5($email . $full_address . time()));
+                if (get_transient($transient_key)) {
+                    return true;
+                }
+                
+                if ($log_entry) {
+                    $userIP = oopspamantispam_get_ip();
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => "",
+                        "IP" => $userIP,
+                        "Email" => $email,
+                        "RawEntry" => json_encode(array("billing_address" => $full_address, "blocked_address" => $blocked_address, "order_id" => $order_id)),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, "Blocked billing address: " . $blocked_address);
+                    
+                    set_transient($transient_key, true, 300);
+                }
+                
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     function oopspam_check_order_attributes($order, $data ) {
 
         $options = get_option('oopspamantispam_settings');
@@ -260,7 +331,7 @@ class WooSpamProtection
                 }
 
                 $error_to_show = $this->get_error_message();
-                wp_die(esc_html($error_to_show));
+                $this->block_checkout_with_error($error_to_show);
             }
         }
         
@@ -287,7 +358,7 @@ class WooSpamProtection
             return $order;
         }
 
-        // Check for blocked order total
+        // Check for blocked order total and billing address
         $wc_order = wc_get_order($order_id);
         if ($wc_order) {
             $order_total = floatval($wc_order->get_total());
@@ -295,6 +366,13 @@ class WooSpamProtection
             
             if ($this->checkBlockedOrderTotal($order_total, $email, $order_id)) {
                 // Delete the order and show error
+                $wc_order->delete(true);
+                $error_to_show = $this->get_error_message();
+                \wc_add_notice( esc_html( $error_to_show ), 'error' );
+                return $order;
+            }
+
+            if ($this->checkBlockedBillingAddress($wc_order, $order_id)) {
                 $wc_order->delete(true);
                 $error_to_show = $this->get_error_message();
                 \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -346,7 +424,14 @@ class WooSpamProtection
                 // Delete the order and show error
                 $wc_order->delete(true);
                 $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html( $error_to_show ), 'error' );
+                $this->block_checkout_with_error($error_to_show);
+                return $order;
+            }
+
+            if ($this->checkBlockedBillingAddress($wc_order, $wc_order->get_id())) {
+                $wc_order->delete(true);
+                $error_to_show = $this->get_error_message();
+                $this->block_checkout_with_error($error_to_show);
                 return $order;
             }
         }
@@ -359,7 +444,7 @@ class WooSpamProtection
             $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
             if ($showError) {
                 $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html( $error_to_show ), 'error' );
+                $this->block_checkout_with_error($error_to_show);
             }
         
     }    
@@ -392,6 +477,13 @@ class WooSpamProtection
             
             if ($this->checkBlockedOrderTotal($order_total, $email, $order_id)) {
                 // Delete the order and show error
+                $wc_order->delete(true);
+                $error_to_show = $this->get_error_message();
+                \wc_add_notice( esc_html( $error_to_show ), 'error' );
+                return $order;
+            }
+
+            if ($this->checkBlockedBillingAddress($wc_order, $order_id)) {
                 $wc_order->delete(true);
                 $error_to_show = $this->get_error_message();
                 \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -604,7 +696,6 @@ class WooSpamProtection
         if ($showError) {
             $error_to_show = $this->get_error_message();
             $errors->add('oopspam_error', esc_html($error_to_show));
-            wp_die( esc_html($error_to_show) );
             return $errors;
         }
 
@@ -745,6 +836,44 @@ class WooSpamProtection
         }
     }
     return false;
+}
+
+/**
+ * Check if the current request is a WooCommerce Store API request (block-based checkout).
+ */
+private function is_store_api_request() {
+    if (defined('REST_REQUEST') && REST_REQUEST) {
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        if (strpos($request_uri, 'wc/store') !== false) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Block checkout with an error message, using the appropriate method
+ * depending on whether this is a Store API (block checkout) or classic checkout.
+ *
+ * For Store API requests, throws a RouteException so WooCommerce returns
+ * a proper JSON error response. For classic checkout, uses wc_add_notice.
+ * Falls back to wp_die() if neither is available.
+ */
+private function block_checkout_with_error($error_message) {
+    if ($this->is_store_api_request() && class_exists('\Automattic\WooCommerce\StoreApi\Exceptions\RouteException')) {
+        throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException(
+            'oopspam_spam_detected',
+            esc_html($error_message),
+            400
+        );
+    }
+
+    if (function_exists('wc_add_notice')) {
+        \wc_add_notice(esc_html($error_message), 'error');
+        return;
+    }
+
+    wp_die(esc_html($error_message));
 }
 
 /**
