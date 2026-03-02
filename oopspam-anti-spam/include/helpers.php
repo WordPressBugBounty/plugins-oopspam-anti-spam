@@ -381,6 +381,7 @@ function oopspam_store_spam_submission($frmEntry, $reason)
     
     // Enrich raw entry with HTTP headers and request metadata
     $enriched_raw_entry = oopspam_enrich_raw_entry($frmEntry["RawEntry"]);
+    $sanitized_form_id = isset($frmEntry["FormId"]) ? sanitize_text_field(wp_unslash((string) $frmEntry["FormId"])) : '';
     
     $data = array(
         'message' => $frmEntry["Message"],
@@ -388,7 +389,7 @@ function oopspam_store_spam_submission($frmEntry, $reason)
         'email' => $frmEntry["Email"],
         'score' => $frmEntry["Score"],
         'raw_entry' => $enriched_raw_entry,
-        'form_id' => $frmEntry["FormId"],
+        'form_id' => $sanitized_form_id,
         'reason' => $reason
     );
     $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s');
@@ -417,6 +418,7 @@ function oopspam_store_ham_submission($frmEntry)
     
     // Enrich raw entry with HTTP headers and request metadata
     $enriched_raw_entry = oopspam_enrich_raw_entry($frmEntry["RawEntry"]);
+    $sanitized_form_id = isset($frmEntry["FormId"]) ? sanitize_text_field(wp_unslash((string) $frmEntry["FormId"])) : '';
 
     $table_name = $wpdb->prefix . 'oopspam_frm_ham_entries';
     $data = array(
@@ -425,7 +427,7 @@ function oopspam_store_ham_submission($frmEntry)
         'email' => $frmEntry["Email"],
         'score' => $frmEntry["Score"],
         'raw_entry' => $enriched_raw_entry,
-        'form_id' => $frmEntry["FormId"],
+        'form_id' => $sanitized_form_id,
         'gclid' => $gclid
     );
     $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s');

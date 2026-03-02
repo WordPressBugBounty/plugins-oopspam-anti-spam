@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.62
+Stable tag: 1.2.63
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -143,6 +143,14 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.63 =
+* **NEW:** [WooCommerce] Added "Max failed payment attempts per IP" velocity protection setting.
+* **NEW:** [WooCommerce] Added "Failed payment time window (hours)" setting for velocity checks.
+* **NEW:** [WooCommerce] Added "Block repeated same-amount orders" and "Same-amount order window (hours)" settings.
+* **IMPROVEMENT:** [WooCommerce] Improved Classic and Block Checkout field handling via `WC_Order`.
+* **FIX:** [WooCommerce] Fixed Block Checkout validation flow for `WC_Order` handling.
+* **FIX (SECURITY):** [Contact Form 7] Prevented stored XSS in wp-admin Spam/Valid Entries.
+* **FIX:** [Settings UI] Fixed tooltip visibility in WordPress admin.
 = 1.2.62 =
 * **NEW:** [WooCommerce] Added "Block orders with specific billing addresses" setting to block orders matching known fraudulent addresses
 * **FIX:** [WooCommerce] Fixed JSON parse error ("SyntaxError: Unexpected token") on block-based checkout when an order is blocked

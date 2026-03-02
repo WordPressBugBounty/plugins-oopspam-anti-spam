@@ -59,13 +59,15 @@ function oopspamantispam_cf7_pre_submission($spam)
             return $spam;
         }
 
+        $cf7_form_id = isset($_POST['_wpcf7']) ? absint(wp_unslash($_POST['_wpcf7'])) : 0;
+
         $frmEntry = [
             "Score" => $detectionResult["Score"],
             "Message" => $escapedMsg,
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $_POST['_wpcf7'],
+            "FormId" => (string) $cf7_form_id,
         ];
 
         if (!$detectionResult["isItHam"]) {

@@ -60,6 +60,10 @@ class WooSpamProtection
         add_action('woocommerce_new_order', [$this, 'oopspam_legacy_checkout_classic_processed'], 10, 2);
 
         add_action('woocommerce_order_save_attribution_data', [$this, 'oopspam_check_order_attributes'], 10, 2);
+
+        // Track failed payment attempts for velocity check
+        add_action('woocommerce_order_status_failed', [$this, 'oopspam_track_failed_payment'], 10, 2);
+
     }
 
     private function cleanSensitiveData($data) {
@@ -216,6 +220,157 @@ class WooSpamProtection
         return false;
     }
 
+    /**
+     * Track failed payment attempts per IP using transients.
+     */
+    public function oopspam_track_failed_payment($order_id, $order = null) {
+        $options = get_option('oopspamantispam_settings');
+        $max_failed = isset($options['oopspam_woo_max_failed_payments']) && $options['oopspam_woo_max_failed_payments'] !== '' ? intval($options['oopspam_woo_max_failed_payments']) : 0;
+        
+        if ($max_failed <= 0) {
+            return;
+        }
+
+        $userIP = oopspamantispam_get_ip();
+        if (empty($userIP)) {
+            return;
+        }
+
+        $window_hours = isset($options['oopspam_woo_failed_payments_window']) && $options['oopspam_woo_failed_payments_window'] !== '' ? intval($options['oopspam_woo_failed_payments_window']) : 24;
+        $transient_key = 'oopspam_failed_pay_' . md5($userIP);
+        $failed_data = get_transient($transient_key);
+
+        if (!$failed_data || !is_array($failed_data)) {
+            $failed_data = [];
+        }
+
+        // Add current timestamp
+        $failed_data[] = time();
+
+        // Clean old entries outside the time window
+        $cutoff = time() - ($window_hours * 3600);
+        $failed_data = array_values(array_filter($failed_data, function($ts) use ($cutoff) {
+            return $ts >= $cutoff;
+        }));
+
+        set_transient($transient_key, $failed_data, $window_hours * 3600);
+    }
+
+    /**
+     * Check if an IP has exceeded failed payment attempt threshold.
+     * Returns true if the IP should be blocked.
+     */
+    private function checkFailedPaymentVelocity($email = '') {
+        $options = get_option('oopspamantispam_settings');
+        $max_failed = isset($options['oopspam_woo_max_failed_payments']) && $options['oopspam_woo_max_failed_payments'] !== '' ? intval($options['oopspam_woo_max_failed_payments']) : 0;
+        
+        if ($max_failed <= 0) {
+            return false;
+        }
+
+        $userIP = oopspamantispam_get_ip();
+        if (empty($userIP)) {
+            return false;
+        }
+
+        $window_hours = isset($options['oopspam_woo_failed_payments_window']) && $options['oopspam_woo_failed_payments_window'] !== '' ? intval($options['oopspam_woo_failed_payments_window']) : 24;
+        $transient_key = 'oopspam_failed_pay_' . md5($userIP);
+        $failed_data = get_transient($transient_key);
+
+        if (!$failed_data || !is_array($failed_data)) {
+            return false;
+        }
+
+        // Clean old entries outside the time window
+        $cutoff = time() - ($window_hours * 3600);
+        $failed_data = array_values(array_filter($failed_data, function($ts) use ($cutoff) {
+            return $ts >= $cutoff;
+        }));
+
+        if (count($failed_data) >= $max_failed) {
+            $frmEntry = [
+                "Score" => 6,
+                "Message" => "",
+                "IP" => $userIP,
+                "Email" => $email,
+                "RawEntry" => json_encode([
+                    'failed_attempts' => count($failed_data),
+                    'max_allowed' => $max_failed,
+                    'window_hours' => $window_hours
+                ]),
+                "FormId" => "WooCommerce",
+            ];
+            oopspam_store_spam_submission($frmEntry, "Too many failed payment attempts: " . count($failed_data) . "/" . $max_failed . " in " . $window_hours . "h");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if there are too many recent orders with the same total amount.
+     * Returns true if the order should be blocked.
+     */
+    private function checkSameAmountOrders($order_total, $email = '', $order_id = null) {
+        $options = get_option('oopspamantispam_settings');
+        $threshold = isset($options['oopspam_woo_same_amount_threshold']) && $options['oopspam_woo_same_amount_threshold'] !== '' ? intval($options['oopspam_woo_same_amount_threshold']) : 0;
+
+        if ($threshold <= 0 || $order_total <= 0) {
+            return false;
+        }
+
+        $window_hours = isset($options['oopspam_woo_same_amount_window']) && $options['oopspam_woo_same_amount_window'] !== '' ? intval($options['oopspam_woo_same_amount_window']) : 1;
+        $date_after_ts = time() - ($window_hours * HOUR_IN_SECONDS);
+
+        $args = [
+            'date_created' => '>' . $date_after_ts,
+            'status' => ['processing', 'on-hold', 'pending', 'failed', 'completed'],
+            'limit' => 200,
+            'return' => 'ids',
+        ];
+
+        // Exclude the current order if provided
+        if ($order_id) {
+            $args['exclude'] = [$order_id];
+        }
+
+        $recent_orders = wc_get_orders($args);
+        
+        // Count how many have the same total
+        $same_amount_count = 0;
+        foreach ($recent_orders as $rid) {
+            $recent_order = wc_get_order($rid);
+            if ($recent_order) {
+                $recent_total = floatval($recent_order->get_total());
+                if (abs($recent_total - $order_total) < 0.01) {
+                    $same_amount_count++;
+                }
+            }
+        }
+
+
+        if ($same_amount_count >= $threshold) {
+            $userIP = oopspamantispam_get_ip();
+            $frmEntry = [
+                "Score" => 6,
+                "Message" => "",
+                "IP" => $userIP,
+                "Email" => $email,
+                "RawEntry" => json_encode([
+                    'order_total' => $order_total,
+                    'same_amount_count' => $same_amount_count,
+                    'threshold' => $threshold,
+                    'window_hours' => $window_hours
+                ]),
+                "FormId" => "WooCommerce",
+            ];
+            oopspam_store_spam_submission($frmEntry, "Too many orders with same amount ($" . number_format($order_total, 2) . "): " . $same_amount_count . "/" . $threshold . " in " . $window_hours . "h");
+            return true;
+        }
+
+        return false;
+    }
+
     function oopspam_check_order_attributes($order, $data ) {
 
         $options = get_option('oopspamantispam_settings');
@@ -348,44 +503,53 @@ class WooSpamProtection
             return $order;
         }
         
-        $data = json_decode($order, true);
+        // $order is a WC_Order object from woocommerce_new_order
+        $wc_order = is_a($order, 'WC_Order') ? $order : wc_get_order($order_id);
+        if (!$wc_order) {
+            return $order;
+        }
+
+        $email = $wc_order->get_billing_email();
         $post = $_POST;
 
         // Check for allowed email/IP
-        $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
+        $hasAllowedEmail = $email ? $this->isEmailAllowed($email, $wc_order->get_data()) : false;
 
         if ($hasAllowedEmail) {
             return $order;
         }
 
         // Check for blocked order total and billing address
-        $wc_order = wc_get_order($order_id);
-        if ($wc_order) {
-            $order_total = floatval($wc_order->get_total());
-            $email = isset($data['billing']['email']) ? $data['billing']['email'] : '';
-            
-            if ($this->checkBlockedOrderTotal($order_total, $email, $order_id)) {
-                // Delete the order and show error
-                $wc_order->delete(true);
-                $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html( $error_to_show ), 'error' );
-                return $order;
-            }
+        $order_total = floatval($wc_order->get_total());
 
-            if ($this->checkBlockedBillingAddress($wc_order, $order_id)) {
-                $wc_order->delete(true);
-                $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html( $error_to_show ), 'error' );
-                return $order;
-            }
+        if ($this->checkBlockedOrderTotal($order_total, $email, $order_id)) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html( $error_to_show ), 'error' );
+            return $order;
+        }
+
+        if ($this->checkBlockedBillingAddress($wc_order, $order_id)) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html( $error_to_show ), 'error' );
+            return $order;
+        }
+
+        // Same-amount orders velocity check
+        if (!$this->hasCompletedOrders($email) && $this->checkSameAmountOrders($order_total, $email, $order_id)) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html( $error_to_show ), 'error' );
+            return $order;
         }
 
         // Now check with OOPSpam API
         $message = isset($post['order_comments']) ? sanitize_text_field($post['order_comments']) : '';
-        if (empty($message) && isset($data['customer_note'])) {
-            $message = sanitize_text_field($data['customer_note']);
+        if (empty($message)) {
+            $message = sanitize_text_field($wc_order->get_customer_note());
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -404,48 +568,67 @@ class WooSpamProtection
             return $order;
         }
         
-        $data = json_decode($order, true);
+        // $order is a WC_Order object from woocommerce_store_api_checkout_order_processed
+        $wc_order = $order;
+        $email = $wc_order->get_billing_email();
 
         // Check for allowed email/IP
-        $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
+        $hasAllowedEmail = $email ? $this->isEmailAllowed($email, $wc_order->get_data()) : false;
 
         if ($hasAllowedEmail) {
             return $order;
         }
-        
-        // Check for blocked order total
-        // $order might be an order object or order ID, let's handle both
-        $wc_order = is_numeric($order) ? wc_get_order($order) : $order;
-        if ($wc_order && is_a($wc_order, 'WC_Order')) {
-            $order_total = floatval($wc_order->get_total());
-            $email = isset($data['billing']['email']) ? $data['billing']['email'] : $wc_order->get_billing_email();
-            
-            if ($this->checkBlockedOrderTotal($order_total, $email, $wc_order->get_id())) {
-                // Delete the order and show error
-                $wc_order->delete(true);
-                $error_to_show = $this->get_error_message();
-                $this->block_checkout_with_error($error_to_show);
-                return $order;
-            }
 
-            if ($this->checkBlockedBillingAddress($wc_order, $wc_order->get_id())) {
-                $wc_order->delete(true);
-                $error_to_show = $this->get_error_message();
-                $this->block_checkout_with_error($error_to_show);
-                return $order;
+        $userIP = oopspamantispam_get_ip();
+        $hasAllowedIP = oopspam_is_ip_allowed($userIP);
+
+        if (!$hasAllowedIP) {
+            $hasCompletedOrders = !empty($email) ? $this->hasCompletedOrders($email) : false;
+
+            if (!$hasCompletedOrders) {
+                // Failed payment velocity check
+                if ($this->checkFailedPaymentVelocity($email)) {
+                    $wc_order->delete(true);
+                    $error_to_show = $this->get_error_message();
+                    $this->block_checkout_with_error($error_to_show);
+                    return $order;
+                }
+
             }
+        }
+
+        // Check for blocked order total
+        $order_total = floatval($wc_order->get_total());
+
+        if ($this->checkBlockedOrderTotal($order_total, $email, $wc_order->get_id())) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            $this->block_checkout_with_error($error_to_show);
+            return $order;
+        }
+
+        if ($this->checkBlockedBillingAddress($wc_order, $wc_order->get_id())) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            $this->block_checkout_with_error($error_to_show);
+            return $order;
+        }
+
+        // Same-amount orders velocity check
+        if (!$this->hasCompletedOrders($email) && $this->checkSameAmountOrders($order_total, $email, $wc_order->get_id())) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            $this->block_checkout_with_error($error_to_show);
+            return $order;
         }
             
         // Now check with OOPSpam API
-            $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
-            if (empty($message) && isset($data['order_comments'])) {
-                $message = sanitize_text_field($data['order_comments']);
-            }
-            $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
-            if ($showError) {
-                $error_to_show = $this->get_error_message();
-                $this->block_checkout_with_error($error_to_show);
-            }
+        $message = sanitize_text_field($wc_order->get_customer_note());
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
+        if ($showError) {
+            $error_to_show = $this->get_error_message();
+            $this->block_checkout_with_error($error_to_show);
+        }
         
     }    
 
@@ -460,43 +643,48 @@ class WooSpamProtection
             return $order;
         }
         
-        $data = json_decode($order, true);
+        // $order is a WC_Order object from woocommerce_checkout_order_processed
+        $wc_order = $order;
+        $email = $wc_order->get_billing_email();
 
         // Check for allowed email/IP
-        $hasAllowedEmail = isset($data['billing']['email']) ? $this->isEmailAllowed($data['billing']['email'], $data) : false;
+        $hasAllowedEmail = $email ? $this->isEmailAllowed($email, $wc_order->get_data()) : false;
 
         if ($hasAllowedEmail) {
             return $order;
         }
         
         // Check for blocked order total
-        $wc_order = wc_get_order($order_id);
-        if ($wc_order) {
-            $order_total = floatval($wc_order->get_total());
-            $email = isset($data['billing']['email']) ? $data['billing']['email'] : '';
-            
-            if ($this->checkBlockedOrderTotal($order_total, $email, $order_id)) {
-                // Delete the order and show error
-                $wc_order->delete(true);
-                $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html( $error_to_show ), 'error' );
-                return $order;
-            }
+        $order_total = floatval($wc_order->get_total());
 
-            if ($this->checkBlockedBillingAddress($wc_order, $order_id)) {
-                $wc_order->delete(true);
-                $error_to_show = $this->get_error_message();
-                \wc_add_notice( esc_html( $error_to_show ), 'error' );
-                return $order;
-            }
+        if ($this->checkBlockedOrderTotal($order_total, $email, $order_id)) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html( $error_to_show ), 'error' );
+            return $order;
+        }
+
+        if ($this->checkBlockedBillingAddress($wc_order, $order_id)) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html( $error_to_show ), 'error' );
+            return $order;
+        }
+
+        // Same-amount orders velocity check
+        if (!$this->hasCompletedOrders($email) && $this->checkSameAmountOrders($order_total, $email, $order_id)) {
+            $wc_order->delete(true);
+            $error_to_show = $this->get_error_message();
+            \wc_add_notice( esc_html( $error_to_show ), 'error' );
+            return $order;
         }
         
         // Now check with OOPSpam API
-        $message = isset($data['customer_note']) ? sanitize_text_field($data['customer_note']) : '';
+        $message = sanitize_text_field($wc_order->get_customer_note());
         if (empty($message) && isset($posted_data['order_comments'])) {
             $message = sanitize_text_field($posted_data['order_comments']);
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($data['billing']['email']), $message);
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -523,7 +711,27 @@ class WooSpamProtection
             $email = $_POST["billing_email"];
         }
         
-        // Note: Blocked order total check is handled in the order processing functions
+        // Check for allowed email/IP before velocity checks
+        $hasAllowedEmail = !empty($email) ? $this->isEmailAllowed($email, $_POST) : false;
+        $userIP = oopspamantispam_get_ip();
+        $hasAllowedIP = oopspam_is_ip_allowed($userIP);
+
+        if (!$hasAllowedEmail && !$hasAllowedIP) {
+            // Check if user has completed orders - skip velocity checks for returning customers
+            $hasCompletedOrders = !empty($email) ? $this->hasCompletedOrders($email) : false;
+
+            if (!$hasCompletedOrders) {
+                // Failed payment velocity check
+                if ($this->checkFailedPaymentVelocity($email)) {
+                    $error_to_show = $this->get_error_message();
+                    \wc_add_notice( esc_html( $error_to_show ), 'error' );
+                    return;
+                }
+
+            }
+        }
+
+        // Note: Blocked order total and same-amount checks are handled in the order processing functions
         // to avoid duplicate entries and ensure proper logging
         
         $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), sanitize_text_field($message));

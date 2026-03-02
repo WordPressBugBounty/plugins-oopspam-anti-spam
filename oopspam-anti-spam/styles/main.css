@@ -142,6 +142,7 @@
   align-items: center;
   margin-left: 6px;
   vertical-align: middle;
+   z-index: 100000;
 }
 
 .oopspam-tooltip .dashicons {
@@ -169,7 +170,7 @@
   border-radius: 10px;
   padding: 12px 14px;
   position: absolute;
-  z-index: 999;
+   z-index: 100001;
   bottom: 135%;
   left: 50%;
   transform: translateX(-50%);
@@ -208,6 +209,24 @@
 .form-table th .oopspam-tooltip .dashicons {
   vertical-align: text-bottom;
   margin-top: -2px;
+}
+
+.form-table th .oopspam-tooltip .tooltip-text {
+   left: calc(100% + 10px);
+   bottom: 50%;
+   transform: translateY(50%);
+}
+
+.form-table th .oopspam-tooltip:hover .tooltip-text {
+   transform: translateY(50%);
+}
+
+.form-table th .oopspam-tooltip .tooltip-text::after {
+   top: 50%;
+   left: -12px;
+   margin-left: 0;
+   margin-top: -6px;
+   border-color: transparent #1a1a1a transparent transparent;
 }
 
 

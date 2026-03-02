@@ -1577,6 +1577,50 @@ function oopspam_jform_spam_message_render()
             'oopspamantispam-woo-settings-group',
             'oopspam_woo_settings_section'
         );
+
+        add_settings_field(
+            'oopspam_woo_max_failed_payments',
+            esc_html__('Max failed payment attempts per IP',  'oopspam-anti-spam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            esc_html__('Block checkout from an IP address after this many failed payment attempts within the time window. This helps prevent card testing attacks. Leave empty or set to 0 to disable.',  'oopspam-anti-spam') . 
+            '</span></span>',
+            'oopspam_woo_max_failed_payments_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+
+        add_settings_field(
+            'oopspam_woo_failed_payments_window',
+            esc_html__('Failed payment time window (hours)',  'oopspam-anti-spam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            esc_html__('The time window (in hours) for counting failed payment attempts. Default is 24 hours.',  'oopspam-anti-spam') . 
+            '</span></span>',
+            'oopspam_woo_failed_payments_window_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+
+        add_settings_field(
+            'oopspam_woo_same_amount_threshold',
+            esc_html__('Block repeated same-amount orders',  'oopspam-anti-spam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            esc_html__('Block an order if this many or more orders with the same total amount have been placed within the time window. This detects coordinated fraud patterns. Leave empty or set to 0 to disable.',  'oopspam-anti-spam') . 
+            '</span></span>',
+            'oopspam_woo_same_amount_threshold_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
+
+        add_settings_field(
+            'oopspam_woo_same_amount_window',
+            esc_html__('Same-amount order time window (hours)',  'oopspam-anti-spam') . 
+            '<span class="oopspam-tooltip"><span class="dashicons dashicons-info-outline"></span><span class="tooltip-text">' . 
+            esc_html__('The time window (in hours) for checking duplicate order amounts. Default is 1 hour.',  'oopspam-anti-spam') . 
+            '</span></span>',
+            'oopspam_woo_same_amount_window_render',
+            'oopspamantispam-woo-settings-group',
+            'oopspam_woo_settings_section'
+        );
     }
 
     // SureCart settings section
@@ -4112,6 +4156,70 @@ function oopspam_woo_block_billing_address_render()
                       placeholder="123 Fake Street&#10;456 Spam Avenue, Suite 100&#10;PO Box 999"><?php echo isset($options['oopspam_woo_block_billing_address']) && $options['oopspam_woo_block_billing_address'] !== '' ? esc_textarea($options['oopspam_woo_block_billing_address']) : ''; ?></textarea>
             <p class="description"><?php echo esc_html__('Enter billing addresses to block (one per line). Orders with a billing address containing any of these values will be blocked. Matching is case-insensitive.', 'oopspam-anti-spam'); ?></p>
             <p class="description"><?php echo esc_html__('Example: Enter "123 Fake Street" to block any order whose billing address contains that text.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_max_failed_payments_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_max_failed_payments">
+            <input type="number" min="0" step="1" id="woo_max_failed_payments" 
+                   name="oopspamantispam_settings[oopspam_woo_max_failed_payments]" 
+                   value="<?php echo isset($options['oopspam_woo_max_failed_payments']) && $options['oopspam_woo_max_failed_payments'] !== '' ? esc_attr($options['oopspam_woo_max_failed_payments']) : ''; ?>" 
+                   placeholder="0"/>
+            <p class="description"><?php echo esc_html__('Set the maximum number of failed payment attempts allowed per IP before blocking checkout. Leave empty or set to 0 to disable. Recommended: 3-5.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_failed_payments_window_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_failed_payments_window">
+            <input type="number" min="1" step="1" id="woo_failed_payments_window" 
+                   name="oopspamantispam_settings[oopspam_woo_failed_payments_window]" 
+                   value="<?php echo isset($options['oopspam_woo_failed_payments_window']) && $options['oopspam_woo_failed_payments_window'] !== '' ? esc_attr($options['oopspam_woo_failed_payments_window']) : ''; ?>" 
+                   placeholder="24"/>
+            <p class="description"><?php echo esc_html__('Time window in hours to count failed payment attempts. Default: 24 hours.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_same_amount_threshold_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_same_amount_threshold">
+            <input type="number" min="0" step="1" id="woo_same_amount_threshold" 
+                   name="oopspamantispam_settings[oopspam_woo_same_amount_threshold]" 
+                   value="<?php echo isset($options['oopspam_woo_same_amount_threshold']) && $options['oopspam_woo_same_amount_threshold'] !== '' ? esc_attr($options['oopspam_woo_same_amount_threshold']) : ''; ?>" 
+                   placeholder="0"/>
+            <p class="description"><?php echo esc_html__('Block orders when this many orders with the same total amount have been placed within the time window. Helps detect coordinated fraud. Leave empty or set to 0 to disable. Recommended: 3-5.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_woo_same_amount_window_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="woo_same_amount_window">
+            <input type="number" min="1" step="1" id="woo_same_amount_window" 
+                   name="oopspamantispam_settings[oopspam_woo_same_amount_window]" 
+                   value="<?php echo isset($options['oopspam_woo_same_amount_window']) && $options['oopspam_woo_same_amount_window'] !== '' ? esc_attr($options['oopspam_woo_same_amount_window']) : ''; ?>" 
+                   placeholder="1"/>
+            <p class="description"><?php echo esc_html__('Time window in hours for checking duplicate order amounts. Default: 1 hour.', 'oopspam-anti-spam'); ?></p>
         </label>
     </div>
     <?php

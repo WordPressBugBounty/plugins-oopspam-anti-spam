@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.62
+ * Version: 1.2.63
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -870,6 +870,11 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     $countryblocklistSetting = array_filter((array)get_option('oopspam_countryblocklist', []));
     $countryAlwaysAllowSetting = array_filter((array)get_option('oopspam_country_always_allow', []));
     $languageallowlistSetting = array_filter((array)get_option('oopspam_languageallowlist', []));
+
+    if ($type === "woo" && trim((string) $commentText) === '' && !empty($languageallowlistSetting)) {
+        $languageallowlistSetting = [];
+    }
+
     $checkForLength = (isset($options['oopspam_is_check_for_length']) ? $options['oopspam_is_check_for_length'] : false);
     $isLoggable = defined('OOPSPAM_ENABLE_REMOTE_LOGGING') ? OOPSPAM_ENABLE_REMOTE_LOGGING : (isset($options['oopspam_is_loggable']) ? $options['oopspam_is_loggable'] : false);
     
