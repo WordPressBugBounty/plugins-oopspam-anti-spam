@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.63
+ * Version: 1.2.64
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -114,6 +114,7 @@ require_once dirname(__FILE__) . '/integration/MemberPress.php';
 require_once dirname(__FILE__) . '/integration/Pmpro.php';
 require_once dirname(__FILE__) . '/integration/JetpackForms.php';
 require_once dirname(__FILE__) . '/integration/MC4WP.php';
+require_once dirname(__FILE__) . '/integration/TribulantNewsletters.php';
 require_once dirname(__FILE__) . '/integration/SureForms.php';
 require_once dirname(__FILE__) . '/integration/SureCart.php';
 require_once dirname(__FILE__) . '/integration/BreakdanceForm.php';

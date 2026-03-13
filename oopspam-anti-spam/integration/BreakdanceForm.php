@@ -60,7 +60,7 @@ function checkSpamBeforeEmail($canExecute, $action, $form) {
         }
     }
 
-    if (!empty(oopspamantispam_get_key())) {
+    if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('bd')) {
         $userIP = '';
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = $form['ip'];
@@ -83,7 +83,8 @@ function checkSpamBeforeEmail($canExecute, $action, $form) {
             oopspam_store_spam_submission($frmEntry, $detectionResult["Reason"]);
 
             // Prevent email from being sent
-            return new \WP_Error('spam_detected', 'Email action prevented - submission was marked as spam.');
+            $message = isset($options['oopspam_bd_spam_message']) && !empty($options['oopspam_bd_spam_message']) ? $options['oopspam_bd_spam_message'] : 'Your submission was marked as spam and was not sent.';
+            return new \WP_Error('spam_detected', $message);
         } else {
             // It's ham
             oopspam_store_ham_submission($frmEntry);

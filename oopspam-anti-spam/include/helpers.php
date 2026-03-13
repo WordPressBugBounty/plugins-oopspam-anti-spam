@@ -130,6 +130,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'tnl':
+                if (is_plugin_active('newsletters-lite/wp-mailinglist.php')) {
+                    $result = true;
+                }
+            break;
             case 'sure':
                 if (is_plugin_active('sureforms/sureforms.php')) {
                     $result = true;
@@ -182,6 +187,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'forminator' => 'OOPSPAM_IS_FORMINATOR_ACTIVATED',
         'mpoet' => 'OOPSPAM_IS_MPOET_ACTIVATED',
         'mc4wp' => 'OOPSPAM_IS_MC4WP_ACTIVATED',
+        'tnl' => 'OOPSPAM_IS_TNL_ACTIVATED',
         'wpdis' => 'OOPSPAM_IS_WPDIS_ACTIVATED',
         'kb' => 'OOPSPAM_IS_KB_ACTIVATED',
         'nj' => 'OOPSPAM_IS_NJ_ACTIVATED',
@@ -190,6 +196,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'fable' => 'OOPSPAM_IS_FABLE_ACTIVATED',
         'gf' => 'OOPSPAM_IS_GF_ACTIVATED',
         'el' => 'OOPSPAM_IS_EL_ACTIVATED',
+        'bd' => 'OOPSPAM_IS_BD_ACTIVATED',
         'br' => 'OOPSPAM_IS_BR_ACTIVATED',
         'ws' => 'OOPSPAM_IS_WS_ACTIVATED',
         'wpf' => 'OOPSPAM_IS_WPF_ACTIVATED',
@@ -223,6 +230,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'forminator' => 'oopspam_is_forminator_activated',
         'mpoet' => 'oopspam_is_mpoet_activated',
         'mc4wp' => 'oopspam_is_mc4wp_activated',
+        'tnl' => 'oopspam_is_tnl_activated',
         'wpdis' => 'oopspam_is_wpdis_activated',
         'kb' => 'oopspam_is_kb_activated',
         'nj' => 'oopspam_is_nj_activated',
@@ -231,6 +239,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'fable' => 'oopspam_is_fable_activated',
         'gf' => 'oopspam_is_gf_activated',
         'el' => 'oopspam_is_el_activated',
+        'bd' => 'oopspam_is_bd_activated',
         'br' => 'oopspam_is_br_activated',
         'ws' => 'oopspam_is_ws_activated',
         'wpf' => 'oopspam_is_wpf_activated',

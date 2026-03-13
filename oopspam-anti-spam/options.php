@@ -770,6 +770,29 @@ function oopspamantispam_settings_init()
         );
     }
 
+    // Tribulant Newsletters settings section
+    if (oopspamantispam_plugin_check('tnl') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_tnl_settings_section',
+            esc_html__('Newsletters by Tribulant',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-tnl-settings-group'
+        );
+        add_settings_field('oopspam_is_tnl_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_tnl_activated_render',
+            'oopspamantispam-tnl-settings-group',
+            'oopspam_tnl_settings_section'
+        );
+
+        add_settings_field('oopspam_tnl_spam_message',
+            esc_html__('Newsletters by Tribulant Spam Message',  'oopspam-anti-spam'),
+            'oopspam_tnl_spam_message_render',
+            'oopspamantispam-tnl-settings-group',
+            'oopspam_tnl_settings_section'
+        );
+    }
+
     // WPDiscuz settings section
     if (oopspamantispam_plugin_check('wpdis') && !empty(oopspamantispam_get_key())) {
 
@@ -1299,6 +1322,13 @@ function oopspam_jform_spam_message_render()
             esc_html__('Breakdance Forms',  'oopspam-anti-spam'),
             false,
             'oopspamantispam-bd-settings-group');
+
+        add_settings_field('oopspam_is_bd_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_bd_activated_render',
+            'oopspamantispam-bd-settings-group',
+            'oopspam_bd_settings_section'
+        );
 
         add_settings_field('oopspam_bd_spam_message',
             esc_html__('Breakdance Forms Spam Message',  'oopspam-anti-spam'),
@@ -2644,6 +2674,46 @@ function oopspam_mc4wp_spam_message_render()
 
 /* MC4WP UI settings section ends */
 
+/* Tribulant Newsletters UI settings section starts */
+
+function oopspam_is_tnl_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_TNL_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_TNL_ACTIVATED : (isset($options['oopspam_is_tnl_activated']) && 1 == $options['oopspam_is_tnl_activated']);
+    ?>
+    <div>
+        <label for="tnl_support">
+            <input class="oopspam-toggle" type="checkbox" id="tnl_support" 
+                   name="oopspamantispam_settings[oopspam_is_tnl_activated]" 
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?> 
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_tnl_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_tnl_spam_message">
+                    <input id="oopspam_tnl_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_tnl_spam_message]" value="<?php if (isset($options['oopspam_tnl_spam_message'])) {
+        esc_html_e($options['oopspam_tnl_spam_message'], "oopspam-anti-spam");
+    }
+    ?>">
+                        <p class="description"><?php echo esc_html__('Enter a short message to display when a spam subscriber signup is blocked in Newsletters by Tribulant.', 'oopspam-anti-spam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+/* Tribulant Newsletters UI settings section ends */
+
 /* MailPoet UI settings section starts */
 
 function oopspam_is_mpoet_activated_render()
@@ -3809,6 +3879,26 @@ function oopspam_ff_exclude_form_render()
 
 /* Breakdance Forms settings section starts */
 
+function oopspam_is_bd_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_BD_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_BD_ACTIVATED : (isset($options['oopspam_is_bd_activated']) && 1 == $options['oopspam_is_bd_activated']);
+    ?>
+    <div>
+        <label for="bd_support">
+            <input class="oopspam-toggle" type="checkbox" id="bd_support" 
+                   name="oopspamantispam_settings[oopspam_is_bd_activated]" 
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?> 
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
 function oopspam_bd_spam_message_render()
 {
     $options = get_option('oopspamantispam_settings');
@@ -4887,6 +4977,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                             <div class="mc4wp form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-mc4wp-settings-group');
+                    ?>
+                            </div>
+                            <div class="tnl form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-tnl-settings-group');
                     ?>
                             </div>
                             <div class="mpoet form-setting">

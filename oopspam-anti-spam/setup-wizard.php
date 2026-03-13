@@ -130,6 +130,7 @@ function oopspam_get_active_form_plugins() {
         'mpress' => 'MemberPress',
         'jform' => 'Jetpack Form',
         'mc4wp' => 'Mailchimp for WordPress',
+        'tnl' => 'Newsletters by Tribulant',
         'mpoet' => 'MailPoet',
         'quform' => 'Quform',
         'surecart' => 'SureCart',

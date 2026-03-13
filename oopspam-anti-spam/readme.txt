@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.63
+Stable tag: 1.2.64
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -143,6 +143,9 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.64 =
+* **NEW:** Added support for Newsletters by Tribulant
+* **IMPROVEMENT:** [Breakdance] Added an option to enable or disable spam protection.
 = 1.2.63 =
 * **NEW:** [WooCommerce] Added "Max failed payment attempts per IP" velocity protection setting.
 * **NEW:** [WooCommerce] Added "Failed payment time window (hours)" setting for velocity checks.
