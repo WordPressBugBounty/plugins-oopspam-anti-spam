@@ -999,11 +999,10 @@ private static function process_form_fields($raw_entry) {
             case 'raw_entry':
 			case 'reason':
             case 'date':
-				return $item[ $column_name ];
 			case 'form_id':
 				return esc_html( $item[ $column_name ] );
 			default:
-				return print_r( $item, true ); //Show the whole array for troubleshooting purposes
+				return esc_html( print_r( $item, true ) );
 		}
 	}
 

@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.64
+Stable tag: 1.2.65
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -68,9 +68,6 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpa
 - **24/7** customer support
 - **500M+** malicious IPs and emails in our database
 
-### Works With Everything
-The plugin seamlessly protects your **comments**, **site search**, and **all major form plugins**. No extra configuration needed - it just works!
-
 ### Supported form & comment solutions:
 
 - WooCommerce Order & Registration
@@ -105,6 +102,7 @@ The plugin seamlessly protects your **comments**, **site search**, and **all maj
 - Avada Forms
 - MetForm
 - ACF Frontend Forms
+- Newsletters by Tribulant
 
 
 OOPSpam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -143,6 +141,9 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.65 =
+* **NEW:** Added support for Newsletters by Tribulant PRO version
+* **FIX:** URLs are not being captured in comment content.
 = 1.2.64 =
 * **NEW:** Added support for Newsletters by Tribulant
 * **IMPROVEMENT:** [Breakdance] Added an option to enable or disable spam protection.

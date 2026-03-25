@@ -131,7 +131,7 @@ function oopspamantispam_plugin_check($plugin)
                 }
             break;
             case 'tnl':
-                if (is_plugin_active('newsletters-lite/wp-mailinglist.php')) {
+                if (is_plugin_active('wp-mailinglist/wp-mailinglist.php') || is_plugin_active('newsletters-lite/wp-mailinglist.php')) {
                     $result = true;
                 }
             break;

@@ -26,6 +26,16 @@ function oopspamantispam_admin_menu()
 }
 
 add_action('wp_ajax_update_cloud_providers_setting', 'oopspam_update_cloud_providers_setting');
+add_action('wp_ajax_oopspam_dismiss_oopvulns_notice', 'oopspam_dismiss_oopvulns_notice');
+
+function oopspam_dismiss_oopvulns_notice() {
+    if (!check_ajax_referer('oopspam_dismiss_oopvulns', 'nonce', false)) {
+        wp_send_json_error('Invalid security token');
+        return;
+    }
+    update_option('oopspam_oopvulns_notice_dismissed', true);
+    wp_send_json_success();
+}
 
 function oopspam_update_cloud_providers_setting() {
     // Verify nonce
@@ -4804,6 +4814,38 @@ function oopspamantispam_options_page()
         <p>Need help with the plugin? <a href="https://wordpress.org/support/plugin/oopspam-anti-spam/">WordPress Plugin Support Forum</a> </p>
         <p><a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/#new-post">Support us with a review ♥️</a></p>
     </div>
+    <?php
+    // OOPVulns Vulnerability Scanner promotion notice
+    $oopvulns_active = is_plugin_active('oopvulns-vulnerability-scanner/oopspam-vulnerability-scanner.php');
+    $oopvulns_dismissed = get_option('oopspam_oopvulns_notice_dismissed', false);
+    if (!$oopvulns_active && !$oopvulns_dismissed) :
+        $oopvulns_nonce = wp_create_nonce('oopspam_dismiss_oopvulns');
+    ?>
+    <div id="oopspam-oopvulns-notice" style="background: linear-gradient(135deg, #FBF6ED 0%, #ffffff 100%); border: 1px solid rgba(252, 221, 86, 0.4); border-left: 4px solid #FCDD56; padding: 16px 20px; margin: 15px 0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);">
+        <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
+            <span style="font-size: 26px; line-height: 1;">✨</span>
+            <div>
+                <strong style="font-size: 14px; color: #000000;">OOPVulns – Vulnerability Scanner</strong> <?php esc_html_e('is officially out on WordPress.org.', 'oopspam-anti-spam'); ?><br>
+                <span style="color: #666666; font-size: 13px;"><?php esc_html_e('Scan your WordPress core, plugins, and themes for known vulnerabilities. Free for all OOPSpam customers.', 'oopspam-anti-spam'); ?></span>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+            <a href="<?php echo esc_url(admin_url('plugin-install.php?s=oopvulns+vulnerability+scanner&tab=search&type=term')); ?>" style="background: #000000; color: #FCDD56; border: 1px solid #000000; border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; display: inline-block; transition: all 0.25s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);"><?php esc_html_e('Install Free Plugin', 'oopspam-anti-spam'); ?></a>
+            <button type="button" id="oopspam-dismiss-oopvulns" style="background: none; border: none; cursor: pointer; color: #666666; font-size: 20px; line-height: 1; padding: 4px; transition: color 0.2s ease;" title="<?php esc_attr_e('Dismiss this notice', 'oopspam-anti-spam'); ?>" onmouseover="this.style.color='#000000'" onmouseout="this.style.color='#666666'">&times;</button>
+        </div>
+    </div>
+    <script>
+    (function(){
+        document.getElementById('oopspam-dismiss-oopvulns').addEventListener('click', function(){
+            document.getElementById('oopspam-oopvulns-notice').style.display = 'none';
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', ajaxurl);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('action=oopspam_dismiss_oopvulns_notice&nonce=<?php echo esc_js($oopvulns_nonce); ?>');
+        });
+    })();
+    </script>
+    <?php endif; ?>
     <?php
     
     $options = get_option('oopspamantispam_settings');

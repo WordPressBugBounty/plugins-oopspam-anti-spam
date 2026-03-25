@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.64
+ * Version: 1.2.65
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -1268,7 +1268,7 @@ function oopspamantispam_check_comment($approved, $commentdata)
     $trimmedURL = oopspam_urlToDomain($commentdata['comment_author_url']);
 
     $sanitized_author_url = esc_url_raw($trimmedURL);
-    $sanitized_content = sanitize_text_field($commentdata['comment_content']);
+    $sanitized_content = wp_kses_post($commentdata['comment_content']);
 
     $content = $sanitized_content . " " . $sanitized_author_url;
 
@@ -1292,7 +1292,7 @@ function oopspamantispam_check_comment($approved, $commentdata)
         ];
     } else {
         // if Spam filtering is on and the OOPSpam Service considers it spam then mark it as spam
-        $detectionResult = oopspamantispam_call_OOPSpam(sanitize_textarea_field($content), $senderIp, $email, true, "comment");
+        $detectionResult = oopspamantispam_call_OOPSpam($content, $senderIp, $email, true, "comment");
         if (!isset($detectionResult["isItHam"])) {
             return;
         }
@@ -1354,7 +1354,7 @@ function oopspamantispam_check_pingback($approved, $commentdata)
         $trimmedURL = oopspam_urlToDomain($commentdata['comment_author_url']);
 
         $sanitized_author_url = esc_url_raw($trimmedURL);
-        $sanitized_content = sanitize_text_field($commentdata['comment_content']);
+        $sanitized_content = wp_kses_post($commentdata['comment_content']);
 
         $content = $sanitized_author_url . " " . $sanitized_content;
 
@@ -1366,7 +1366,7 @@ function oopspamantispam_check_pingback($approved, $commentdata)
         // If length check allowed then anything shorter than 20 should be considered as spam
         if ($checkForLength && strlen($commentdata['comment_content']) <= 20) {
             $isItSpam = true;
-        } else if (oopspamantispam_call_OOPSpam(sanitize_textarea_field($content), $senderIp, $email, false, "comment") == false) {
+        } else if (oopspamantispam_call_OOPSpam($content, $senderIp, $email, false, "comment") == false) {
             // if Spam filtering is on and the OOPSpam Service considers it spam then mark it as spam
             $isItSpam = true;
         }
