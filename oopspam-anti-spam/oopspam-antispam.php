@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.65
+ * Version: 1.2.66
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -198,6 +198,10 @@ function oopspam_schedule_intervals($schedules)
             'interval' => MONTH_IN_SECONDS,
             'display' => __('Once a month'),
         );
+        $schedules['weekly'] = array(
+            'interval' => WEEK_IN_SECONDS,
+            'display' => __('Once a week'),
+        );
         return $schedules;
     } catch (Exception $e) {
         // Handle the exception
@@ -371,6 +375,7 @@ function oopspam_plugin_deactivation()
     wp_clear_scheduled_hook('oopspam_cleanup_ham_entries_cron');
     wp_clear_scheduled_hook('oopspam_cleanup_spam_entries_cron');
     wp_clear_scheduled_hook('oopspam_cleanup_ratelimit_entries_cron');
+    wp_clear_scheduled_hook('oopspam_spam_report_cron');
     
     // Clean up session variables
     if (session_id()) {

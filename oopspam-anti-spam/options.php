@@ -1816,6 +1816,14 @@ function oopspam_jform_spam_message_render()
         'oopspam_misc_settings_section'
     );
 
+    add_settings_field(
+        'oopspam_spam_report',
+        esc_html__('Spam Summary Report',  'oopspam-anti-spam'),
+        'oopspam_spam_report_field_render',
+        'oopspamantispam-misc-settings-group',
+        'oopspam_misc_settings_section'
+    );
+
     // Avada Forms settings section
     if (oopspamantispam_plugin_check('avada') && !empty(oopspamantispam_get_key())) {
 
@@ -5233,3 +5241,284 @@ function oopspam_handle_usage_refresh() {
 
 // Register AJAX handler for usage refresh
 add_action('wp_ajax_oopspam_refresh_usage', 'oopspam_handle_usage_refresh');
+
+// ============================================================
+// Spam Summary Report Feature
+// ============================================================
+
+function oopspam_spam_report_field_render() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $frequency       = isset($options['oopspam_spam_report_frequency']) ? $options['oopspam_spam_report_frequency'] : 'disabled';
+    $email           = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : get_option('admin_email');
+    $subject         = isset($options['oopspam_spam_report_subject']) ? $options['oopspam_spam_report_subject'] : 'Your spam report for {{site_name}}';
+    $threshold_count = isset($options['oopspam_spam_report_threshold_count']) ? $options['oopspam_spam_report_threshold_count'] : 10;
+    ?>
+    <div>
+        <p class="description"><?php echo esc_html__('Know when entries are flagged as spam. When enabled, this feature will send an automated spam report giving you a summary of recent spam entries. If no spam entries have been submitted, no report will be sent.', 'oopspam-anti-spam'); ?></p>
+
+        <p style="margin-top: 12px;"><strong><?php echo esc_html__('Report Frequency', 'oopspam-anti-spam'); ?></strong></p>
+        <p class="description"><?php echo esc_html__('How frequently should Spam Summary Reports be sent?', 'oopspam-anti-spam'); ?></p>
+        <fieldset style="margin-top: 8px;">
+                <label style="display: block; margin-bottom: 8px;">
+                    <input type="radio" name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]" value="disabled" <?php checked($frequency, 'disabled'); ?> />
+                    <?php echo esc_html__('Disabled', 'oopspam-anti-spam'); ?>
+                </label>
+                <label style="display: block; margin-bottom: 8px;">
+                    <input type="radio" name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]" value="threshold" <?php checked($frequency, 'threshold'); ?> />
+                    <?php echo esc_html__('Threshold-Based', 'oopspam-anti-spam'); ?>
+                </label>
+                <label style="display: block; margin-bottom: 8px;">
+                    <input type="radio" name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]" value="twicedaily" <?php checked($frequency, 'twicedaily'); ?> />
+                    <?php echo esc_html__('Twice Daily', 'oopspam-anti-spam'); ?>
+                </label>
+                <label style="display: block; margin-bottom: 8px;">
+                    <input type="radio" name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]" value="daily" <?php checked($frequency, 'daily'); ?> />
+                    <?php echo esc_html__('Daily', 'oopspam-anti-spam'); ?>
+                </label>
+                <label style="display: block; margin-bottom: 8px;">
+                    <input type="radio" name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]" value="weekly" <?php checked($frequency, 'weekly'); ?> />
+                    <?php echo esc_html__('Weekly', 'oopspam-anti-spam'); ?>
+                </label>
+                <label style="display: block; margin-bottom: 8px;">
+                    <input type="radio" name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]" value="monthly" <?php checked($frequency, 'monthly'); ?> />
+                    <?php echo esc_html__('Monthly', 'oopspam-anti-spam'); ?>
+                </label>
+        </fieldset>
+
+        <div id="oopspam-threshold-count-wrapper" style="margin-top: 15px; padding: 12px; background: #FBF6ED; border: 1px solid #F2E4C8; border-left: 4px solid #FCDD56; border-radius: 8px; color: #1d2327; <?php echo $frequency !== 'threshold' ? 'display:none;' : ''; ?>">
+                <label for="oopspam_spam_report_threshold_count">
+                    <strong><?php echo esc_html__('Send report after this many spam entries:', 'oopspam-anti-spam'); ?></strong>
+                </label>
+                <br/>
+                <input type="number" min="1" step="1"
+                       id="oopspam_spam_report_threshold_count"
+                       name="oopspamantispam_misc_settings[oopspam_spam_report_threshold_count]"
+                       value="<?php echo esc_attr($threshold_count); ?>"
+                       placeholder="10"
+                       class="small-text"
+                   style="margin-top: 6px; border-color: #d9c997;" />
+            <p class="description" style="color: #5f6368;"><?php echo esc_html__('A report will be sent once the spam entry count reaches this number since the last report.', 'oopspam-anti-spam'); ?></p>
+        </div>
+
+        <p style="margin-top: 16px;"><strong><?php echo esc_html__('Email Address', 'oopspam-anti-spam'); ?></strong> <span style="color: #d63638;">(<?php echo esc_html__('Required', 'oopspam-anti-spam'); ?>)</span></p>
+        <p class="description"><?php echo esc_html__('Send spam report to this email address.', 'oopspam-anti-spam'); ?></p>
+        <input type="email"
+               name="oopspamantispam_misc_settings[oopspam_spam_report_email]"
+               value="<?php echo esc_attr($email); ?>"
+               class="regular-text" />
+
+        <p style="margin-top: 12px;"><strong><?php echo esc_html__('Email Subject', 'oopspam-anti-spam'); ?></strong> <span style="color: #d63638;">(<?php echo esc_html__('Required', 'oopspam-anti-spam'); ?>)</span></p>
+        <input type="text"
+               name="oopspamantispam_misc_settings[oopspam_spam_report_subject]"
+               value="<?php echo esc_attr($subject); ?>"
+               class="regular-text" />
+        <p class="description"><?php echo esc_html__('Available placeholders: {{site_name}} — your site name, {{total_spam_count}} — total spam entries since the last report.', 'oopspam-anti-spam'); ?></p>
+
+        <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button type="button" id="oopspam-send-test-email" class="button button-secondary">
+                <?php echo esc_html__('Send Test Email', 'oopspam-anti-spam'); ?>
+            </button>
+            <span id="oopspam-spam-report-status" style="margin-left: 5px;"></span>
+        </div>
+    </div>
+
+    <script>
+    jQuery(document).ready(function($) {
+        // Toggle threshold count field visibility
+        $('input[name="oopspamantispam_misc_settings[oopspam_spam_report_frequency]"]').on('change', function() {
+            if ($(this).val() === 'threshold') {
+                $('#oopspam-threshold-count-wrapper').slideDown();
+            } else {
+                $('#oopspam-threshold-count-wrapper').slideUp();
+            }
+        });
+
+        // Send test email
+        $('#oopspam-send-test-email').on('click', function(e) {
+            e.preventDefault();
+            var $btn = $(this);
+            var $status = $('#oopspam-spam-report-status');
+            var emailField = $('input[name="oopspamantispam_misc_settings[oopspam_spam_report_email]"]');
+            var email = emailField.val();
+
+            if (!email) {
+                $status.html('<span style="color: #d63638;"><?php echo esc_js(__('Please enter an email address.', 'oopspam-anti-spam')); ?></span>');
+                return;
+            }
+
+            $btn.prop('disabled', true).text('<?php echo esc_js(__('Sending...', 'oopspam-anti-spam')); ?>');
+            $status.html('');
+
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'oopspam_send_test_spam_report',
+                    nonce: '<?php echo esc_js(wp_create_nonce('oopspam_send_test_spam_report')); ?>',
+                    email: email
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $status.html('<span style="color: #00a32a;">&#10003; ' + response.data + '</span>');
+                    } else {
+                        $status.html('<span style="color: #d63638;">' + response.data + '</span>');
+                    }
+                },
+                error: function() {
+                    $status.html('<span style="color: #d63638;"><?php echo esc_js(__('Error connecting to server.', 'oopspam-anti-spam')); ?></span>');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).text('<?php echo esc_js(__('Send Test Email', 'oopspam-anti-spam')); ?>');
+                }
+            });
+        });
+    });
+    </script>
+    <?php
+}
+
+// AJAX handler for sending test Spam Summary Report
+function oopspam_handle_send_test_spam_report() {
+    if (!check_ajax_referer('oopspam_send_test_spam_report', 'nonce', false)) {
+        wp_send_json_error(__('Invalid security token.', 'oopspam-anti-spam'));
+        return;
+    }
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Insufficient permissions.', 'oopspam-anti-spam'));
+        return;
+    }
+
+    $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+    if (empty($email) || !is_email($email)) {
+        wp_send_json_error(__('Please provide a valid email address.', 'oopspam-anti-spam'));
+        return;
+    }
+
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $subject_template = isset($options['oopspam_spam_report_subject']) && !empty($options['oopspam_spam_report_subject'])
+        ? $options['oopspam_spam_report_subject']
+        : 'Your spam report for {{site_name}}';
+
+    $result  = oopspam_build_spam_report_email(true);
+    $html    = $result['html'];
+    $subject = str_replace(
+        array('{{site_name}}', '{{total_spam_count}}'),
+        array(get_bloginfo('name'), $result['total_spam']),
+        $subject_template
+    );
+    $subject = '[TEST] ' . $subject;
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    $sent = wp_mail($email, $subject, $html, $headers);
+
+    if ($sent) {
+        wp_send_json_success(__('Test email sent successfully!', 'oopspam-anti-spam'));
+    } else {
+        wp_send_json_error(__('Failed to send test email. Please check your server mail configuration.', 'oopspam-anti-spam'));
+    }
+}
+add_action('wp_ajax_oopspam_send_test_spam_report', 'oopspam_handle_send_test_spam_report');
+
+// Send the scheduled Spam Summary Report
+function oopspam_send_scheduled_spam_report() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $frequency = isset($options['oopspam_spam_report_frequency']) ? $options['oopspam_spam_report_frequency'] : 'disabled';
+
+    if ($frequency === 'disabled' || $frequency === 'threshold') {
+        // Threshold-based reports are sent immediately via oopspam_maybe_send_threshold_spam_report()
+        return;
+    }
+
+    $email = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
+    if (empty($email) || !is_email($email)) {
+        return;
+    }
+
+    // Check if there are new spam entries since last report
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
+    $last_sent = get_option('oopspam_spam_report_last_sent', '1970-01-01 00:00:00');
+
+    $spam_count = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM " . esc_sql($table_name) . " WHERE date > %s",
+        $last_sent
+    ));
+
+    if ($spam_count === 0) {
+        return;
+    }
+
+    $subject_template = isset($options['oopspam_spam_report_subject']) && !empty($options['oopspam_spam_report_subject'])
+        ? $options['oopspam_spam_report_subject']
+        : 'Your spam report for {{site_name}}';
+
+    $result  = oopspam_build_spam_report_email(false);
+    $html    = $result['html'];
+    $subject = str_replace(
+        array('{{site_name}}', '{{total_spam_count}}'),
+        array(get_bloginfo('name'), $result['total_spam']),
+        $subject_template
+    );
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    wp_mail($email, $subject, $html, $headers);
+
+    // Update last sent timestamp
+    update_option('oopspam_spam_report_last_sent', current_time('mysql'));
+}
+add_action('oopspam_spam_report_cron', 'oopspam_send_scheduled_spam_report');
+
+// Schedule/unschedule the spam report cron when misc settings are saved
+add_action('updated_option', 'oopspam_spam_report_schedule_cron', 10, 3);
+function oopspam_spam_report_schedule_cron($option, $old_value, $new_value) {
+    if ($option !== 'oopspamantispam_misc_settings') {
+        return;
+    }
+
+    $old_frequency = isset($old_value['oopspam_spam_report_frequency']) ? $old_value['oopspam_spam_report_frequency'] : 'disabled';
+    $new_frequency = isset($new_value['oopspam_spam_report_frequency']) ? $new_value['oopspam_spam_report_frequency'] : 'disabled';
+
+    // Only reschedule if frequency changed
+    if ($old_frequency === $new_frequency) {
+        return;
+    }
+
+    // Clear existing scheduled event
+    $timestamp = wp_next_scheduled('oopspam_spam_report_cron');
+    if ($timestamp) {
+        wp_unschedule_event($timestamp, 'oopspam_spam_report_cron');
+    }
+
+    if ($new_frequency === 'disabled') {
+        delete_option('oopspam_spam_report_threshold_counter');
+        return;
+    }
+
+    // Threshold mode doesn't use cron. It sends immediately via oopspam_maybe_send_threshold_spam_report()
+    if ($new_frequency === 'threshold') {
+        update_option('oopspam_spam_report_threshold_counter', 0, false);
+        return;
+    }
+
+    // For time-based schedules, threshold counter is not used.
+    delete_option('oopspam_spam_report_threshold_counter');
+
+    $schedule_map = array(
+        'twicedaily' => 'twicedaily',
+        'daily'      => 'daily',
+        'weekly'     => 'weekly',
+        'monthly'    => 'oopspam-monthly',
+    );
+    $next_run_map = array(
+        'twicedaily' => '+12 hours',
+        'daily'      => '+1 day',
+        'weekly'     => '+1 week',
+        'monthly'    => '+1 month',
+    );
+
+    $schedule = isset($schedule_map[$new_frequency]) ? $schedule_map[$new_frequency] : 'daily';
+    $next_run = isset($next_run_map[$new_frequency]) ? $next_run_map[$new_frequency] : '+1 day';
+
+    wp_schedule_event(strtotime($next_run), $schedule, 'oopspam_spam_report_cron');
+}

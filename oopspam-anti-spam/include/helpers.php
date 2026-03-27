@@ -403,6 +403,187 @@ function oopspam_store_spam_submission($frmEntry, $reason)
     );
     $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s');
     $wpdb->insert($table_name, $data, $format);
+
+    // Check threshold-based spam report and send immediately if threshold is met
+    oopspam_maybe_send_threshold_spam_report();
+}
+
+/**
+ * Build the HTML content for the Spam Summary Report.
+ */
+function oopspam_build_spam_report_email($is_test = false) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
+    $site_name = get_bloginfo('name');
+    $site_url = get_bloginfo('url');
+
+    if ($is_test) {
+        // Use sample data for test emails
+        $total_spam = 42;
+        $entries = array(
+            (object) array('email' => 'spammer@example.com', 'ip' => '192.168.1.100', 'message' => 'Hi, I want to offer you a great deal on pharmaceuticals...', 'reason' => 'Spam score too high', 'date' => current_time('mysql')),
+            (object) array('email' => 'bot@test.com', 'ip' => '10.0.0.1', 'message' => 'Click here to win a prize!', 'reason' => 'Blocked keyword', 'date' => date('Y-m-d H:i:s', strtotime('-1 hour'))),
+            (object) array('email' => 'fake@domain.net', 'ip' => '172.16.0.5', 'message' => '', 'reason' => 'Rate limited', 'date' => date('Y-m-d H:i:s', strtotime('-3 hours'))),
+        );
+    } else {
+        $last_sent = get_option('oopspam_spam_report_last_sent', '1970-01-01 00:00:00');
+        $total_spam = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM " . esc_sql($table_name) . " WHERE date > %s",
+            $last_sent
+        ));
+        $entries = $wpdb->get_results($wpdb->prepare(
+            "SELECT email, ip, message, reason, date FROM " . esc_sql($table_name) . " WHERE date > %s ORDER BY date DESC LIMIT 10",
+            $last_sent
+        ));
+    }
+
+    ob_start();
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"></head>
+    <body style="margin:0; padding:0; background-color:#f2f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f4f6; padding:40px 0;">
+            <tr><td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color:#1d2327; padding:24px 30px;">
+                            <h1 style="color:#ffffff; margin:0; font-size:22px;">
+                                <?php echo $is_test ? '🧪 ' : ''; ?><?php echo esc_html__('Spam Report', 'oopspam-anti-spam'); ?>
+                            </h1>
+                            <p style="color:#a7aaad; margin:6px 0 0; font-size:14px;"><?php echo esc_html($site_name); ?></p>
+                        </td>
+                    </tr>
+                    <!-- Summary -->
+                    <tr>
+                        <td style="padding:30px;">
+                            <?php if ($is_test): ?>
+                            <div style="background-color:#fcf0e3; border-left:4px solid #dba617; padding:12px 16px; margin-bottom:20px; border-radius:0 4px 4px 0;">
+                                <strong><?php echo esc_html__('This is a test email.', 'oopspam-anti-spam'); ?></strong> 
+                                <?php echo esc_html__('The data below is sample data for preview purposes.', 'oopspam-anti-spam'); ?>
+                            </div>
+                            <?php endif; ?>
+
+                            <div style="background-color:#fafafa; border-radius:6px; padding:20px; text-align:center; margin-bottom:24px;">
+                                <p style="margin:0; font-size:14px; color:#646970;"><?php echo esc_html__('Total Spam Entries', 'oopspam-anti-spam'); ?></p>
+                                <p style="margin:8px 0 0; font-size:36px; font-weight:bold; color:#d63638;"><?php echo esc_html($total_spam); ?></p>
+                            </div>
+
+                            <?php if (!empty($entries)): ?>
+                            <h3 style="margin:0 0 12px; font-size:16px; color:#1d2327;"><?php echo esc_html__('Recent Spam Entries', 'oopspam-anti-spam'); ?></h3>
+                            <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; font-size:13px;">
+                                <thead>
+                                    <tr style="background-color:#f0f0f1;">
+                                        <th style="text-align:left; padding:10px; border-bottom:2px solid #c3c4c7;"><?php echo esc_html__('Email', 'oopspam-anti-spam'); ?></th>
+                                        <th style="text-align:left; padding:10px; border-bottom:2px solid #c3c4c7;"><?php echo esc_html__('IP', 'oopspam-anti-spam'); ?></th>
+                                        <th style="text-align:left; padding:10px; border-bottom:2px solid #c3c4c7;"><?php echo esc_html__('Message', 'oopspam-anti-spam'); ?></th>
+                                        <th style="text-align:left; padding:10px; border-bottom:2px solid #c3c4c7;"><?php echo esc_html__('Reason', 'oopspam-anti-spam'); ?></th>
+                                        <th style="text-align:left; padding:10px; border-bottom:2px solid #c3c4c7;"><?php echo esc_html__('Date', 'oopspam-anti-spam'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($entries as $entry):
+                                        $msg = isset($entry->message) ? trim($entry->message) : '';
+                                        $msg_display = $msg !== '' ? (mb_strlen($msg) > 100 ? mb_substr($msg, 0, 100) . '…' : $msg) : '—';
+                                    ?>
+                                    <tr>
+                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0;"><?php echo esc_html($entry->email ?: '—'); ?></td>
+                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0;"><?php echo esc_html($entry->ip ?: '—'); ?></td>
+                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0; color:#646970;"><?php echo esc_html($msg_display); ?></td>
+                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0;"><?php echo esc_html($entry->reason ?: '—'); ?></td>
+                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0; white-space:nowrap;"><?php echo esc_html($entry->date); ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <?php if ($total_spam > 10 && !$is_test): ?>
+                            <p style="color:#646970; font-size:13px; margin-top:10px;">
+                                <?php echo sprintf(esc_html__('Showing 10 of %d entries. View all entries in your WordPress dashboard.', 'oopspam-anti-spam'), $total_spam); ?>
+                            </p>
+                            <?php endif; ?>
+                            <?php else: ?>
+                            <p style="color:#646970;"><?php echo esc_html__('No spam entries found for this period.', 'oopspam-anti-spam'); ?></p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color:#f0f0f1; padding:20px 30px; text-align:center;">
+                            <p style="margin:0; font-size:13px; color:#646970;">
+                                <?php echo sprintf(
+                                    esc_html__('This report was generated by OOPSpam Anti-Spam on %s', 'oopspam-anti-spam'),
+                                    '<a href="' . esc_url($site_url) . '" style="color:#2271b1;">' . esc_html($site_name) . '</a>'
+                                ); ?>
+                            </p>
+                            <p style="margin:8px 0 0; font-size:12px; color:#a7aaad;">
+                                <?php echo esc_html__('To change report settings, go to OOPSpam Anti-Spam > Misc in your WordPress dashboard.', 'oopspam-anti-spam'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td></tr>
+        </table>
+    </body>
+    </html>
+    <?php
+    return array(
+        'html'        => ob_get_clean(),
+        'total_spam'  => $total_spam,
+    );
+}
+
+/**
+ * Check if threshold-based spam report should be sent immediately.
+ * Called after each spam entry is stored.
+ */
+function oopspam_maybe_send_threshold_spam_report() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $frequency = isset($options['oopspam_spam_report_frequency']) ? $options['oopspam_spam_report_frequency'] : 'disabled';
+
+    if ($frequency !== 'threshold') {
+        return;
+    }
+
+    $email = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
+    if (empty($email) || !is_email($email)) {
+        return;
+    }
+
+    $threshold = isset($options['oopspam_spam_report_threshold_count']) ? (int) $options['oopspam_spam_report_threshold_count'] : 10;
+    $threshold = max(1, $threshold);
+
+    // Use a dedicated counter for threshold mode so the count resets after each sent report.
+    $current_count = (int) get_option('oopspam_spam_report_threshold_counter', 0);
+    $current_count++;
+
+    if ($current_count < $threshold) {
+        update_option('oopspam_spam_report_threshold_counter', $current_count, false);
+        return;
+    }
+
+        $subject_template = isset($options['oopspam_spam_report_subject']) && !empty($options['oopspam_spam_report_subject'])
+            ? $options['oopspam_spam_report_subject']
+            : 'Your spam report for {{site_name}}';
+
+        $result  = oopspam_build_spam_report_email(false);
+        $html    = $result['html'];
+        $subject = str_replace(
+            array('{{site_name}}', '{{total_spam_count}}'),
+            array(get_bloginfo('name'), $result['total_spam']),
+            $subject_template
+        );
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    $sent = wp_mail($email, $subject, $html, $headers);
+
+    if ($sent) {
+        update_option('oopspam_spam_report_last_sent', current_time('mysql'));
+        update_option('oopspam_spam_report_threshold_counter', 0, false);
+    } else {
+        // Preserve current count to retry sending on the next submission.
+        update_option('oopspam_spam_report_threshold_counter', $current_count, false);
+    }
 }
 
 function oopspam_store_ham_submission($frmEntry)
