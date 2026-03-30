@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.66
+Stable tag: 1.2.67
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -141,6 +141,9 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.67 =
+* **NEW:** Added oopspam_check_spam function to check custom forms for spam.
+* **IMPROVEMENT:** Send the "Spam Summary Report" to multiple recipients.
 = 1.2.66 =
 * **NEW:** Added "Spam Summary Report" feature for scheduled email reports
 = 1.2.65 =

@@ -5300,14 +5300,15 @@ function oopspam_spam_report_field_render() {
             <p class="description" style="color: #5f6368;"><?php echo esc_html__('A report will be sent once the spam entry count reaches this number since the last report.', 'oopspam-anti-spam'); ?></p>
         </div>
 
-        <p style="margin-top: 16px;"><strong><?php echo esc_html__('Email Address', 'oopspam-anti-spam'); ?></strong> <span style="color: #d63638;">(<?php echo esc_html__('Required', 'oopspam-anti-spam'); ?>)</span></p>
-        <p class="description"><?php echo esc_html__('Send spam report to this email address.', 'oopspam-anti-spam'); ?></p>
-        <input type="email"
+        <p style="margin-top: 16px;"><strong><?php echo esc_html__('Email Address(es)', 'oopspam-anti-spam'); ?></strong> <span style="color: #d63638;">(<?php echo esc_html__('Required', 'oopspam-anti-spam'); ?>)</span></p>
+        <p  style="margin-bottom: 16px;" class="description"><?php echo esc_html__('Send spam report to these email addresses. Separate multiple addresses with commas.', 'oopspam-anti-spam'); ?></p>
+        <input type="text"
                name="oopspamantispam_misc_settings[oopspam_spam_report_email]"
                value="<?php echo esc_attr($email); ?>"
+               placeholder="admin@example.com, manager@example.com"
                class="regular-text" />
 
-        <p style="margin-top: 12px;"><strong><?php echo esc_html__('Email Subject', 'oopspam-anti-spam'); ?></strong> <span style="color: #d63638;">(<?php echo esc_html__('Required', 'oopspam-anti-spam'); ?>)</span></p>
+        <p style="margin-top: 12px; margin-bottom: 16px;"><strong><?php echo esc_html__('Email Subject', 'oopspam-anti-spam'); ?></strong> <span style="color: #d63638;">(<?php echo esc_html__('Required', 'oopspam-anti-spam'); ?>)</span></p>
         <input type="text"
                name="oopspamantispam_misc_settings[oopspam_spam_report_subject]"
                value="<?php echo esc_attr($subject); ?>"
@@ -5389,9 +5390,13 @@ function oopspam_handle_send_test_spam_report() {
         return;
     }
 
-    $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
-    if (empty($email) || !is_email($email)) {
-        wp_send_json_error(__('Please provide a valid email address.', 'oopspam-anti-spam'));
+    $raw_emails = isset($_POST['email']) ? sanitize_text_field(wp_unslash($_POST['email'])) : '';
+    $emails = array_filter(array_map(function($e) {
+        return sanitize_email(trim($e));
+    }, explode(',', $raw_emails)));
+
+    if (empty($emails)) {
+        wp_send_json_error(__('Please provide at least one valid email address.', 'oopspam-anti-spam'));
         return;
     }
 
@@ -5410,7 +5415,7 @@ function oopspam_handle_send_test_spam_report() {
     $subject = '[TEST] ' . $subject;
     $headers = array('Content-Type: text/html; charset=UTF-8');
 
-    $sent = wp_mail($email, $subject, $html, $headers);
+    $sent = wp_mail($emails, $subject, $html, $headers);
 
     if ($sent) {
         wp_send_json_success(__('Test email sent successfully!', 'oopspam-anti-spam'));
@@ -5430,8 +5435,12 @@ function oopspam_send_scheduled_spam_report() {
         return;
     }
 
-    $email = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
-    if (empty($email) || !is_email($email)) {
+    $raw_emails = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
+    $emails = array_filter(array_map(function($e) {
+        return sanitize_email(trim($e));
+    }, explode(',', $raw_emails)));
+
+    if (empty($emails)) {
         return;
     }
 
@@ -5462,7 +5471,7 @@ function oopspam_send_scheduled_spam_report() {
     );
     $headers = array('Content-Type: text/html; charset=UTF-8');
 
-    wp_mail($email, $subject, $html, $headers);
+    wp_mail($emails, $subject, $html, $headers);
 
     // Update last sent timestamp
     update_option('oopspam_spam_report_last_sent', current_time('mysql'));

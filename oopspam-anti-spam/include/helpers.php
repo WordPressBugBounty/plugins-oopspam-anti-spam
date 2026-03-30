@@ -545,8 +545,12 @@ function oopspam_maybe_send_threshold_spam_report() {
         return;
     }
 
-    $email = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
-    if (empty($email) || !is_email($email)) {
+    $raw_emails = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
+    $emails = array_filter(array_map(function($e) {
+        return sanitize_email(trim($e));
+    }, explode(',', $raw_emails)));
+
+    if (empty($emails)) {
         return;
     }
 
@@ -575,7 +579,7 @@ function oopspam_maybe_send_threshold_spam_report() {
         );
         $headers = array('Content-Type: text/html; charset=UTF-8');
 
-    $sent = wp_mail($email, $subject, $html, $headers);
+    $sent = wp_mail($emails, $subject, $html, $headers);
 
     if ($sent) {
         update_option('oopspam_spam_report_last_sent', current_time('mysql'));

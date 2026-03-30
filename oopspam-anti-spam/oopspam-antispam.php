@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.66
+ * Version: 1.2.67
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -1146,6 +1146,83 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     }
 }
 
+
+/**
+ * Public API for checking spam from custom forms or any custom PHP code.
+ * Runs the full OOPSpam pipeline: local checks (blocked/allowed keywords, emails, IPs),
+ * rate limiting, country/language filters, and the OOPSpam API call.
+ *
+ * @param string $ip      The submitter's IP address.
+ * @param string $email   The submitter's email address.
+ * @param string $content The message/content to check.
+ * @param array  $args    Optional. {
+ *     @type bool   $log      Whether to log the result to Spam/Ham Entries tables. Default true.
+ *     @type string $raw_data Raw form data for logging (e.g. json_encode($_POST)). Default ''.
+ *     @type string $form_id  An identifier for the form. Default ''.
+ * }
+ * @return array {
+ *     @type int    $Score    Spam score (0 = clean, 6 = spam, negative = error).
+ *     @type bool   $isSpam   True if the submission is spam.
+ *     @type string $Reason   Reason for the spam verdict (only present when spam).
+ * }
+ */
+function oopspam_check_spam($ip, $email, $content, $args = []) {
+    $defaults = [
+        'log'      => true,
+        'raw_data' => '',
+        'form_id'  => '',
+    ];
+    $args = wp_parse_args($args, $defaults);
+
+    $result = oopspamantispam_call_OOPSpam(
+        sanitize_textarea_field($content),
+        sanitize_text_field($ip),
+        sanitize_email($email),
+        true,
+        'custom'
+    );
+
+    // Handle unexpected return (e.g. no API key, function returned null)
+    if (!is_array($result) || !isset($result['isItHam'])) {
+        return [
+            'Score'  => -2,
+            'isSpam' => false,
+            'Reason' => 'Unable to determine spam status',
+        ];
+    }
+
+    $isSpam = !$result['isItHam'];
+
+    // Log to Spam/Ham Entries tables
+    if ($args['log']) {
+        $frmEntry = [
+            'Score'    => $result['Score'],
+            'Message'  => sanitize_textarea_field($content),
+            'IP'       => sanitize_text_field($ip),
+            'Email'    => sanitize_email($email),
+            'RawEntry' => $args['raw_data'],
+            'FormId'   => sanitize_text_field($args['form_id']),
+        ];
+
+        if ($isSpam) {
+            $reason = isset($result['Reason']) ? $result['Reason'] : '';
+            oopspam_store_spam_submission($frmEntry, $reason);
+        } else {
+            oopspam_store_ham_submission($frmEntry);
+        }
+    }
+
+    $response = [
+        'Score'  => $result['Score'],
+        'isSpam' => $isSpam,
+    ];
+
+    if ($isSpam && isset($result['Reason'])) {
+        $response['Reason'] = $result['Reason'];
+    }
+
+    return $response;
+}
 
 function extractReasonFromAPIResponse($response) {
 
