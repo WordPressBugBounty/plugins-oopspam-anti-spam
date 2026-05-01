@@ -1402,11 +1402,11 @@ function oopspam_jform_spam_message_render()
         );
     }
 
-    // WP registration settings section
+    // WordPress default forms settings section
     if (oopspamantispam_plugin_check('wp-register') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_wpregister_settings_section',
-            esc_html__('WordPress Registration',  'oopspam-anti-spam'),
+            esc_html__('WordPress Default Forms',  'oopspam-anti-spam'),
             false,
             'oopspamantispam-wpregister-settings-group'
         );
@@ -1417,8 +1417,15 @@ function oopspam_jform_spam_message_render()
             'oopspam_wpregister_settings_section'
         );
 
+        add_settings_field('oopspam_is_wplogin_activated',
+            esc_html__('Protect WordPress Login Form',  'oopspam-anti-spam'),
+            'oopspam_is_wplogin_activated_render',
+            'oopspamantispam-wpregister-settings-group',
+            'oopspam_wpregister_settings_section'
+        );
+
         add_settings_field('oopspam_wpregister_spam_message',
-            esc_html__('WP Registration Forms Spam Message',  'oopspam-anti-spam'),
+            esc_html__('WordPress Default Forms Spam Message',  'oopspam-anti-spam'),
             'oopspam_wpregister_spam_message_render',
             'oopspamantispam-wpregister-settings-group',
             'oopspam_wpregister_settings_section'
@@ -4335,7 +4342,7 @@ function oopspam_woo_same_amount_window_render()
 
 /* WooCommerce settings section ends */
 
-/* WP Registration settings section starts */
+/* WordPress default forms settings section starts */
 
 function oopspam_is_wpregister_activated_render()
 {
@@ -4357,6 +4364,27 @@ function oopspam_is_wpregister_activated_render()
     <?php
 }
 
+function oopspam_is_wplogin_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WPLOGIN_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WPLOGIN_ACTIVATED : (isset($options['oopspam_is_wplogin_activated']) && 1 == $options['oopspam_is_wplogin_activated']);
+    ?>
+    <div>
+        <label for="wplogin_support">
+            <input class="oopspam-toggle" type="checkbox" id="wplogin_support"
+                   name="oopspamantispam_settings[oopspam_is_wplogin_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+        </label>
+        <p class="description"><?php echo esc_html__('Optional. Enable spam protection on the default WordPress login form. Note: you may be locked out if you log in from a new location, VPN, mobile network, or proxy whose IP address is blocked or has a poor reputation.', 'oopspam-anti-spam'); ?></p>
+        <?php if ($is_constant): ?>
+            <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
+        <?php endif; ?>
+    </div>
+    <?php
+}
+
 function oopspam_wpregister_spam_message_render()
 {
     $options = get_option('oopspamantispam_settings');
@@ -4367,13 +4395,13 @@ function oopspam_wpregister_spam_message_render()
         esc_html_e($options['oopspam_wpregister_spam_message'], "oopspam-anti-spam");
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('Enter a short message to display when a spam WordPress registration entry has been submitted. (e.g Our spam detection classified your registration as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('Enter a short message to display when a spam WordPress login, registration, or lost-password request is blocked. (e.g Our spam detection classified your request as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
             <?php
 }
 
-/* WP Registration settings section ends */
+/* WordPress default forms settings section ends */
 
 /* BuddyPress settings section starts */
 
@@ -4582,7 +4610,7 @@ function oopspam_avada_spam_message_render()
             <input id="oopspam_avada_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_avada_spam_message]" value="<?php if (isset($options['oopspam_avada_spam_message'])) {
         esc_html_e($options['oopspam_avada_spam_message'], "oopspam-anti-spam");
     } ?>">
-            <p class="description"><?php echo esc_html__('<strong>Not supported yet.</strong> Enter a short message to display when a spam Avada Form entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com).', 'oopspam-anti-spam'); ?></p>
+            <p class="description"><?php echo esc_html__('Not supported yet. Enter a short message to display when a spam Avada Form entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com).', 'oopspam-anti-spam'); ?></p>
         </label>
     </div>
     <?php
@@ -4838,7 +4866,7 @@ function oopspamantispam_options_page()
             </div>
         </div>
         <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
-            <a href="<?php echo esc_url(admin_url('plugin-install.php?s=oopvulns+vulnerability+scanner&tab=search&type=term')); ?>" style="background: #000000; color: #FCDD56; border: 1px solid #000000; border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; display: inline-block; transition: all 0.25s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);"><?php esc_html_e('Install Free Plugin', 'oopspam-anti-spam'); ?></a>
+            <a href="<?php echo esc_url(admin_url('plugin-install.php?s=oopvulns+vulnerability+scanner&tab=search&type=term')); ?>" style="background: #000000; color: #FCDD56; border: 1px solid #000000; border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; display: inline-block; transition: all 0.25s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);"><?php esc_html_e('Install the plugin', 'oopspam-anti-spam'); ?></a>
             <button type="button" id="oopspam-dismiss-oopvulns" style="background: none; border: none; cursor: pointer; color: #666666; font-size: 20px; line-height: 1; padding: 4px; transition: color 0.2s ease;" title="<?php esc_attr_e('Dismiss this notice', 'oopspam-anti-spam'); ?>" onmouseover="this.style.color='#000000'" onmouseout="this.style.color='#666666'">&times;</button>
         </div>
     </div>

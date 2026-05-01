@@ -543,7 +543,10 @@
 }
 
 .form-setting .form-table {
+   box-sizing: border-box;
    margin: 1.5em;
+   max-width: calc(100% - 3em);
+   width: calc(100% - 3em);
 }
 
 .form-setting .form-table th {

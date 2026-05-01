@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.67
+Stable tag: 1.2.68
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -70,6 +70,7 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpa
 
 ### Supported form & comment solutions:
 
+- WordPress Login, Registration, and Lost Password
 - WooCommerce Order & Registration
 - BuddyPress
 - Elementor Forms
@@ -141,6 +142,9 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.68 =
+* **IMPROVEMENT:** Added spam protection to the WordPress login and lost password forms.
+* **IMPROVEMENT:** Minor UI improvements.
 = 1.2.67 =
 * **NEW:** Added oopspam_check_spam function to check custom forms for spam.
 * **IMPROVEMENT:** Send the "Spam Summary Report" to multiple recipients.

@@ -121,7 +121,7 @@ function oopspam_get_active_form_plugins() {
         'ts' => 'Toolset Forms',
         'happyforms' => 'Happy Forms',
         'give' => 'GiveWP',
-        'wp-register' => 'WordPress Registration',
+        'wp-register' => 'WordPress Default Forms',
         'buddypress' => 'BuddyPress',
         'woo' => 'WooCommerce',
         'forminator' => 'Forminator',

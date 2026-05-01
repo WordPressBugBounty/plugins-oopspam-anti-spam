@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.67
+ * Version: 1.2.68
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -163,7 +163,7 @@ function oopspamantispam_migrate_privacy_settings() {
 
 function oopspamantispam_check_run_migration() {
     // Run privacy settings migration if needed
-    if (get_option('oopspamantispam_privacy_migration_completed') !== true) {
+    if (!get_option('oopspamantispam_privacy_migration_completed')) {
         oopspamantispam_migrate_privacy_settings();
     }
     
@@ -1694,7 +1694,7 @@ function oopspam_proxy_headers_notice() {
             <?php 
             printf(
                 /* translators: %s: detected proxy service name */
-                esc_html__('Your site appears to be behind %s. To ensure accurate IP detection for spam filtering, please enable the "Trust proxy headers" setting.', 'oopspam-anti-spam'),
+                esc_html__('Your site appears to be behind %s. To ensure accurate IP detection for spam filtering, please enable the Misc -> Trust proxy headers setting.', 'oopspam-anti-spam'),
                 '<strong>' . esc_html($detected_proxy) . '</strong>'
             ); 
             ?>
