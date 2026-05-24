@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.68
+ * Version: 1.2.69
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -439,6 +439,25 @@ function oopspam_is_keyword_blocked($text) {
     return false;
 }
 
+function oopspam_matches_email_pattern($email, $pattern) {
+    $email = strtolower(trim((string) $email));
+    $pattern = strtolower(trim((string) $pattern));
+
+    if ('' === $email || '' === $pattern) {
+        return false;
+    }
+
+    if (strpos($pattern, '@') === false) {
+        return false;
+    }
+
+    if (strpos($pattern, '*') === false) {
+        return $pattern === $email;
+    }
+
+    return fnmatch($pattern, $email);
+}
+
 // Check if an email is blocked locally
 function oopspam_is_email_blocked($email) {
  
@@ -461,22 +480,9 @@ function oopspam_is_email_blocked($email) {
         if (empty($b_email)) {
             continue;
         }
-        
-        // Check if the blocked email contains a wildcard
-        if (strpos($b_email, '*') !== false) {
-            // Extract the domain part
-            $blocked_domain = substr($b_email, strpos($b_email, '@') + 1);
-            $email_domain = substr($email, strpos($email, '@') + 1);
-            
-            // Check if the provided email matches the blocked domain
-            if (fnmatch($blocked_domain, $email_domain)) {
-                return true;
-            }
-        } else {
-            // Check if the provided email exactly matches the blocked email
-            if ($b_email === $email) {
-                return true;
-            }
+
+        if (oopspam_matches_email_pattern($email, $b_email)) {
+            return true;
         }
     }
     return false;
@@ -581,22 +587,9 @@ function oopspam_is_email_allowed($email) {
         if (empty($b_email)) {
             continue;
         }
-        
-        // Check if the allowed email contains a wildcard
-        if (strpos($b_email, '*') !== false) {
-            // Extract the domain part
-            $allowed_domain = substr($b_email, strpos($b_email, '@') + 1);
-            $email_domain = substr($email, strpos($email, '@') + 1);
-            
-            // Check if the provided email matches the allowed domain
-            if (fnmatch($allowed_domain, $email_domain)) {
-                return true;
-            }
-        } else {
-            // Check if the provided email exactly matches the allowed email
-            if ($b_email === $email) {
-                return true;
-            }
+
+        if (oopspam_matches_email_pattern($email, $b_email)) {
+            return true;
         }
     }
     return false;
@@ -707,7 +700,7 @@ function oopspam_isRateLimitingEnabled() {
     return true;
 }
 
-function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnReason, $type)
+function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnReason, $type, $metadata = '')
 {
     // Get rate limiting settings
     $rtOptions = get_option('oopspamantispam_ratelimit_settings');
@@ -981,6 +974,16 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     if ($apiKey) {
 
         $OOPSpamAPI = new OOPSpamAPI($apiKey, $checkForLength, $isLoggable, $blockTempEmail, $blockVPNs, $blockDC);
+
+        if (empty($metadata)) {
+            $request_metadata = oopspam_get_request_metadata();
+            if (!empty($request_metadata)) {
+                $metadata = wp_json_encode(
+                    array('request_metadata' => $request_metadata),
+                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+                );
+            }
+        }
         
         // Unicode support
         $commentText = mb_convert_encoding($commentText, "UTF-8");
@@ -990,7 +993,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         $email, 
         $countryallowlistSetting, 
         $languageallowlistSetting, 
-        $countryblocklistSetting);
+        $countryblocklistSetting,
+        $metadata);
 
         $response_code = wp_remote_retrieve_response_code($response);
         if (!is_wp_error($response) && $response_code == "200") {
@@ -1157,7 +1161,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
  * @param string $content The message/content to check.
  * @param array  $args    Optional. {
  *     @type bool   $log      Whether to log the result to Spam/Ham Entries tables. Default true.
- *     @type string $raw_data Raw form data for logging (e.g. json_encode($_POST)). Default ''.
+ *     @type string $raw_data Raw form data for logging and API metadata enrichment (e.g. json_encode($_POST)). Default ''.
  *     @type string $form_id  An identifier for the form. Default ''.
  * }
  * @return array {
@@ -1174,12 +1178,18 @@ function oopspam_check_spam($ip, $email, $content, $args = []) {
     ];
     $args = wp_parse_args($args, $defaults);
 
+    $metadata = '';
+    if (!empty($args['raw_data'])) {
+        $metadata = oopspam_enrich_raw_entry($args['raw_data']);
+    }
+
     $result = oopspamantispam_call_OOPSpam(
         sanitize_textarea_field($content),
         sanitize_text_field($ip),
         sanitize_email($email),
         true,
-        'custom'
+        'custom',
+        $metadata
     );
 
     // Handle unexpected return (e.g. no API key, function returned null)

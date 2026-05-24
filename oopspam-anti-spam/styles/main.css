@@ -729,8 +729,8 @@
 .form-setting select:not(.ts-control select) {
    border: 1px solid rgba(0, 0, 0, 0.15) !important;
    border-radius: 8px !important;
-   padding: 10px 14px !important;
-   font-size: 14px !important;
+   padding: 4px 12px !important;
+   font-size: 13px !important;
    transition: all 0.2s ease !important;
    background: #ffffff !important;
    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
@@ -755,9 +755,9 @@
    color: #FCDD56 !important;
    border: 1px solid #000000 !important;
    border-radius: 8px !important;
-   padding: 10px 20px !important;
+   padding: 4px 12px !important;
    font-weight: 600 !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    cursor: pointer !important;
    transition: all 0.25s ease !important;
    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
@@ -786,9 +786,9 @@
    color: #000000 !important;
    border: 1px solid rgba(0, 0, 0, 0.2) !important;
    border-radius: 8px !important;
-   padding: 10px 20px !important;
+   padding: 4px 12px !important;
    font-weight: 500 !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    cursor: pointer !important;
    transition: all 0.25s ease !important;
    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
@@ -954,13 +954,12 @@ button[onclick*="addData"] {
    color: #000000 !important;
    border: 1px solid rgba(0, 0, 0, 0.2) !important;
    border-radius: 8px !important;
-   padding: 10px 20px !important;
+   padding: 4px 12px !important;
    font-weight: 500 !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    cursor: pointer !important;
    transition: all 0.25s ease !important;
    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
-   text-transform: uppercase !important;
    letter-spacing: 0.5px !important;
 }
 
@@ -1017,7 +1016,7 @@ table button[onclick*="deleteRow"]:hover {
    padding: 14px 20px !important;
    margin: 0 !important;
    font-weight: 500 !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    text-decoration: none !important;
    transition: all 0.25s ease !important;
    border-radius: 8px 8px 0 0 !important;
@@ -1112,10 +1111,10 @@ table button[onclick*="deleteRow"]:hover {
 .oopspam-wizard-form-group textarea,
 .oopspam-wizard-form-group select {
    width: 100%;
-   padding: 10px 14px !important;
+   padding: 4px 12px !important;
    border: 1px solid rgba(0, 0, 0, 0.15) !important;
    border-radius: 8px !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    transition: all 0.2s ease !important;
 }
 
@@ -1205,6 +1204,7 @@ table button[onclick*="deleteRow"]:hover {
 
 /* Better select styling */
 .form-setting select {
+   width: max-content !important;
    max-width: 100% !important;
    appearance: none !important;
    background: #ffffff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23000" d="M0 0l6 8 6-8z"/></svg>') no-repeat right 10px center !important;
@@ -1273,8 +1273,8 @@ form .form-table textarea:not(.ts-control textarea),
 form .form-table select:not(.ts-control select) {
    border: 1px solid rgba(0, 0, 0, 0.15) !important;
    border-radius: 8px !important;
-   padding: 10px 14px !important;
-   font-size: 14px !important;
+   padding: 4px 12px !important;
+   font-size: 13px !important;
    transition: all 0.2s ease !important;
    background: #ffffff !important;
    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
@@ -1350,6 +1350,7 @@ form .form-table input[type="radio"] + label {
 
 /* Select dropdown styling - scoped */
 form .form-table select {
+   width: max-content !important;
    max-width: 100% !important;
    appearance: none !important;
    background: #ffffff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23000" d="M0 0l6 8 6-8z"/></svg>') no-repeat right 10px center !important;
@@ -1442,9 +1443,9 @@ form:has(.form-table) button[type="submit"],
    color: #000000 !important;
    border: 1px solid rgba(0, 0, 0, 0.2) !important;
    border-radius: 8px !important;
-   padding: 10px 20px !important;
+   padding: 4px 12px !important;
    font-weight: 500 !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    cursor: pointer !important;
    transition: all 0.25s ease !important;
    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
@@ -1479,9 +1480,9 @@ form:has(.form-table) .button-secondary,
    color: #000000 !important;
    border: 1px solid rgba(0, 0, 0, 0.2) !important;
    border-radius: 8px !important;
-   padding: 10px 20px !important;
+   padding: 4px 12px !important;
    font-weight: 500 !important;
-   font-size: 14px !important;
+   font-size: 13px !important;
    cursor: pointer !important;
    transition: all 0.25s ease !important;
    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;

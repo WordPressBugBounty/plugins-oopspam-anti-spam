@@ -168,13 +168,13 @@ function manual_moderation_blockedemails_render() {
         <summary><?php echo esc_html__('View blocked emails', 'oopspam-anti-spam'); ?></summary>
         <div style="margin-top: 10px;">
             <textarea name="manual_moderation_settings[mm_blocked_emails]" 
-                      placeholder="testing@example.com&#10;test@test.com&#10;*@example.com"  
+                      placeholder="testing@example.com&#10;test@test.com&#10;*@example.com&#10;*@*.com"  
                       rows="10" 
                       cols="50" 
                       id="mm_blocked_emails" 
                       class="large-text code"><?php echo esc_textarea($blocked_emails); ?></textarea>
             <p class="description">
-                <?php echo esc_html__('One email per line', 'oopspam-anti-spam'); ?>
+                <?php echo esc_html__('One email or wildcard pattern per line (for example: *@example.com, *@*.com).', 'oopspam-anti-spam'); ?>
             </p>
         </div>
     </details>
@@ -231,13 +231,13 @@ function manual_moderation_allowedemails_render() {
         <summary><?php echo esc_html__('View allowed emails', 'oopspam-anti-spam'); ?></summary>
         <div style="margin-top: 10px;">
             <textarea name="manual_moderation_settings[mm_allowed_emails]" 
-                      placeholder="testing@example.com&#10;test@test.com&#10;*@example.com"  
+                      placeholder="testing@example.com&#10;test@test.com&#10;*@example.com&#10;*@*.com"  
                       rows="10" 
                       cols="50" 
                       id="mm_allowed_emails" 
                       class="large-text code"><?php echo esc_textarea($allowed_emails); ?></textarea>
             <p class="description">
-                <?php echo esc_html__('One email per line', 'oopspam-anti-spam'); ?>
+                <?php echo esc_html__('One email or wildcard pattern per line (for example: *@example.com, *@*.com).', 'oopspam-anti-spam'); ?>
             </p>
         </div>
     </details>
@@ -2054,6 +2054,8 @@ function oopspam_spam_score_threshold_render()
 {
     $options = get_option('oopspamantispam_settings');
     $currentThreshold = (isset($options['oopspam_spam_score_threshold'])) ? (int) $options['oopspam_spam_score_threshold'] : 3;
+    $isSmartAccuracyEnabled = isset($options['oopspam_smart_accuracy']) && 1 == $options['oopspam_smart_accuracy'];
+    $isExtraScreeningEnabled = isset($options['oopspam_extra_screening']) && 1 == $options['oopspam_extra_screening'];
     // Mapping of threshold levels to words
     $thresholdDescriptions = [
         1 => 'Extremely strict',
@@ -2082,6 +2084,24 @@ function oopspam_spam_score_threshold_render()
                 <?php echo esc_html__('Adjust the spam detection sensitivity with this setting. For optimal results, we recommend selecting "Moderate (recommended).', 'oopspam-anti-spam'); ?>
             </p>
         </label>
+        <div class="oopspam-experimental-settings">
+            <label class="oopspam-experimental-option" for="oopspam_smart_accuracy">
+                <input class="oopspam-toggle" type="checkbox" id="oopspam_smart_accuracy" name="oopspamantispam_settings[oopspam_smart_accuracy]" value="1" <?php checked($isSmartAccuracyEnabled); ?>/>
+                <span>
+                    <strong><?php echo esc_html__('Smart Accuracy', 'oopspam-anti-spam'); ?></strong>
+                    <span class="oopspam-experimental-tag"><?php echo esc_html__('Experimental', 'oopspam-anti-spam'); ?></span>
+                    <span class="description"><?php echo esc_html__('Improves detection accuracy to reduce false positives, though some spam may be missed.', 'oopspam-anti-spam'); ?></span>
+                </span>
+            </label>
+            <label class="oopspam-experimental-option" for="oopspam_extra_screening">
+                <input class="oopspam-toggle" type="checkbox" id="oopspam_extra_screening" name="oopspamantispam_settings[oopspam_extra_screening]" value="1" <?php checked($isExtraScreeningEnabled); ?>/>
+                <span>
+                    <strong><?php echo esc_html__('Extra Screening', 'oopspam-anti-spam'); ?></strong>
+                    <span class="oopspam-experimental-tag"><?php echo esc_html__('Experimental', 'oopspam-anti-spam'); ?></span>
+                    <span class="description"><?php echo esc_html__('Applies additional checks for stricter spam filtering.', 'oopspam-anti-spam'); ?></span>
+                </span>
+            </label>
+        </div>
     </div>
     <style>
         .range-input {
@@ -2107,6 +2127,37 @@ function oopspam_spam_score_threshold_render()
             background: #fff;
             border-radius: 50%;
             cursor: pointer;
+        }
+
+        .oopspam-experimental-settings {
+            margin-top: 12px;
+        }
+
+        .oopspam-experimental-option {
+            align-items: flex-start;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .oopspam-experimental-option .description {
+            color: #50575e;
+            display: inline;
+            margin-left: 6px;
+        }
+
+        .oopspam-experimental-tag {
+            background: #fff4d6;
+            border: 1px solid #e0b44c;
+            border-radius: 999px;
+            color: #6c4b00;
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1;
+            margin-left: 6px;
+            padding: 3px 8px;
+            text-transform: uppercase;
         }
     </style>
     <script>

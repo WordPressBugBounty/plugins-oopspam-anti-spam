@@ -41,6 +41,23 @@ class OOPSpamAPI {
     {
         return $value ? "true" : "false";
     }
+
+    protected function getExperimentalParameters()
+    {
+        $options = get_option('oopspamantispam_settings', array());
+        $parameters = array();
+
+        if (!empty($options['oopspam_smart_accuracy'])) {
+            $parameters['smartAccuracy'] = 'true';
+        }
+
+        if (!empty($options['oopspam_extra_screening'])) {
+            $parameters['extraScreening'] = 'true';
+        }
+
+        return $parameters;
+    }
+
     /**
     * Calls the Web Service of OOPSpam API
     * 
@@ -197,10 +214,13 @@ class OOPSpamAPI {
     * Sends a request to OOPSpam API
     * 
     * @param string $content The content that we evaluate.
+    * @param string $metadata Optional JSON metadata containing form fields and HTTP headers for fraud detection.
     * 
     * @return string It returns structured JSON, Score field as root field indicating the spam score
     */
-    public function SpamDetection($content, $sender_ip, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting) {
+    public function SpamDetection($content, $sender_ip, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $metadata = '') {
+        $options = get_option('oopspamantispam_settings', array());
+        $currentSensitivityLevel = isset($options['oopspam_spam_score_threshold']) ? (int) $options['oopspam_spam_score_threshold'] : 3;
         $contextDetectionOptions = get_option('oopspamantispam_contextai_settings');
         $isContextualDetectionEnabled = isset($contextDetectionOptions['oopspam_is_contextai_enabled']) ? true : false;
         
@@ -222,8 +242,20 @@ class OOPSpamAPI {
             'blockedCountries' => $countryblocklistSetting,
             'blockTempEmail' => $this->oopspam_block_tempemail,
             'blockDC' => $this->oopspam_block_datacenters,
-            'blockVPN' => $this->oopspam_block_vpns
+            'blockVPN' => $this->oopspam_block_vpns,
+            'sensitivityLevel' => $currentSensitivityLevel
         );
+
+        $parameters = array_merge($parameters, $this->getExperimentalParameters());
+
+        if (!empty($metadata)) {
+            $decodedMetadata = json_decode($metadata, true);
+            if ($decodedMetadata !== null) {
+                $parameters['metadata'] = $decodedMetadata;
+            } else {
+                $parameters['metadata'] = $metadata;
+            }
+        }
 
         $jsonreply=$this->RequestToOOPSpamAPI(json_encode($parameters));
         
@@ -241,7 +273,7 @@ class OOPSpamAPI {
     public function Report($content, $sender_ip, $email, $countryallowlistSetting, $languageallowlistSetting, $countryblocklistSetting, $isSpam, $metadata = '') {
 
         $options = get_option('oopspamantispam_settings');
-        $currentSensitivityLevel = $options["oopspam_spam_score_threshold"];
+        $currentSensitivityLevel = isset($options['oopspam_spam_score_threshold']) ? (int) $options['oopspam_spam_score_threshold'] : 3;
 
         $contextDetectionOptions = get_option('oopspamantispam_contextai_settings');
         $isContextualDetectionEnabled = isset($contextDetectionOptions['oopspam_is_contextai_enabled']) ? true : false;
@@ -268,6 +300,8 @@ class OOPSpamAPI {
             "shouldBeSpam" => $isSpam,
             "sensitivityLevel" => $currentSensitivityLevel
         );
+
+        $parameters = array_merge($parameters, $this->getExperimentalParameters());
 
         // Add metadata if provided (contains form fields and HTTP headers for fraud detection)
         if (!empty($metadata)) {

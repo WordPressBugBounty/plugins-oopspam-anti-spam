@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 6.9
-Stable tag: 1.2.68
+Stable tag: 1.2.69
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -18,39 +18,12 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpa
 
 ### Why Choose OOPSpam?
 
-**🚀 Zero Impact on User Experience**
-- No CAPTCHA puzzles or challenges that hurt conversions
-- Works silently in the background without JavaScript or tracking
-- Maintains fast website performance with server-side processing
-
-**🛡️ Intelligent Spam Prevention**
-- Catch 99.9% of spam using advanced machine learning and contextual analysis
-- Protect against both automated bots and human spammers
-- Auto-detect spam patterns unique to your website's context
-- Block spam from VPNs and known malicious sources
-- Prevent WooCommerce card testing attacks with advanced checkout protection
-
-**🔒 Privacy-First Design**
-- GDPR-compliant with no data stored on our servers
-- Optional IP and email analysis for maximum privacy
-- All logs stored in your WordPress database
-- Remove sensitive information from messages automatically
-
-**🌍 Smart Geographic Controls**
-- Target your relevant market by blocking specific countries
-- Filter submissions by language to focus on your audience
-- Prevent fraud and abuse from high-risk regions
-
-**⚙️ Powerful Management Tools**
-- View and manage spam entries with detailed detection reasons
-- Export data for analysis or reporting
-- Rate limiting to prevent abuse and click fraud
-- Manual override options for complete control
-
-**🏢 Perfect for Agencies**
-- Use one API key across unlimited websites
-- Centralized logging option in OOPSpam dashboard
-- Consistent protection across all your client sites
+- Protect forms without CAPTCHA, JavaScript challenges, or tracking.
+- Catch bot and human spam with AI-powered analysis and contextual checks.
+- Keep control of privacy with optional IP and email analysis, with logs stored in your WordPress database.
+- Filter submissions by country and language, and block VPNs and other high-risk sources.
+- Use rate limiting, manual controls, detailed logs, and exports to manage spam effectively.
+- Protect WooCommerce checkouts from spam and card testing, and use one API key across unlimited websites.
 
 
 ### What Our Users Say
@@ -142,6 +115,10 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.69 =
+* **NEW:** Added an experimental "Smart Accuracy" feature with additional checks to help reduce false positives.
+* **NEW:** Added an experimental "Extra Screening" feature with additional checks for stricter spam filtering.
+* **IMPROVEMENT:** Manual Moderation -> Blocked Emails and Allowed Emails now support the *@*.com pattern.
 = 1.2.68 =
 * **IMPROVEMENT:** Added spam protection to the WordPress login and lost password forms.
 * **IMPROVEMENT:** Minor UI improvements.
