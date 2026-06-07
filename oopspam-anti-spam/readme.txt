@@ -3,8 +3,8 @@ Contributors: oopspam
 Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
-Tested up to: 6.9
-Stable tag: 1.2.69
+Tested up to: 7.0
+Stable tag: 1.2.70
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -47,6 +47,7 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpa
 - WooCommerce Order & Registration
 - BuddyPress
 - Elementor Forms
+- Elementor Atomic Forms
 - Ninja Forms
 - Gravity Forms
 - Kadence Form Block and Form (Adv) Block
@@ -115,6 +116,8 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.70 =
+* **NEW:** Added support for Elementor Atomic Forms
 = 1.2.69 =
 * **NEW:** Added an experimental "Smart Accuracy" feature with additional checks to help reduce false positives.
 * **NEW:** Added an experimental "Extra Screening" feature with additional checks for stricter spam filtering.

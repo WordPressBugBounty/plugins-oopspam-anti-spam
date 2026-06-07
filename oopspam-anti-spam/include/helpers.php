@@ -24,6 +24,11 @@ function oopspamantispam_plugin_check($plugin)
                 $result = true;
             }
             break;
+        case 'el_atomic':
+            if (is_plugin_active('elementor-pro/elementor-pro.php')) {
+                $result = true;
+            }
+            break;
         case 'br':
             $theme = wp_get_theme(); // gets the current theme
             if ('Bricks' == $theme->name || 'Bricks' == $theme->parent_theme) {
@@ -196,6 +201,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'fable' => 'OOPSPAM_IS_FABLE_ACTIVATED',
         'gf' => 'OOPSPAM_IS_GF_ACTIVATED',
         'el' => 'OOPSPAM_IS_EL_ACTIVATED',
+        'el_atomic' => 'OOPSPAM_IS_EL_ATOMIC_ACTIVATED',
         'bd' => 'OOPSPAM_IS_BD_ACTIVATED',
         'br' => 'OOPSPAM_IS_BR_ACTIVATED',
         'ws' => 'OOPSPAM_IS_WS_ACTIVATED',
@@ -239,6 +245,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'fable' => 'oopspam_is_fable_activated',
         'gf' => 'oopspam_is_gf_activated',
         'el' => 'oopspam_is_el_activated',
+        'el_atomic' => 'oopspam_is_el_atomic_activated',
         'bd' => 'oopspam_is_bd_activated',
         'br' => 'oopspam_is_br_activated',
         'ws' => 'oopspam_is_ws_activated',

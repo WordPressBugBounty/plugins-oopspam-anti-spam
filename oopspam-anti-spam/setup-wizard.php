@@ -111,6 +111,7 @@ function oopspam_get_active_form_plugins() {
         'gf' => 'Gravity Forms',
         'ff' => 'Fluent Forms',
         'el' => 'Elementor Forms',
+        'el_atomic' => 'Elementor Atomic Forms',
         'fable' => 'Formidable Forms',
         'br' => 'Bricks Forms',
         'bd' => 'Breakdance Forms',

@@ -428,6 +428,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-nj-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-gf-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-el-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-el-atomic-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ff-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-wpf-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-fable-settings-group', 'oopspamantispam_settings');
@@ -1053,6 +1054,36 @@ function oopspamantispam_settings_init()
             'oopspam_el_exclude_form_render',
             'oopspamantispam-el-settings-group',
             'oopspam_el_settings_section'
+        );
+    }
+
+    // Elementor Atomic Forms settings section
+    if (oopspamantispam_plugin_check('el_atomic') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_el_atomic_settings_section',
+            esc_html__('Elementor Atomic Forms',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-el-atomic-settings-group'
+        );
+        add_settings_field('oopspam_is_el_atomic_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_el_atomic_activated_render',
+            'oopspamantispam-el-atomic-settings-group',
+            'oopspam_el_atomic_settings_section'
+        );
+
+        add_settings_field('oopspam_el_atomic_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_el_atomic_content_field_render',
+            'oopspamantispam-el-atomic-settings-group',
+            'oopspam_el_atomic_settings_section'
+        );
+
+        add_settings_field('oopspam_el_atomic_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_el_atomic_exclude_form_render',
+            'oopspamantispam-el-atomic-settings-group',
+            'oopspam_el_atomic_settings_section'
         );
     }
 
@@ -3355,6 +3386,85 @@ function oopspam_el_exclude_form_render()
 
 /* Elementor Forms UI settings section ends */
 
+/* Elementor Atomic Forms UI settings section starts */
+
+function oopspam_is_el_atomic_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_EL_ATOMIC_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_EL_ATOMIC_ACTIVATED : (isset($options['oopspam_is_el_atomic_activated']) && 1 == $options['oopspam_is_el_atomic_activated']);
+    ?>
+    <div>
+        <label for="el_atomic_support">
+            <input class="oopspam-toggle" type="checkbox" id="el_atomic_support" 
+                   name="oopspamantispam_settings[oopspam_is_el_atomic_activated]" 
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?> 
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_el_atomic_content_field_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $formDataJson = isset($options['oopspam_el_atomic_content_field']) ? $options['oopspam_el_atomic_content_field'] : '[]';
+    $formData = json_decode($formDataJson, true);
+    ?>
+    <div>
+        <form id="formData">
+            <label for="formIdInput">Form Name:</label>
+            <input type="text" id="formIdInput" name="formIdInput" placeholder="Atomic Contact Form">
+            <label for="fieldIdInput">Field ID:</label>
+            <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="message,email">
+            <button type="button" onclick="addData(this)">Add Pair</button>
+        </form>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th>Form Name</th>
+                    <th>Field ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (is_array($formData)) : ?>
+                    <?php foreach ($formData as $key => $entry) : ?>
+                        <tr>
+                            <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                            <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                            <td><button type="button" onclick="deleteRow(this)">Delete</button></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_el_atomic_content_field]" id="formDataInput" value="<?php echo esc_attr(json_encode($formData)); ?>">
+        <p class="description"><?php echo esc_html__('Enter the Atomic Form Name and Field ID pairs in the table above. If multiple Field IDs are provided for a Form Name, their values will be joined together.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
+function oopspam_el_atomic_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_el_atomic_exclude_form">
+                    <input id="oopspam_el_atomic_exclude_form" type="text" placeholder="Enter Atomic Form names (e.g Sales Form, Contact Us)" class="regular-text" name="oopspamantispam_settings[oopspam_el_atomic_exclude_form]" value="<?php if (isset($options['oopspam_el_atomic_exclude_form'])) {
+        echo esc_html($options['oopspam_el_atomic_exclude_form']);
+    }
+    ?>">
+                        </label>
+                </div>
+            <?php
+}
+
+/* Elementor Atomic Forms UI settings section ends */
+
 /* Bricks Forms UI settings section starts */
 
 function oopspam_is_br_activated_render()
@@ -5016,6 +5126,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                             <div class="elementor-forms form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-el-settings-group');
+                    ?>
+                            </div>
+                            <div class="elementor-atomic-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-el-atomic-settings-group');
                     ?>
                             </div>
                             <div class="bricks-forms form-setting">
