@@ -2,10 +2,19 @@ jQuery(document).ready(function($) {
 
 
     document.querySelectorAll('.select').forEach((el)=>{
+        const isMultiple = el.hasAttribute('multiple');
+        const placeholder = el.dataset.placeholder || '';
         let settings = {
-            plugins: ['remove_button', 'clear_button']
+            placeholder: placeholder,
+            allowEmptyOption: true,
+            plugins: isMultiple ? ['remove_button', 'clear_button'] : ['clear_button']
         };
-         new TomSelect(el, settings);
+
+        if (!isMultiple) {
+            settings.create = false;
+        }
+
+        new TomSelect(el, settings);
     });
 
     let adminEmailList = document.getElementById('admin-email-list');

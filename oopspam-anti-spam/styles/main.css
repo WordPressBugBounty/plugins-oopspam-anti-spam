@@ -810,58 +810,21 @@
    background: rgba(251, 246, 237, 0.3);
 }
 
-/* Better checkbox and radio styling */
+/* Simple and accessible checkbox/radio styling */
 .form-setting input[type="checkbox"],
 .form-setting input[type="radio"] {
    width: 18px !important;
    height: 18px !important;
+   margin: 0 8px 0 0 !important;
    cursor: pointer !important;
+   vertical-align: middle !important;
    accent-color: #FCDD56 !important;
 }
 
-/* Modern radio button styling */
-.form-setting input[type="radio"] {
-   appearance: none !important;
-   width: 20px !important;
-   height: 20px !important;
-   border: 2px solid rgba(0, 0, 0, 0.2) !important;
-   border-radius: 50% !important;
-   background: #ffffff !important;
-   cursor: pointer !important;
-   position: relative !important;
-   transition: all 0.2s ease !important;
-   margin: 0 8px 0 0 !important;
-   vertical-align: middle !important;
-   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-}
-
-.form-setting input[type="radio"]:hover {
-   border-color: #FCDD56 !important;
-   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-}
-
-.form-setting input[type="radio"]:checked {
-   border-color: #FCDD56 !important;
-   background: #FCDD56 !important;
-   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
-
-.form-setting input[type="radio"]:checked::after {
-   content: '' !important;
-   position: absolute !important;
-   top: 50% !important;
-   left: 50% !important;
-   transform: translate(-50%, -50%) !important;
-   width: 8px !important;
-   height: 8px !important;
-   border-radius: 50% !important;
-   background: #000000 !important;
-}
-
+.form-setting input[type="checkbox"]:focus-visible,
 .form-setting input[type="radio"]:focus-visible {
-   outline: none !important;
-   border-color: #FCDD56 !important;
-   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.3) !important;
+   outline: 2px solid #FCDD56 !important;
+   outline-offset: 2px !important;
 }
 
 .form-setting input[type="radio"] + label {
@@ -1200,6 +1163,9 @@ table button[onclick*="deleteRow"]:hover {
 
 .form-setting input[type="checkbox"] {
    vertical-align: middle !important;
+   appearance: auto !important;
+   -webkit-appearance: checkbox !important;
+   border-radius: 4px !important;
 }
 
 /* Better select styling */
@@ -1292,55 +1258,27 @@ form .form-table select:focus:not(.ts-control select) {
    box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Checkbox and radio styling - scoped */
+/* Simple and accessible checkbox/radio styling - scoped */
 form .form-table input[type="checkbox"],
 form .form-table input[type="radio"] {
-   width: 20px !important;
-   height: 20px !important;
-   cursor: pointer !important;
-   accent-color: #FCDD56 !important;
-   vertical-align: middle !important;
+   width: 18px !important;
+   height: 18px !important;
    margin-right: 8px !important;
+   cursor: pointer !important;
+   vertical-align: middle !important;
+   accent-color: #FCDD56 !important;
+   appearance: auto !important;
+   -webkit-appearance: auto !important;
 }
 
-/* Modern radio button styling for form tables */
-form .form-table input[type="radio"] {
-   appearance: none !important;
-   border: 2px solid rgba(0, 0, 0, 0.2) !important;
-   border-radius: 50% !important;
-   background: #ffffff !important;
-   position: relative !important;
-   transition: all 0.2s ease !important;
-   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+input[type="checkbox"]:focus, input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px #fff,0 0 0 4px #fff;
 }
 
-form .form-table input[type="radio"]:hover {
-   border-color: #FCDD56 !important;
-   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.1), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-}
-
-form .form-table input[type="radio"]:checked {
-   border-color: #FCDD56 !important;
-   background: #FCDD56 !important;
-   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
-
-form .form-table input[type="radio"]:checked::after {
-   content: '' !important;
-   position: absolute !important;
-   top: 50% !important;
-   left: 50% !important;
-   transform: translate(-50%, -50%) !important;
-   width: 8px !important;
-   height: 8px !important;
-   border-radius: 50% !important;
-   background: #000000 !important;
-}
-
+form .form-table input[type="checkbox"]:focus-visible,
 form .form-table input[type="radio"]:focus-visible {
-   outline: none !important;
-   border-color: #FCDD56 !important;
-   box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.3) !important;
+   outline: 2px solid #FCDD56 !important;
+   outline-offset: 2px !important;
 }
 
 form .form-table input[type="radio"] + label {
@@ -1532,4 +1470,62 @@ form:has(.form-table) .button-secondary:hover,
 .ts-dropdown {
    z-index: 10000 !important;
    position: absolute !important;
+}
+
+
+.range-input {
+   background: linear-gradient(to right, rgba(255, 0, 0, 0.58) 0%, rgb(56, 239, 93) 100%);
+   -webkit-appearance: none;
+   height: 20px;
+   border-radius: 10px;
+}
+
+.range-input::-webkit-slider-thumb {
+   -webkit-appearance: none;
+   appearance: none;
+   width: 20px;
+   height: 20px;
+   background: #fff;
+   border-radius: 50%;
+   cursor: pointer;
+}
+
+.range-input::-moz-range-thumb {
+   width: 20px;
+   height: 20px;
+   background: #fff;
+   border-radius: 50%;
+   cursor: pointer;
+}
+
+.oopspam-experimental-settings {
+   margin-top: 12px;
+}
+
+.oopspam-experimental-option {
+   align-items: flex-start;
+   display: flex;
+   gap: 8px;
+   margin-bottom: 10px;
+   align-items: center;
+}
+
+.oopspam-experimental-option .description {
+   color: #50575e;
+   display: inline;
+   margin-left: 6px;
+}
+
+.oopspam-experimental-tag {
+   background: #fff4d6;
+   border: 1px solid #e0b44c;
+   border-radius: 999px;
+   color: #6c4b00;
+   display: inline-block;
+   font-size: 11px;
+   font-weight: 600;
+   line-height: 1;
+   margin-left: 6px;
+   padding: 3px 8px;
+   text-transform: uppercase;
 }

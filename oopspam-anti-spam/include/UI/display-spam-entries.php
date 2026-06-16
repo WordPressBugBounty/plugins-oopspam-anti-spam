@@ -101,7 +101,7 @@ function export_spam_entries(){
                 foreach ($filtered_column_names as $column) {
                     // Check if the column exists in the record
                     if (isset($record[$column])) {
-                        $output_record[] = $record[$column];
+						$output_record[] = $column === 'date' ? \oopspam_format_entry_datetime($record[$column]) : $record[$column];
                     } else {
                         $output_record[] = ''; // If column does not exist, use empty string
                     }
@@ -381,7 +381,7 @@ public static function notify_spam_entry($id) {
     $body .= "<div style='background-color: #f9f9f9; padding: 15px; margin-top: 20px; border-radius: 5px;'>";
     $body .= "<h3 style='color: #666; margin-top: 0;'>Submission Details</h3>";
     $body .= "<p style='margin: 5px 0;'><strong>IP Address:</strong> " . esc_html($spamEntry->ip) . "</p>";
-    $body .= "<p style='margin: 5px 0;'><strong>Submission Time:</strong> " . esc_html($spamEntry->date) . "</p>";
+	$body .= "<p style='margin: 5px 0;'><strong>Submission Time:</strong> " . esc_html(\oopspam_format_entry_datetime($spamEntry->date)) . "</p>";
     $body .= "</div>";
     
     $body .= "</div>";
@@ -506,7 +506,7 @@ public static function notify_not_spam_entry($id) {
     $body .= "<div style='background-color: #f9f9f9; padding: 15px; margin-top: 20px; border-radius: 5px;'>";
     $body .= "<h3 style='color: #666; margin-top: 0;'>Submission Details</h3>";
     $body .= "<p style='margin: 5px 0;'><strong>IP Address:</strong> " . esc_html($spamEntry->ip) . "</p>";
-    $body .= "<p style='margin: 5px 0;'><strong>Submission Time:</strong> " . esc_html($spamEntry->date) . "</p>";
+	$body .= "<p style='margin: 5px 0;'><strong>Submission Time:</strong> " . esc_html(\oopspam_format_entry_datetime($spamEntry->date)) . "</p>";
     $body .= "<p style='margin: 5px 0;'><strong>Action:</strong> <span style='color: #28a745; font-weight: bold;'>Marked as Not Spam</span></p>";
     $body .= "</div>";
     
@@ -623,7 +623,7 @@ public static function notify_bulk_not_spam($entry_ids) {
         // Add submission metadata
         $body .= "<div style='background-color: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 3px;'>";
         $body .= "<p style='margin: 2px 0; font-size: 12px;'><strong>IP:</strong> " . esc_html($spamEntry->ip) . " | ";
-        $body .= "<strong>Date:</strong> " . esc_html($spamEntry->date) . "</p>";
+		$body .= "<strong>Date:</strong> " . esc_html(\oopspam_format_entry_datetime($spamEntry->date)) . "</p>";
         $body .= "</div>";
         
         $body .= "</div>";
@@ -998,12 +998,22 @@ private static function process_form_fields($raw_entry) {
             case 'score':
             case 'raw_entry':
 			case 'reason':
-            case 'date':
 			case 'form_id':
 				return esc_html( $item[ $column_name ] );
 			default:
 				return esc_html( print_r( $item, true ) );
 		}
+	}
+
+	public function column_date( $item ) {
+		$formatted_date = \oopspam_format_entry_datetime( $item['date'] );
+		$timezone_label = \oopspam_get_entries_display_timezone_label();
+
+		return sprintf(
+			'<span title="%s">%s</span>',
+			esc_attr( $timezone_label ),
+			esc_html( $formatted_date )
+		);
 	}
 
 	/**

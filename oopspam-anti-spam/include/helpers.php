@@ -1,5 +1,72 @@
 <?php
 
+function oopspam_get_entries_display_timezone() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $timezone = isset($options['oopspam_entries_display_timezone']) ? $options['oopspam_entries_display_timezone'] : 'site';
+
+    if ($timezone === 'site') {
+        return 'site';
+    }
+
+    return in_array($timezone, timezone_identifiers_list(), true) ? $timezone : 'site';
+}
+
+function oopspam_get_entries_display_timezone_object() {
+    $timezone = oopspam_get_entries_display_timezone();
+
+    if ($timezone === 'site') {
+        return wp_timezone();
+    }
+
+    try {
+        return new DateTimeZone($timezone);
+    } catch (Exception $exception) {
+        return wp_timezone();
+    }
+}
+
+function oopspam_format_entry_datetime($datetime) {
+    if (empty($datetime)) {
+        return '';
+    }
+
+    $source_timezone = wp_timezone();
+    $display_timezone = oopspam_get_entries_display_timezone_object();
+    $format = trim(get_option('date_format') . ' ' . get_option('time_format'));
+
+    if ($format === '') {
+        $format = 'Y-m-d H:i:s';
+    }
+
+    $date = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $datetime, $source_timezone);
+
+    if (!$date instanceof DateTimeImmutable) {
+        try {
+            $date = new DateTimeImmutable($datetime, $source_timezone);
+        } catch (Exception $exception) {
+            return $datetime;
+        }
+    }
+
+    return wp_date($format, $date->getTimestamp(), $display_timezone);
+}
+
+function oopspam_get_entries_display_timezone_label() {
+    $timezone = oopspam_get_entries_display_timezone();
+
+    if ($timezone === 'site') {
+        $site_timezone_name = wp_timezone()->getName();
+
+        return sprintf(
+            /* translators: %s: site timezone identifier */
+            __('WordPress timezone (%s)', 'oopspam-anti-spam'),
+            $site_timezone_name
+        );
+    }
+
+    return $timezone;
+}
+
 function oopspamantispam_plugin_check($plugin)
 {
     $result = false;
@@ -493,13 +560,14 @@ function oopspam_build_spam_report_email($is_test = false) {
                                     <?php foreach ($entries as $entry):
                                         $msg = isset($entry->message) ? trim($entry->message) : '';
                                         $msg_display = $msg !== '' ? (mb_strlen($msg) > 100 ? mb_substr($msg, 0, 100) . '…' : $msg) : '—';
+                                        $formatted_entry_date = oopspam_format_entry_datetime($entry->date);
                                     ?>
                                     <tr>
                                         <td style="padding:10px; border-bottom:1px solid #e0e0e0;"><?php echo esc_html($entry->email ?: '—'); ?></td>
                                         <td style="padding:10px; border-bottom:1px solid #e0e0e0;"><?php echo esc_html($entry->ip ?: '—'); ?></td>
                                         <td style="padding:10px; border-bottom:1px solid #e0e0e0; color:#646970;"><?php echo esc_html($msg_display); ?></td>
                                         <td style="padding:10px; border-bottom:1px solid #e0e0e0;"><?php echo esc_html($entry->reason ?: '—'); ?></td>
-                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0; white-space:nowrap;"><?php echo esc_html($entry->date); ?></td>
+                                        <td style="padding:10px; border-bottom:1px solid #e0e0e0; white-space:nowrap;"><?php echo esc_html($formatted_entry_date); ?></td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>

@@ -368,6 +368,43 @@ function oopspam_sanitize_settings($input) {
     return $input;
 }
 
+function oopspam_sanitize_misc_settings($input) {
+    $sanitized = array();
+    $input = is_array($input) ? $input : array();
+
+    if (isset($input['oopspam_trust_proxy_headers'])) {
+        $sanitized['oopspam_trust_proxy_headers'] = '1';
+    }
+
+    if (isset($input['oopspam_email_admin_on_not_spam'])) {
+        $sanitized['oopspam_email_admin_on_not_spam'] = '1';
+    }
+
+    $allowed_frequencies = array('disabled', 'threshold', 'twicedaily', 'daily', 'weekly', 'monthly');
+    $frequency = isset($input['oopspam_spam_report_frequency']) ? sanitize_key($input['oopspam_spam_report_frequency']) : 'disabled';
+    $sanitized['oopspam_spam_report_frequency'] = in_array($frequency, $allowed_frequencies, true) ? $frequency : 'disabled';
+
+    $sanitized['oopspam_spam_report_threshold_count'] = isset($input['oopspam_spam_report_threshold_count'])
+        ? max(1, absint($input['oopspam_spam_report_threshold_count']))
+        : 10;
+
+    $emails = array();
+    if (isset($input['oopspam_spam_report_email'])) {
+        $emails = array_filter(array_map('sanitize_email', array_map('trim', explode(',', wp_unslash($input['oopspam_spam_report_email'])))));
+    }
+    $sanitized['oopspam_spam_report_email'] = implode(', ', $emails);
+
+    $sanitized['oopspam_spam_report_subject'] = isset($input['oopspam_spam_report_subject'])
+        ? sanitize_text_field(wp_unslash($input['oopspam_spam_report_subject']))
+        : '';
+
+    $timezone = isset($input['oopspam_entries_display_timezone']) ? sanitize_text_field(wp_unslash($input['oopspam_entries_display_timezone'])) : 'site';
+    $allowed_timezones = timezone_identifiers_list();
+    $sanitized['oopspam_entries_display_timezone'] = ($timezone === 'site' || in_array($timezone, $allowed_timezones, true)) ? $timezone : 'site';
+
+    return $sanitized;
+}
+
 function oopspamantispam_settings_init()
 {
 
@@ -376,7 +413,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-privacy-settings-group', 'oopspamantispam_privacy_settings');
     register_setting('oopspamantispam-ratelimit-settings-group', 'oopspamantispam_ratelimit_settings');
     register_setting('oopspamantispam-ipfiltering-settings-group', 'oopspamantispam_ipfiltering_settings');
-    register_setting('oopspamantispam-misc-settings-group', 'oopspamantispam_misc_settings');
+    register_setting('oopspamantispam-misc-settings-group', 'oopspamantispam_misc_settings', 'oopspam_sanitize_misc_settings');
     register_setting('oopspamantispam-settings-group', 'oopspamantispam_settings', 'oopspam_sanitize_settings');
 
 
@@ -1855,6 +1892,14 @@ function oopspam_jform_spam_message_render()
     );
 
     add_settings_field(
+        'oopspam_entries_display_timezone',
+        esc_html__('Entries table timezone',  'oopspam-anti-spam'),
+        'oopspam_entries_display_timezone_render',
+        'oopspamantispam-misc-settings-group',
+        'oopspam_misc_settings_section'
+    );
+
+    add_settings_field(
         'oopspam_spam_report',
         esc_html__('Spam Summary Report',  'oopspam-anti-spam'),
         'oopspam_spam_report_field_render',
@@ -2050,6 +2095,39 @@ function oopspam_email_admin_on_not_spam_render() {
     <?php
 }
 
+function oopspam_entries_display_timezone_render() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $selected_timezone = isset($options['oopspam_entries_display_timezone']) ? $options['oopspam_entries_display_timezone'] : 'site';
+    $site_timezone = wp_timezone()->getName();
+    $timezones = timezone_identifiers_list();
+    ?>
+    <div>
+        <label for="oopspam_entries_display_timezone" class="screen-reader-text"><?php echo esc_html__('Entries table timezone', 'oopspam-anti-spam'); ?></label>
+        <select id="oopspam_entries_display_timezone"
+                name="oopspamantispam_misc_settings[oopspam_entries_display_timezone]"
+            class="select regular-text"
+            data-placeholder="<?php echo esc_attr__('Choose a timezone...', 'oopspam-anti-spam'); ?>"
+            style="width: 600px; max-width: 100%;">
+            <option value="site" <?php selected($selected_timezone, 'site'); ?>>
+                <?php
+                echo esc_html(sprintf(
+                    /* translators: %s: WordPress site timezone identifier */
+                    __('WordPress timezone (%s)', 'oopspam-anti-spam'),
+                    $site_timezone
+                ));
+                ?>
+            </option>
+            <?php foreach ($timezones as $timezone) : ?>
+                <option value="<?php echo esc_attr($timezone); ?>" <?php selected($selected_timezone, $timezone); ?>>
+                    <?php echo esc_html(str_replace('_', ' ', $timezone)); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <p class="description"><?php echo esc_html__('Used only for the Date column in the Form Entries and Spam Entries tables. Leave this on the WordPress timezone unless you need a different reporting timezone.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
 function oopspam_api_key_render()
 {
     $options = get_option('oopspamantispam_settings');
@@ -2134,63 +2212,7 @@ function oopspam_spam_score_threshold_render()
             </label>
         </div>
     </div>
-    <style>
-        .range-input {
-            background: linear-gradient(to right, rgba(255, 0, 0, 0.58) 0%, rgb(56, 239, 93) 100%);
-            -webkit-appearance: none;
-            height: 20px;
-            border-radius: 10px;
-        }
-
-        .range-input::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .range-input::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-
-        .oopspam-experimental-settings {
-            margin-top: 12px;
-        }
-
-        .oopspam-experimental-option {
-            align-items: flex-start;
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .oopspam-experimental-option .description {
-            color: #50575e;
-            display: inline;
-            margin-left: 6px;
-        }
-
-        .oopspam-experimental-tag {
-            background: #fff4d6;
-            border: 1px solid #e0b44c;
-            border-radius: 999px;
-            color: #6c4b00;
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 600;
-            line-height: 1;
-            margin-left: 6px;
-            padding: 3px 8px;
-            text-transform: uppercase;
-        }
-    </style>
+    
     <script>
         // Mapping for live update of range text description
         const thresholdDescriptions = {
@@ -2626,8 +2648,8 @@ function oopspam_api_key_source_render()
 
     ?>
         <div id="oopspam-api-key-source">
-        <input type="radio" name="oopspamantispam_settings[oopspam_api_key_source]" value="RapidAPI" <?php checked("RapidAPI", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>RapidAPI
-        <input type="radio" name="oopspamantispam_settings[oopspam_api_key_source]" value="OOPSpamDashboard" <?php checked("OOPSpamDashboard", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>OOPSpam Dashboard
+        <label for="oopspam_api_key_source_rapidapi"><input type="radio" id="oopspam_api_key_source_rapidapi" name="oopspamantispam_settings[oopspam_api_key_source]" value="RapidAPI" <?php checked("RapidAPI", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>RapidAPI</label>
+        <label for="oopspam_api_key_source_dashboard"><input type="radio" id="oopspam_api_key_source_dashboard" name="oopspamantispam_settings[oopspam_api_key_source]" value="OOPSpamDashboard" <?php checked("OOPSpamDashboard", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>OOPSpam Dashboard</label>
         </div>
    <?php
 }

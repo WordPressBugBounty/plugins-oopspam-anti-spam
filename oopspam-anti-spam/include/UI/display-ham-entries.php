@@ -94,7 +94,7 @@ function export_ham_entries(){
                 foreach ($filtered_column_names as $column) {
                     // Check if the column exists in the record
                     if (isset($record[$column])) {
-                        $output_record[] = $record[$column];
+						$output_record[] = $column === 'date' ? \oopspam_format_entry_datetime($record[$column]) : $record[$column];
                     } else {
                         $output_record[] = ''; // If column does not exist, use empty string
                     }
@@ -336,7 +336,6 @@ class Ham_Entries extends \WP_List_Table {
 			case 'ip':
 			case 'email':
             case 'raw_entry':
-            case 'date':
 			case 'form_id':
 				return esc_html( $item[ $column_name ] );
 			case 'score':
@@ -344,6 +343,17 @@ class Ham_Entries extends \WP_List_Table {
 			default:
 				return esc_html( print_r( $item, true ) );
 		}
+	}
+
+	public function column_date( $item ) {
+		$formatted_date = \oopspam_format_entry_datetime( $item['date'] );
+		$timezone_label = \oopspam_get_entries_display_timezone_label();
+
+		return sprintf(
+			'<span title="%s">%s</span>',
+			esc_attr( $timezone_label ),
+			esc_html( $formatted_date )
+		);
 	}
 
 	function column_score( $item ) {
