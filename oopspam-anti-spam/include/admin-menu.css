@@ -12,3 +12,36 @@
     color: #fff;
     background-color: #2271b1;
 }
+
+.row-actions a.oopspam-action-pending {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.oopspam-row-action-indicator {
+    margin-left: 6px;
+    color: #50575e;
+    font-style: italic;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.oopspam-row-action-indicator::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border: 2px solid #8c8f94;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: oopspam-spin 0.7s linear infinite;
+}
+
+@keyframes oopspam-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

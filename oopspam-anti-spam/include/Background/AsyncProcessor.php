@@ -45,12 +45,16 @@ class AsyncProcessor {
                         error_log("AsyncProcessor: Failed to report entry $current_id as not spam");
                         // Still continue processing other entries
                     }
+				} elseif ($action === 'bulk-undo-report') {
+					\OOPSPAM\UI\Spam_Entries::undo_report_spam_entry($current_id);
                 }
             } else {
                 if ($action === 'bulk-delete') {
                     \OOPSPAM\UI\Ham_Entries::delete_ham_entry($current_id);
                 } elseif ($action === 'bulk-report') {
                     \OOPSPAM\UI\Ham_Entries::report_ham_entry($current_id);
+				} elseif ($action === 'bulk-undo-report') {
+					\OOPSPAM\UI\Ham_Entries::undo_report_ham_entry($current_id);
                 }
             }
 

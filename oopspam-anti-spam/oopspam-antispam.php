@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.71
+ * Version: 1.2.72
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -457,6 +457,72 @@ function oopspam_matches_email_pattern($email, $pattern) {
     }
 
     return fnmatch($pattern, $email);
+}
+
+function oopspam_get_manual_moderation_entries($option_key) {
+    $manual_moderation_options = get_option('manual_moderation_settings', array());
+    $entries = isset($manual_moderation_options[$option_key]) ? $manual_moderation_options[$option_key] : '';
+
+    if ('' === $entries) {
+        return array();
+    }
+
+    return array_values(array_filter(array_map('trim', explode("\n", $entries)), 'strlen'));
+}
+
+function oopspam_update_manual_moderation_entries($option_key, $entries) {
+    $manual_moderation_options = get_option('manual_moderation_settings', array());
+    $manual_moderation_options[$option_key] = implode("\n", array_values($entries));
+
+    update_option('manual_moderation_settings', $manual_moderation_options);
+}
+
+function oopspam_add_manual_moderation_entry($option_key, $value, $case_insensitive = false) {
+    $value = trim((string) $value);
+
+    if ('' === $value) {
+        return false;
+    }
+
+    $entries = oopspam_get_manual_moderation_entries($option_key);
+    foreach ($entries as $entry) {
+        if (($case_insensitive && strtolower($entry) === strtolower($value)) || (!$case_insensitive && $entry === $value)) {
+            return false;
+        }
+    }
+
+    $entries[] = $value;
+    oopspam_update_manual_moderation_entries($option_key, $entries);
+
+    return true;
+}
+
+function oopspam_remove_manual_moderation_entry($option_key, $value, $case_insensitive = false) {
+    $value = trim((string) $value);
+
+    if ('' === $value) {
+        return false;
+    }
+
+    $entries = oopspam_get_manual_moderation_entries($option_key);
+    $filtered_entries = array_values(array_filter(
+        $entries,
+        function($entry) use ($value, $case_insensitive) {
+            if ($case_insensitive) {
+                return strtolower($entry) !== strtolower($value);
+            }
+
+            return $entry !== $value;
+        }
+    ));
+
+    if (count($filtered_entries) === count($entries)) {
+        return false;
+    }
+
+    oopspam_update_manual_moderation_entries($option_key, $filtered_entries);
+
+    return true;
 }
 
 // Check if an email is blocked locally

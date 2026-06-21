@@ -10,7 +10,7 @@ if ( ! class_exists( '\WP_List_Table' ) ) {
 function empty_spam_entries(){
 
 	 try {
-		if ( ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
 	        wp_send_json_error( array(
 	            'error'   => true,
 	            'message' => 'Access denied.',
@@ -51,7 +51,7 @@ add_action('wp_ajax_empty_spam_entries', 'OOPSPAM\UI\empty_spam_entries' ); // e
 function export_spam_entries(){
 
     try {
-        if ( ! is_user_logged_in() ) {
+        if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array(
                 'error'   => true,
                 'message' => 'Access denied.',
@@ -873,33 +873,8 @@ private static function process_form_fields($raw_entry) {
 					array( '%d' ) 
 				);
 
-				// Get the current settings
-				$manual_moderation_settings = get_option('manual_moderation_settings', array());
-
-				// Add email to allowed emails if it doesn't already exist
-				if (isset($spamEntry->email) && !empty($spamEntry->email)) {
-					$allowed_emails = isset($manual_moderation_settings['mm_allowed_emails']) ? $manual_moderation_settings['mm_allowed_emails'] : '';
-					$email_list = array_map('trim', explode("\n", $allowed_emails));
-					if (!in_array($spamEntry->email, $email_list)) {
-						$email_list[] = $spamEntry->email;
-						$manual_moderation_settings['mm_allowed_emails'] = implode("\n", $email_list);
-					}
-				}
-
-				// Add IP to allowed IPs if it doesn't already exist
-				if (isset($spamEntry->ip) && !empty($spamEntry->ip)) {
-					$allowed_ips = isset($manual_moderation_settings['mm_allowed_ips']) ? $manual_moderation_settings['mm_allowed_ips'] : '';
-					$ip_list = array_map('trim', explode("\n", $allowed_ips));
-					if (!in_array($spamEntry->ip, $ip_list)) {
-						$ip_list[] = $spamEntry->ip;
-						$manual_moderation_settings['mm_allowed_ips'] = implode("\n", $ip_list);
-					}
-				}
-
-				// Update the settings only if changes were made
-				if (isset($manual_moderation_settings['mm_allowed_emails']) || isset($manual_moderation_settings['mm_allowed_ips'])) {
-					update_option('manual_moderation_settings', $manual_moderation_settings);
-				}
+				oopspam_add_manual_moderation_entry('mm_allowed_emails', isset($spamEntry->email) ? $spamEntry->email : '', true);
+				oopspam_add_manual_moderation_entry('mm_allowed_ips', isset($spamEntry->ip) ? $spamEntry->ip : '');
 
 				// Send admin email notification if enabled
 				self::maybe_notify_not_spam($id);
@@ -923,6 +898,41 @@ private static function process_form_fields($raw_entry) {
 			}
 			return false;
 		}
+	}
+
+	public static function undo_report_spam_entry( $id ) {
+		global $wpdb;
+		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+
+		$spamEntry = $wpdb->get_row(
+			$wpdb->prepare(
+				"
+					SELECT ip, email
+					FROM $table
+					WHERE id = %s
+				",
+				$id
+			)
+		);
+
+		if (!$spamEntry) {
+			return false;
+		}
+
+		$updated = $wpdb->update(
+			$table,
+			array(
+				'reported' => false
+			),
+			array( 'ID' => $id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+
+		$email_removed = oopspam_remove_manual_moderation_entry('mm_allowed_emails', isset($spamEntry->email) ? $spamEntry->email : '', true);
+		$ip_removed = oopspam_remove_manual_moderation_entry('mm_allowed_ips', isset($spamEntry->ip) ? $spamEntry->ip : '');
+
+		return false !== $updated || $email_removed || $ip_removed;
 	}
 
 	/**
@@ -1029,6 +1039,23 @@ private static function process_form_fields($raw_entry) {
 		);
 	}
 
+	private function get_row_action_url( $action, $entry_id, $nonce ) {
+		$query_args = array(
+			'page' => isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : 'wp_oopspam_frm_spam_entries',
+			'action' => $action,
+			'spam' => absint( $entry_id ),
+			'_wpnonce' => $nonce,
+		);
+
+		foreach ( array( 'paged', 'orderby', 'order', 's' ) as $arg ) {
+			if ( isset( $_GET[ $arg ] ) ) {
+				$query_args[ $arg ] = sanitize_text_field( wp_unslash( $_GET[ $arg ] ) );
+			}
+		}
+
+		return add_query_arg( $query_args, admin_url( 'admin.php' ) );
+	}
+
 
 	/**
 	 * Method for name column
@@ -1041,6 +1068,9 @@ private static function process_form_fields($raw_entry) {
 		$delete_nonce = wp_create_nonce( 'sp_delete_spam' );
 		$report_nonce = wp_create_nonce( 'sp_report_spam' );
 		$notify_nonce = wp_create_nonce( 'sp_notify_spam' );
+		$delete_url = $this->get_row_action_url( 'delete', $item['id'], $delete_nonce );
+		$report_url = $this->get_row_action_url( 'report', $item['id'], $report_nonce );
+		$notify_url = $this->get_row_action_url( 'notify', $item['id'], $notify_nonce );
 	
 		// Limit the message to 80 characters
 		$truncated_message = substr($item['message'], 0, 80);
@@ -1051,11 +1081,13 @@ private static function process_form_fields($raw_entry) {
 		$title = '<span title="' . esc_attr($item['message']) . '">' . esc_html($truncated_message) . '</span>';
 	
 		$actions = [
-			'delete' => sprintf( '<a href="?page=%s&action=%s&spam=%s&_wpnonce=%s">Delete</a>', sanitize_text_field( $_GET['page'] ), 'delete', absint( $item['id'] ), $delete_nonce ),
-			'report' => sprintf( '<a style="color:green; %s" href="?page=%s&action=%s&spam=%s&_wpnonce=%s">Not Spam</a>', ($item['reported'] === '1' ? 'color: grey !important;pointer-events: none;
-			cursor: default; opacity: 0.5;' : ''), sanitize_text_field( $_GET['page'] ), 'report', absint( $item['id'] ), $report_nonce ),
-			'notify' => sprintf( '<a href="?page=%s&action=%s&spam=%s&_wpnonce=%s">E-mail admin</a>', sanitize_text_field( $_GET['page'] ), 'notify', absint( $item['id'] ), $notify_nonce ),
+			'delete' => sprintf( '<a href="%s">Delete</a>', esc_url( $delete_url ) ),
+			'notify' => sprintf( '<a href="%s">E-mail admin</a>', esc_url( $notify_url ) ),
 		];
+
+		if ($item['reported'] !== '1') {
+			$actions['report'] = sprintf( '<a style="color:green;" href="%s">Not Spam</a>', esc_url( $report_url ) );
+		}
 	
 		return $title . $this->row_actions( $actions );
 	}
@@ -1081,7 +1113,13 @@ private static function process_form_fields($raw_entry) {
 
 	function column_reported( $item ) {
         if ($item['reported'] === '1') {
-			return '<span style="color:green;">Reported as not spam</span>';
+			$undo_report_nonce = wp_create_nonce( 'sp_undo_report_spam' );
+			$undo_report_url = $this->get_row_action_url( 'undo-report', $item['id'], $undo_report_nonce );
+
+			return sprintf(
+				'<span style="color:green;">Reported as not spam</span> <a class="oopspam-undo-action" style="color:red;" href="%s">Undo</a>',
+				esc_url( $undo_report_url )
+			);
 		}
 		return '';
 	}
@@ -1146,7 +1184,8 @@ private static function process_form_fields($raw_entry) {
 	public function get_bulk_actions() {
 		$actions = [
 			'bulk-delete' => 'Delete',
-			'bulk-report' => 'Report as not spam'
+			'bulk-report' => 'Report as not spam',
+			'bulk-undo-report' => 'Undo report'
 		];
 
 		return $actions;
@@ -1172,6 +1211,14 @@ private static function process_form_fields($raw_entry) {
                         exit;
                     }
                     break;
+
+				case 'undo-report':
+					if (wp_verify_nonce($_GET['_wpnonce'], 'sp_undo_report_spam')) {
+						self::undo_report_spam_entry($entry_id);
+						wp_safe_redirect(remove_query_arg(['action', 'spam', '_wpnonce']));
+						exit;
+					}
+					break;
                     
                 case 'delete':
                     if (wp_verify_nonce($_GET['_wpnonce'], 'sp_delete_spam')) {
@@ -1226,7 +1273,7 @@ private static function process_form_fields($raw_entry) {
     }
 
     $action = $this->current_action();
-    if (in_array($action, ['bulk-delete', 'bulk-report'])) {
+	if (in_array($action, ['bulk-delete', 'bulk-report', 'bulk-undo-report'])) {
         $entry_ids = isset($_POST['bulk-delete']) ? array_map('absint', $_POST['bulk-delete']) : array();
         if (!empty($entry_ids)) {
             // Add JavaScript for async processing
@@ -1298,7 +1345,7 @@ private static function process_form_fields($raw_entry) {
                                         <?php endif; ?>
                                         setTimeout(function() {
                                             location.reload();
-                                        }, 1000);
+                                        }, 500);
                                     } else {
                                         processNextEntry();
                                     }
@@ -1456,6 +1503,26 @@ class OOPSpam_Spam {
 				<br class="clear">
 			</div>
 		</div>
+		<script type="text/javascript">
+		jQuery(document).ready(function($) {
+			$(document).on('click', 'a.oopspam-undo-action', function() {
+				const $undoLink = $(this);
+
+				if ($undoLink.data('busy')) {
+					return false;
+				}
+
+				$undoLink.data('busy', true);
+				$undoLink.text('Undoing...');
+				$undoLink.css({
+					'pointer-events': 'none',
+					'opacity': '0.6',
+					'cursor': 'default'
+				});
+				$undoLink.attr('aria-disabled', 'true');
+			});
+		});
+		</script>
 		<style>
 		.ts-wrapper {
 			min-width: 200px;

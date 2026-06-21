@@ -44,6 +44,12 @@ function oopspam_update_cloud_providers_setting() {
         return;
     }
 
+    // Check user permissions
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Insufficient permissions');
+        return;
+    }
+
     // Get current settings
     $options = get_option('oopspamantispam_ipfiltering_settings', array());
     

@@ -1,5 +1,56 @@
 jQuery(document).ready(function($) {
 
+    function ensureActionIndicatorStyles() {
+        if (document.getElementById('oopspam-action-indicator-style')) {
+            return;
+        }
+
+        const style = document.createElement('style');
+        style.id = 'oopspam-action-indicator-style';
+        style.textContent =
+            '.row-actions a.oopspam-action-pending { pointer-events: none; opacity: 0.8; }' +
+            '.oopspam-row-action-indicator { margin-left: 6px; color: #50575e; font-style: italic; display: inline-flex; align-items: center; gap: 6px; }' +
+            '.oopspam-row-action-indicator::before { content: ""; width: 10px; height: 10px; border: 2px solid #8c8f94; border-top-color: transparent; border-radius: 50%; animation: oopspam-spin 0.7s linear infinite; }' +
+            '@keyframes oopspam-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+
+        document.head.appendChild(style);
+    }
+
+    ensureActionIndicatorStyles();
+
+    function isModifiedClick(event) {
+        return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.which === 2;
+    }
+
+    $(document).on('click', '.row-actions a[href*="action=report"]', function(event) {
+        if (isModifiedClick(event) || this.target === '_blank') {
+            return;
+        }
+
+        const $link = $(this);
+
+        if ($link.hasClass('oopspam-action-pending')) {
+            event.preventDefault();
+            return;
+        }
+
+        event.preventDefault();
+
+        const destination = $link.attr('href');
+        const originalText = $link.text();
+
+        $link
+            .addClass('oopspam-action-pending')
+            .attr('aria-disabled', 'true')
+            .text(originalText + '...');
+
+        $('<span class="oopspam-row-action-indicator" aria-live="polite">Updating...</span>').insertAfter($link);
+
+        setTimeout(function() {
+            window.location.href = destination;
+        }, 120);
+    });
+
 
     document.querySelectorAll('.select').forEach((el)=>{
         const isMultiple = el.hasAttribute('multiple');
