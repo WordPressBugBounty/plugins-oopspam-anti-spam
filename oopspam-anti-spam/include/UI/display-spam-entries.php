@@ -195,6 +195,19 @@ class Spam_Entries extends \WP_List_Table {
 			}
 		}
 
+		// Add date range filter
+		$date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+		$date_to   = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
+
+		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
+			$where[] = "date >= %s";
+			$values[] = $date_from . ' 00:00:00';
+		}
+		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
+			$where[] = "date <= %s";
+			$values[] = $date_to . ' 23:59:59';
+		}
+
 		// Combine WHERE clauses
 		$where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 
@@ -251,6 +264,8 @@ class Spam_Entries extends \WP_List_Table {
 			$form_ids = $this->get_unique_form_ids();
 			$current_reason = isset($_REQUEST['filter_reason']) ? sanitize_text_field($_REQUEST['filter_reason']) : '';
 			$current_form_ids = isset($_REQUEST['filter_form_id']) ? array_map('sanitize_text_field', (array)$_REQUEST['filter_form_id']) : [];
+			$current_date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+			$current_date_to   = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
 			?>
 			<div class="alignleft actions">
 				<select name="filter_reason" class="postform" id="filter-by-reason">
@@ -270,6 +285,12 @@ class Spam_Entries extends \WP_List_Table {
 						</option>
 					<?php endforeach; ?>
 				</select>
+
+				<label class="oopspam-date-filter-label" for="spam-date-from"><?php esc_html_e('From:', 'oopspam-anti-spam'); ?></label>
+				<input type="date" id="spam-date-from" name="date_from" value="<?php echo esc_attr($current_date_from); ?>" class="oopspam-date-input" placeholder="<?php esc_attr_e('Start date', 'oopspam-anti-spam'); ?>">
+
+				<label class="oopspam-date-filter-label" for="spam-date-to"><?php esc_html_e('To:', 'oopspam-anti-spam'); ?></label>
+				<input type="date" id="spam-date-to" name="date_to" value="<?php echo esc_attr($current_date_to); ?>" class="oopspam-date-input" placeholder="<?php esc_attr_e('End date', 'oopspam-anti-spam'); ?>">
 
 				<?php submit_button(__('Filter',  'oopspam-anti-spam'), '', 'filter_action', false); ?>
 			</div>
@@ -295,6 +316,27 @@ class Spam_Entries extends \WP_List_Table {
 				}
 				.alignleft.actions input[type="submit"] {
 					margin: 1px 8px 0 0;
+				}
+				.oopspam-date-filter-label {
+					margin: 0 2px 0 8px;
+					font-weight: 500;
+					vertical-align: middle;
+					color: #50575e;
+				}
+				.oopspam-date-input {
+					vertical-align: middle;
+					min-height: 30px;
+					padding: 0 6px;
+					border: 1px solid #8c8f94;
+					border-radius: 4px;
+					font-size: 13px;
+					line-height: 2;
+					color: #2c3338;
+				}
+				.oopspam-date-input:focus {
+					border-color: #2271b1;
+					box-shadow: 0 0 0 1px #2271b1;
+					outline: 2px solid transparent;
 				}
 			</style>
 
@@ -972,12 +1014,25 @@ private static function process_form_fields($raw_entry) {
 				$values = array_merge($values, $form_ids);
 			}
 		}
-		
+
+		// Add date range filter
+		$date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+		$date_to   = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
+
+		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
+			$where[] = "date >= %s";
+			$values[] = $date_from . ' 00:00:00';
+		}
+		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
+			$where[] = "date <= %s";
+			$values[] = $date_to . ' 23:59:59';
+		}
+
 		// Combine WHERE clauses
 		if (!empty($where)) {
 			$sql .= " WHERE " . implode(" AND ", $where);
 		}
-		
+
 		// Use prepare only if there are values to prepare
 		if (!empty($values)) {
 			return $wpdb->get_var($wpdb->prepare($sql, $values));
@@ -1047,7 +1102,7 @@ private static function process_form_fields($raw_entry) {
 			'_wpnonce' => $nonce,
 		);
 
-		foreach ( array( 'paged', 'orderby', 'order', 's' ) as $arg ) {
+		foreach ( array( 'paged', 'orderby', 'order', 's', 'date_from', 'date_to' ) as $arg ) {
 			if ( isset( $_GET[ $arg ] ) ) {
 				$query_args[ $arg ] = sanitize_text_field( wp_unslash( $_GET[ $arg ] ) );
 			}

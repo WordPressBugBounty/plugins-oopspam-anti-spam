@@ -30,7 +30,9 @@ function oopspam_format_entry_datetime($datetime) {
         return '';
     }
 
-    $source_timezone = wp_timezone();
+    // The date column is a MySQL TIMESTAMP which is always stored in UTC.
+    // Interpret the value as UTC to avoid double timezone offset.
+    $source_timezone = new DateTimeZone('UTC');
     $display_timezone = oopspam_get_entries_display_timezone_object();
     $format = trim(get_option('date_format') . ' ' . get_option('time_format'));
 
@@ -65,6 +67,20 @@ function oopspam_get_entries_display_timezone_label() {
     }
 
     return $timezone;
+}
+
+/**
+ * Validate that a string is a properly formatted date (Y-m-d).
+ *
+ * @param string $date Date string to validate.
+ * @return bool True if valid Y-m-d format, false otherwise.
+ */
+function oopspam_is_valid_date($date) {
+    if (empty($date)) {
+        return false;
+    }
+    $d = \DateTime::createFromFormat('Y-m-d', $date);
+    return $d && $d->format('Y-m-d') === $date;
 }
 
 function oopspamantispam_plugin_check($plugin)
@@ -754,6 +770,9 @@ function oopspam_get_request_metadata() {
     
     // Connection type
     $metadata['connection'] = isset($_SERVER['HTTP_CONNECTION']) ? sanitize_text_field($_SERVER['HTTP_CONNECTION']) : '';
+    
+    // Upgrade header
+    $metadata['upgrade'] = isset($_SERVER['HTTP_UPGRADE']) ? sanitize_text_field($_SERVER['HTTP_UPGRADE']) : '';
     
     // Request URI/Page 
     $metadata['request_uri'] = isset($_SERVER['REQUEST_URI']) ? esc_url_raw($_SERVER['REQUEST_URI']) : '';

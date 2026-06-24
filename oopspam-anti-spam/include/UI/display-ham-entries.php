@@ -170,7 +170,20 @@ class Ham_Entries extends \WP_List_Table {
 			 $where[] = "(form_id LIKE %s OR message LIKE %s OR ip LIKE %s OR email LIKE %s OR raw_entry LIKE %s)";
 			 $values = array_merge($values, array_fill(0, 5, $search_term));
 		 }
-	 
+
+		// Add date range filter
+		$date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+		$date_to   = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
+
+		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
+			$where[] = "date >= %s";
+			$values[] = $date_from . ' 00:00:00';
+		}
+		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
+			$where[] = "date <= %s";
+			$values[] = $date_to . ' 23:59:59';
+		}
+
 		 // Combine WHERE clauses
 		 $where_clause = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
 	 
@@ -313,12 +326,25 @@ class Ham_Entries extends \WP_List_Table {
 			$where[] = "(form_id LIKE %s OR message LIKE %s OR ip LIKE %s OR email LIKE %s OR raw_entry LIKE %s)";
 			$values = array_merge($values, array_fill(0, 5, $search_term));
 		}
-		
+
+		// Add date range filter
+		$date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+		$date_to   = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
+
+		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
+			$where[] = "date >= %s";
+			$values[] = $date_from . ' 00:00:00';
+		}
+		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
+			$where[] = "date <= %s";
+			$values[] = $date_to . ' 23:59:59';
+		}
+
 		// Combine WHERE clauses
 		if (!empty($where)) {
 			$sql .= " WHERE " . implode(" AND ", $where);
 		}
-		
+
 		// Use prepare only if there are values to prepare
 		if (!empty($values)) {
 			return $wpdb->get_var($wpdb->prepare($sql, $values));
@@ -331,6 +357,54 @@ class Ham_Entries extends \WP_List_Table {
 	/** Text displayed when no ham entry is available */
 	public function no_items() {
 		esc_html_e( 'No ham entries available.', 'oopspam-anti-spam' );
+	}
+
+	/**
+	 * Display the filter dropdown and date range picker
+	 */
+	public function extra_tablenav($which) {
+		if ($which === 'top') {
+			$current_date_from = isset($_REQUEST['date_from']) ? sanitize_text_field($_REQUEST['date_from']) : '';
+			$current_date_to   = isset($_REQUEST['date_to']) ? sanitize_text_field($_REQUEST['date_to']) : '';
+			?>
+			<div class="alignleft actions">
+				<label class="oopspam-date-filter-label" for="ham-date-from"><?php esc_html_e('From:', 'oopspam-anti-spam'); ?></label>
+				<input type="date" id="ham-date-from" name="date_from" value="<?php echo esc_attr($current_date_from); ?>" class="oopspam-date-input" placeholder="<?php esc_attr_e('Start date', 'oopspam-anti-spam'); ?>">
+
+				<label class="oopspam-date-filter-label" for="ham-date-to"><?php esc_html_e('To:', 'oopspam-anti-spam'); ?></label>
+				<input type="date" id="ham-date-to" name="date_to" value="<?php echo esc_attr($current_date_to); ?>" class="oopspam-date-input" placeholder="<?php esc_attr_e('End date', 'oopspam-anti-spam'); ?>">
+
+				<?php submit_button(__('Filter',  'oopspam-anti-spam'), '', 'filter_action', false); ?>
+			</div>
+
+			<style>
+				.oopspam-date-filter-label {
+					margin: 0 2px 0 8px;
+					font-weight: 500;
+					vertical-align: middle;
+					color: #50575e;
+				}
+				.oopspam-date-input {
+					vertical-align: middle;
+					min-height: 30px;
+					padding: 0 6px;
+					border: 1px solid #8c8f94;
+					border-radius: 4px;
+					font-size: 13px;
+					line-height: 2;
+					color: #2c3338;
+				}
+				.oopspam-date-input:focus {
+					border-color: #2271b1;
+					box-shadow: 0 0 0 1px #2271b1;
+					outline: 2px solid transparent;
+				}
+				.alignleft.actions input[type="submit"] {
+					margin: 1px 8px 0 0;
+				}
+			</style>
+			<?php
+		}
 	}
 
 	/**
@@ -427,7 +501,7 @@ class Ham_Entries extends \WP_List_Table {
 			'_wpnonce' => $nonce,
 		);
 
-		foreach ( array( 'paged', 'orderby', 'order', 's' ) as $arg ) {
+		foreach ( array( 'paged', 'orderby', 'order', 's', 'date_from', 'date_to' ) as $arg ) {
 			if ( isset( $_GET[ $arg ] ) ) {
 				$query_args[ $arg ] = sanitize_text_field( wp_unslash( $_GET[ $arg ] ) );
 			}
