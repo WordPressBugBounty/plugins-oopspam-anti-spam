@@ -9,30 +9,26 @@ class OOPSpam_RateLimiter {
     
     public function __construct() {
         $rtOptions = get_option('oopspamantispam_ratelimit_settings', []);
-        
-        // Check if $rtOptions is an array and has the necessary keys
-        if (!is_array($rtOptions) || 
-        !isset($rtOptions['oopspamantispam_ratelimit_ip_limit']) || 
-        !isset($rtOptions['oopspamantispam_ratelimit_email_limit']) ||
-        !isset($rtOptions['oopspamantispam_ratelimit_block_duration']) ||
-        !isset($rtOptions['oopspamantispam_ratelimit_cleanup_duration'])) {
-        // Handle the case where rtOptions is not an array or missing keys
+
+        // Safely extract values with int casting; empty strings
+        // and missing keys fall back to sensible defaults.
+        $ipLimit = isset($rtOptions['oopspamantispam_ratelimit_ip_limit'])
+            ? intval($rtOptions['oopspamantispam_ratelimit_ip_limit']) : 2;
+        $emailLimit = isset($rtOptions['oopspamantispam_ratelimit_email_limit'])
+            ? intval($rtOptions['oopspamantispam_ratelimit_email_limit']) : 2;
+        $blockDuration = isset($rtOptions['oopspamantispam_ratelimit_block_duration'])
+            ? intval($rtOptions['oopspamantispam_ratelimit_block_duration']) : 24;
+        $cleanupDuration = isset($rtOptions['oopspamantispam_ratelimit_cleanup_duration'])
+            ? intval($rtOptions['oopspamantispam_ratelimit_cleanup_duration']) : 48;
+
+        // Use 0 as floor for block/cleanup so they are never negative.
         $this->config = [
-            'ip_limit_per_hour' => 2,
-            'email_limit_per_hour' => 2,
-            'block_duration' => 24,
-            'cleanup_older_than' => 48
+            'ip_limit_per_hour'   => max(0, $ipLimit),
+            'email_limit_per_hour' => max(0, $emailLimit),
+            'block_duration'      => max(1, $blockDuration),
+            'cleanup_older_than'  => max(1, $cleanupDuration),
         ];
-    } else {
-        // Load configuration
-        $this->config = [
-            'ip_limit_per_hour' => $rtOptions['oopspamantispam_ratelimit_ip_limit'],
-            'email_limit_per_hour' => $rtOptions['oopspamantispam_ratelimit_email_limit'],
-            'block_duration' => $rtOptions['oopspamantispam_ratelimit_block_duration'],
-            'cleanup_older_than' => $rtOptions['oopspamantispam_ratelimit_cleanup_duration']
-        ];
-    }
-    
+
         add_filter('cron_schedules', [$this, 'oopspam_register_cron_schedule']);
     }
     
@@ -51,100 +47,80 @@ class OOPSpam_RateLimiter {
         return date('Y-m-d H:i:s', strtotime($this->getCurrentDateTime() . " {$hours} hours"));
     }  
 
+    /**
+     * Check and record a rate limit attempt atomically.
+     *
+     * @param string $identifier  IP address or email.
+     * @param string $type        'ip' or 'email'.
+     * @return bool               True if allowed, false if blocked.
+     */
     public function checkLimit($identifier, $type = 'ip') {
-        // Schedule clean up if not set
-        if (!wp_next_scheduled($this->cron_hook)) {
-            $cleanup_hours = isset($this->config['cleanup_older_than']) ? intval($this->config['cleanup_older_than']) : 48; // 48 as default
+        static $cron_ensured = false;
+
+        // Schedule clean up if not set (only once per request)
+        if (!$cron_ensured && !wp_next_scheduled($this->cron_hook)) {
+            $cron_ensured = true;
+            $cleanup_hours = isset($this->config['cleanup_older_than']) ? intval($this->config['cleanup_older_than']) : 48;
             $this->reschedule_cleanup(0, $cleanup_hours);
-         }
-       
+        }
+
         if ($this->isBlocked($identifier, $type)) {
             return false;
         }
 
-        $attempts = $this->getAttempts($identifier, $type);
+        global $wpdb;
+        $now = $this->getCurrentDateTime();
+        $one_hour_ago = $this->getDateTimeWithOffset(-1);
         $limit = $type === 'ip' ? $this->config['ip_limit_per_hour'] : $this->config['email_limit_per_hour'];
-        
-        if ($attempts >= $limit) {
-            $this->blockIdentifier($identifier, $type);
-            return false;
+        $table_name = $wpdb->prefix . $this->db_table;
+
+        // A limit of 0 or less means this type of rate limiting is disabled.
+        // Allow the request without recording any attempt.
+        if ($limit <= 0) {
+            return true;
         }
 
-        $this->recordAttempt($identifier, $type);
-        return true;
-    }
+        // Atomic upsert: insert a new row or increment the counter.
+        // The CASE resets attempts to 1 when the last_attempt is older than 1 hour.
+        $wpdb->query($wpdb->prepare(
+            "INSERT INTO `{$table_name}` (identifier, type, first_attempt, last_attempt, attempts)
+            VALUES (%s, %s, %s, %s, 1)
+            ON DUPLICATE KEY UPDATE
+                attempts = CASE WHEN last_attempt > %s THEN attempts + 1 ELSE 1 END,
+                last_attempt = CASE WHEN last_attempt > %s THEN %s ELSE last_attempt END,
+                first_attempt = CASE WHEN last_attempt > %s THEN first_attempt ELSE %s END",
+            $identifier,
+            $type,
+            $now,
+            $now,
+            $one_hour_ago,
+            $one_hour_ago,
+            $now,
+            $one_hour_ago,
+            $now
+        ));
 
-    private function getAttempts($identifier, $type) {
-        global $wpdb;
-        
-        $one_hour_ago = $this->getDateTimeWithOffset(-1);
-    
-        $table_name = esc_sql($wpdb->prefix . $this->db_table);
-        $result = $wpdb->get_var($wpdb->prepare(
+        // Read back the new attempt count from the now-committed row.
+        $attempts = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT 
                 CASE 
                     WHEN last_attempt > %s THEN attempts
                     ELSE 0
                 END as current_attempts
-            FROM {$table_name}
+            FROM `{$table_name}`
             WHERE identifier = %s 
             AND type = %s",
             $one_hour_ago,
             $identifier,
             $type
         ));
-        
-        return (int)$result;
-    }
 
-    private function recordAttempt($identifier, $type) {
-        global $wpdb;
-        
-        $now = $this->getCurrentDateTime();
-        $one_hour_ago = $this->getDateTimeWithOffset(-1);
-    
-        $table_name = esc_sql($wpdb->prefix . $this->db_table);
-        $existing = $wpdb->get_row($wpdb->prepare(
-            "SELECT id, last_attempt, 
-            CASE 
-                WHEN last_attempt > %s THEN attempts
-                ELSE 0
-            END as current_attempts
-            FROM {$table_name}
-            WHERE identifier = %s AND type = %s",
-            $one_hour_ago,
-            $identifier,
-            $type
-        ));
-        
-        if ($existing) {
-            $table_name = esc_sql($wpdb->prefix . $this->db_table);
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$table_name}
-                SET 
-                    attempts = CASE 
-                        WHEN last_attempt > %s THEN attempts + 1
-                        ELSE 1
-                    END,
-                    last_attempt = %s 
-                WHERE id = %d",
-                $one_hour_ago,
-                $now,
-                $existing->id
-            ));
-        } else {
-            $wpdb->insert(
-                $wpdb->prefix . $this->db_table,
-                [
-                    'identifier' => $identifier,
-                    'type' => $type,
-                    'first_attempt' => $now,
-                    'last_attempt' => $now,
-                    'attempts' => 1
-                ],
-                ['%s', '%s', '%s', '%s', '%d']
-            );
+        if ($attempts > $limit) {
+            $this->blockIdentifier($identifier, $type);
+            return false;
         }
+
+        return true;
     }    
 
     private function blockIdentifier($identifier, $type) {
@@ -230,21 +206,30 @@ class OOPSpam_RateLimiter {
     }
 
     public function reschedule_cleanup($old_value, $new_value) {
-        try {            
-            // Clear existing schedules to prevent duplicates
-            wp_clear_scheduled_hook($this->cron_hook);
-            
+        try {
             // Update config with new duration
             $this->config['cleanup_older_than'] = intval($new_value);
-            
-            // Schedule the new cleanup event
-            $timestamp = time() + $this->config['cleanup_older_than'] * HOUR_IN_SECONDS;
-            $scheduled = wp_schedule_event($timestamp, 'oopspam_ratelimit_cleanup', $this->cron_hook);
+
+            $next_run = wp_next_scheduled($this->cron_hook);
+            $desired_timestamp = time() + $this->config['cleanup_older_than'] * HOUR_IN_SECONDS;
+
+            // If a schedule already exists and the duration hasn't changed
+            // meaningfully (within 1 hour), leave it alone to avoid
+            // unnecessary clear+reschedule races under concurrent requests.
+            if ($next_run) {
+                $existing_interval = abs($next_run - $desired_timestamp);
+                if ($existing_interval < HOUR_IN_SECONDS) {
+                    return;
+                }
+                wp_clear_scheduled_hook($this->cron_hook);
+            }
+
+            $scheduled = wp_schedule_event($desired_timestamp, 'oopspam_ratelimit_cleanup', $this->cron_hook);
 
             if ($scheduled === false) {
                 error_log("Failed to schedule new cleanup event");
             }
-            
+
         } catch (\Exception $e) {
             error_log('OOPSpam_RateLimiter reschedule_cleanup error: ' . $e->getMessage());
         }

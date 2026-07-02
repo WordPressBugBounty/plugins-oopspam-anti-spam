@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 7.0
-Stable tag: 1.2.73
+Stable tag: 1.2.74
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -116,6 +116,11 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.74 =
+* **NEW:** Form ID in the Form and Valid Entries tables now displays the form title/name on hover.
+* **IMPROVEMENT:** Rate limiting now checks ongoing requests to help prevent race conditions.
+* **FIX:** The timezone setting now uses UTC when displaying dates in the Form and Valid Entries tables.
+* **FIX:** The date range filter in the Form and Valid Entries tables now respects the database timezone.
 = 1.2.73 =
 * **NEW:** Added a new date range filter to the Form and Spam Entries tables
 * **FIX:** Fixed a double time zone conversion for the time zone setting.

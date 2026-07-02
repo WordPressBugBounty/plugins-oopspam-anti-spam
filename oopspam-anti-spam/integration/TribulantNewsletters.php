@@ -92,10 +92,7 @@ function oopspam_tribulant_before_save($errors, $data)
     }
 
     $rawEntry = wp_json_encode($payload);
-    $formId = 'Newsletters by Tribulant';
-    if (!empty($currentFormId)) {
-        $formId = 'Newsletters by Tribulant: ' . $currentFormId;
-    }
+    $formId = \oopspam_format_form_id($currentFormId, 'Newsletters by Tribulant');
 
     $userIP = '';
     if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {

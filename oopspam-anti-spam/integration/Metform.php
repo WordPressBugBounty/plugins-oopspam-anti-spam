@@ -150,7 +150,7 @@ function oopspamantispam_metform_validation_check($filter_validate)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => json_encode($form_data),
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, $form_post ? $form_post->post_title : ''),
         ];
 
         if (!$detectionResult["isItHam"]) {

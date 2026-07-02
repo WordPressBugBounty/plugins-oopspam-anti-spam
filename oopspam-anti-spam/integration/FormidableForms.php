@@ -87,7 +87,7 @@ function oopspamantispam_formidable_pre_submission($errors, $values)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $values['form_id'],
+            "FormId" => \oopspam_format_form_id($values['form_id'], \FrmForm::getName($values['form_id'])),
         ];
 
         if (!$detectionResult["isItHam"]) {

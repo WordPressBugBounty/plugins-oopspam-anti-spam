@@ -46,7 +46,7 @@ function oopspamantispam_um_submission($post)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, get_post($form_id) ? get_post($form_id)->post_title : ''),
         ];
 
         if (!$detectionResult["isItHam"]) {

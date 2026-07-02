@@ -43,7 +43,7 @@ function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $header
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $_POST["post_id"],
+            "FormId" => \oopspam_format_form_id($_POST["post_id"], get_the_title($_POST["post_id"])),
         ];
 
         if (!$detectionResult["isItHam"]) {

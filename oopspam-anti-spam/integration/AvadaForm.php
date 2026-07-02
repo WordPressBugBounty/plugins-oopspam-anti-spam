@@ -117,7 +117,7 @@ function oopspamantispam_avada_submission($form_data, $form_post_id)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_post_id)),
         ];
 
         if (!$detectionResult["isItHam"]) {

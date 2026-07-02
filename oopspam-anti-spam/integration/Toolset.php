@@ -46,7 +46,7 @@ function oopspam_toolset_pre_submission($error_fields, $form_data)
         "IP" => $userIP,
         "Email" => $email,
         "RawEntry" => $raw_entry,
-        "FormId" => $form_data["id"],
+        "FormId" => \oopspam_format_form_id($form_data["id"], get_the_title($form_data["id"])),
     ];
 
     if (!$detectionResult["isItHam"]) {

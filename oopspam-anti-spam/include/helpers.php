@@ -25,13 +25,27 @@ function oopspam_get_entries_display_timezone_object() {
     }
 }
 
+/**
+ *
+ * The SET is only executed once per request (static flag).
+ */
+function oopspam_ensure_mysql_utc_timezone() {
+    static $ensured = false;
+    if ($ensured) {
+        return;
+    }
+    global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.DirectDatabaseQuery.DirectQuery
+    $wpdb->query("SET time_zone = '+00:00'");
+    $ensured = true;
+}
+
 function oopspam_format_entry_datetime($datetime) {
     if (empty($datetime)) {
         return '';
     }
 
-    // The date column is a MySQL TIMESTAMP which is always stored in UTC.
-    // Interpret the value as UTC to avoid double timezone offset.
+   
     $source_timezone = new DateTimeZone('UTC');
     $display_timezone = oopspam_get_entries_display_timezone_object();
     $format = trim(get_option('date_format') . ' ' . get_option('time_format'));
@@ -81,6 +95,35 @@ function oopspam_is_valid_date($date) {
     }
     $d = \DateTime::createFromFormat('Y-m-d', $date);
     return $d && $d->format('Y-m-d') === $date;
+}
+
+/**
+ * Convert a date filter value (Y-m-d) from the display timezone to a UTC datetime string.
+ *
+ * The entries table stores dates as MySQL TIMESTAMP (UTC internally), and queries
+ * run with the MySQL session time_zone set to UTC. Date filter inputs from the user
+ * represent dates in the display timezone, so they must be converted to UTC before
+ * being used in SQL WHERE comparisons.
+ *
+ * @param string $date_string Date in Y-m-d format (from the date picker).
+ * @param string $time_suffix Time portion to append, e.g. '00:00:00' or '23:59:59'.
+ * @return string Datetime string in UTC (Y-m-d H:i:s), suitable for SQL comparison.
+ */
+function oopspam_convert_date_filter_to_utc($date_string, $time_suffix) {
+    if (empty($date_string)) {
+        return '';
+    }
+
+    $display_timezone = oopspam_get_entries_display_timezone_object();
+
+    try {
+        $date = new DateTime($date_string . ' ' . $time_suffix, $display_timezone);
+        $date->setTimezone(new DateTimeZone('UTC'));
+        return $date->format('Y-m-d H:i:s');
+    } catch (Exception $e) {
+        // Fall back to the raw concatenation if timezone conversion fails.
+        return $date_string . ' ' . $time_suffix;
+    }
 }
 
 function oopspamantispam_plugin_check($plugin)
@@ -503,6 +546,10 @@ function oopspam_store_spam_submission($frmEntry, $reason)
  */
 function oopspam_build_spam_report_email($is_test = false) {
     global $wpdb;
+    
+    // Ensure MySQL returns TIMESTAMP values in UTC
+    oopspam_ensure_mysql_utc_timezone();
+    
     $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
     $site_name = get_bloginfo('name');
     $site_url = get_bloginfo('url');
@@ -852,4 +899,68 @@ function oopspam_enrich_raw_entry($raw_entry) {
     );
     
     return json_encode($enriched_entry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+
+/**
+ * Format form ID and title for storage in the database.
+ * Uses format: {title}|{id} or just {title} if no id, or just {id} if no title.
+ * Truncates to fit within varchar(50).
+ *
+ * @param string|int $id    The form identifier (numeric ID or slug).
+ * @param string     $title The human-readable form title/name.
+ * @return string Formatted string for storage in form_id column.
+ */
+function oopspam_format_form_id($id, $title = '') {
+    $id = trim((string) $id);
+    $title = trim((string) $title);
+
+    if ($title !== '' && $id !== '') {
+        $combined = $title . '|' . $id;
+        // Truncate title to fit varchar(50), preserving the ID portion
+        if (strlen($combined) > 50) {
+            $max_title_len = 50 - strlen($id) - 1; // -1 for the pipe separator
+            if ($max_title_len > 0) {
+                $title = substr($title, 0, $max_title_len);
+            } else {
+                $title = '';
+            }
+            $combined = $title ? $title . '|' . $id : $id;
+        }
+        return $combined;
+    }
+
+    if ($title !== '') {
+        return substr($title, 0, 50);
+    }
+
+    return substr($id, 0, 50);
+}
+
+/**
+ * Parse a stored form_id value into its display components.
+ * Handles the format {title}|{id} as well as legacy plain values.
+ *
+ * @param string $stored The value from the form_id database column.
+ * @return array{id: string, title: string, display: string} Parsed components.
+ *         'id' is the form identifier, 'title' is the human-readable name,
+ *         'display' is what should be shown as the visible text in the table.
+ */
+function oopspam_parse_form_id($stored) {
+    $stored = trim((string) $stored);
+
+    if (strpos($stored, '|') !== false) {
+        $parts = explode('|', $stored, 2);
+        return array(
+            'id'      => $parts[1],
+            'title'   => $parts[0],
+            'display' => $parts[1],
+        );
+    }
+
+    // Legacy format: no pipe separator, show as-is
+    return array(
+        'id'      => $stored,
+        'title'   => $stored,
+        'display' => $stored,
+    );
 }

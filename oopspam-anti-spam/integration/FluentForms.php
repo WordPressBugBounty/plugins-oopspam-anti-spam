@@ -121,7 +121,7 @@ function oopspamantispam_ff_pre_submission($insertData, $data, $form)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $insertData["form_id"],
+            "FormId" => \oopspam_format_form_id($insertData["form_id"], $form->title),
         ];
 
         if (!$detectionResult["isItHam"]) {

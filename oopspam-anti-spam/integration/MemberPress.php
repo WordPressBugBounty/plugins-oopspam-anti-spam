@@ -50,7 +50,7 @@ function oopspamantispam_mpress_validate_signup($errors)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $_POST['mepr_product_id'],
+            "FormId" => \oopspam_format_form_id($_POST['mepr_product_id'], get_the_title($_POST['mepr_product_id'])),
         ];
 
         if (!$detectionResult["isItHam"]) {

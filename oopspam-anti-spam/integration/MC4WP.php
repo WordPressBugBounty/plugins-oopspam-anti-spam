@@ -14,7 +14,7 @@ add_filter( 'mc4wp_form_errors', function( array $errors, \MC4WP_Form $form ) {
         $data = $form->get_raw_data();
 
         $raw_entry = json_encode($data);
-        $form_id = "MC4WP: Mailchimp for WordPress: "  . $data['_mc4wp_form_id'];
+        $form_id = \oopspam_format_form_id($data['_mc4wp_form_id'], $form->get_name());
         $userIP = "";
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();

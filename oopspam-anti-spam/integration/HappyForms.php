@@ -110,7 +110,7 @@ function oopspamantispam_happyforms_pre_submission($is_valid, $request, $_form)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, isset($_form['post_title']) ? $_form['post_title'] : ''),
         ];
 
         if (!$detectionResult["isItHam"]) {

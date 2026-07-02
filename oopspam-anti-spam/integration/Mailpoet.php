@@ -13,7 +13,7 @@ function oopspam_mailpoet_pre_subscription($subscriber_data, $subscriber, $form_
         $email = sanitize_email($subscriber_data['email']);
 
         $raw_entry = json_encode($subscriber_data);
-        $form_id = "MailPoet: "  . sanitize_text_field($form_data->getName());
+        $form_id = \oopspam_format_form_id($form_data->getId(), $form_data->getName());
         $userIP = "";
         if (!isset($privacyOptions['oopspam_is_check_for_ip']) || ($privacyOptions['oopspam_is_check_for_ip'] !== true && $privacyOptions['oopspam_is_check_for_ip'] !== 'on')) {
             $userIP = oopspamantispam_get_ip();

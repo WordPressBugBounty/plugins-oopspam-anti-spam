@@ -114,7 +114,7 @@ function oopspamantispam_ws_pre_submission($field_error_action_array, $post_mode
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, method_exists($submit, 'form_name') ? $submit->form_name : ''),
         ];
 
         if (!$detectionResult["isItHam"]) {

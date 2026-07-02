@@ -75,7 +75,7 @@ function checkSpamBeforeEmail($canExecute, $action, $form) {
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => json_encode($form['fields']),
-            "FormId" => $form['formId'],
+            "FormId" => \oopspam_format_form_id($form['formId'], isset($form['formName']) ? $form['formName'] : get_the_title($form['formId'])),
         ];
 
         if (isset($detectionResult["isItHam"]) && !$detectionResult["isItHam"]) {

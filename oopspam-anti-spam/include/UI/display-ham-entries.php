@@ -63,6 +63,9 @@ function export_ham_entries(){
         global $wpdb; 
         $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
         
+        // Ensure MySQL returns TIMESTAMP values in UTC
+        \oopspam_ensure_mysql_utc_timezone();
+        
         // Get column names securely
         $column_names = $wpdb->get_col($wpdb->prepare(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
@@ -152,6 +155,9 @@ class Ham_Entries extends \WP_List_Table {
 	public static function get_ham_entries($per_page = 5, $page_number = 1, $search = "") {
 		global $wpdb;
 		
+		// Ensure MySQL returns TIMESTAMP values in UTC
+		\oopspam_ensure_mysql_utc_timezone();
+		
 		// Validate and sanitize input parameters
 		$per_page = absint($per_page);
 		$page_number = absint($page_number);
@@ -177,11 +183,11 @@ class Ham_Entries extends \WP_List_Table {
 
 		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
 			$where[] = "date >= %s";
-			$values[] = $date_from . ' 00:00:00';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_from, '00:00:00');
 		}
 		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
 			$where[] = "date <= %s";
-			$values[] = $date_to . ' 23:59:59';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_to, '23:59:59');
 		}
 
 		 // Combine WHERE clauses
@@ -312,6 +318,10 @@ class Ham_Entries extends \WP_List_Table {
 	 */
 	public static function record_count() {
 		global $wpdb;
+		
+		// Ensure MySQL returns TIMESTAMP values in UTC
+		\oopspam_ensure_mysql_utc_timezone();
+		
 		$table = $wpdb->prefix . 'oopspam_frm_ham_entries';
 		
 		$where = array();
@@ -333,11 +343,11 @@ class Ham_Entries extends \WP_List_Table {
 
 		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
 			$where[] = "date >= %s";
-			$values[] = $date_from . ' 00:00:00';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_from, '00:00:00');
 		}
 		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
 			$where[] = "date <= %s";
-			$values[] = $date_to . ' 23:59:59';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_to, '23:59:59');
 		}
 
 		// Combine WHERE clauses
@@ -422,13 +432,21 @@ class Ham_Entries extends \WP_List_Table {
 			case 'ip':
 			case 'email':
             case 'raw_entry':
-			case 'form_id':
 				return esc_html( $item[ $column_name ] );
 			case 'score':
 				return $this->column_score($item);
 			default:
 				return esc_html( print_r( $item, true ) );
 		}
+	}
+
+	function column_form_id( $item ) {
+		$parsed = \oopspam_parse_form_id( $item['form_id'] );
+		return sprintf(
+			'<span title="%s">%s</span>',
+			esc_attr( $parsed['title'] ),
+			esc_html( $parsed['display'] )
+		);
 	}
 
 	public function column_date( $item ) {

@@ -105,7 +105,7 @@ function oopspamantispam_wpf_pre_submission($fields, $entry, $form_data)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_data['id'],
+            "FormId" => \oopspam_format_form_id($form_data['id'], isset($form_data['settings']['form_title']) ? $form_data['settings']['form_title'] : ''),
         ];
 
         if (!$detectionResult["isItHam"]) {

@@ -85,7 +85,7 @@ function my_pre_validate(array $result, \Quform_Form $form)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, $form->getName()),
         ];
 
         if (!$detectionResult["isItHam"]) {

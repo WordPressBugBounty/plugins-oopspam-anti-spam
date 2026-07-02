@@ -41,7 +41,7 @@ function oopspamantispam_gpartialentries_check_spam( $partial_entry, $form ) {
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => json_encode($partial_entry),
-            "FormId" => $form['id'],
+            "FormId" => \oopspam_format_form_id($form['id'], $form['title']),
         ];
 
         if (!$detectionResult["isItHam"]) {
@@ -122,7 +122,7 @@ function oopspamantispam_gform_check_spam($is_spam, $form, $entry)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => json_encode($entry),
-            "FormId" => $form['id'],
+            "FormId" => \oopspam_format_form_id($form['id'], $form['title']),
         ];
 
         if (!$detectionResult["isItHam"]) {

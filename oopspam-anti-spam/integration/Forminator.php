@@ -110,7 +110,7 @@ function oopspam_forminator_spam_check($is_spam, $field_data_array, $form_id, $f
         "IP" => $userIP,
         "Email" => $email,
         "RawEntry" => $raw_entry,
-        "FormId" => $form_id,
+        "FormId" => \oopspam_format_form_id($form_id, get_post($form_id) ? get_post($form_id)->post_title : ''),
     ];
 
     if (!$detectionResult['isItHam']) {

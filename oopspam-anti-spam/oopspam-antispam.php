@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.73
+ * Version: 1.2.74
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -247,6 +247,10 @@ function oopspam_cron_job() {
 function oopspam_cleanup_ham_entries() {
     try {
         global $wpdb;
+        
+        // Ensure MySQL compares TIMESTAMP values in UTC
+        \oopspam_ensure_mysql_utc_timezone();
+        
         $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
         $options = get_option('oopspamantispam_settings');
 
@@ -275,6 +279,10 @@ function oopspam_cleanup_ham_entries() {
 function oopspam_cleanup_spam_entries() {
     try {
         global $wpdb;
+        
+        // Ensure MySQL compares TIMESTAMP values in UTC
+        \oopspam_ensure_mysql_utc_timezone();
+        
         $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
         $options = get_option('oopspamantispam_settings');
 
@@ -385,6 +393,7 @@ function oopspam_plugin_deactivation()
 }
 
 add_filter('plugin_action_links', 'oopspam_plugin_action_links', 10, 2);
+add_filter('plugin_row_meta', 'oopspam_plugin_row_meta', 10, 2);
 
 function oopspam_plugin_action_links($links, $file)
 {
@@ -398,6 +407,38 @@ function oopspam_plugin_action_links($links, $file)
         // add Settings link on the plugins page
         $settings_link = '<a href="' . get_bloginfo('wpurl') . '/wp-admin/admin.php?page=wp_oopspam_settings_page">Settings</a>';
         array_unshift($links, $settings_link);
+    }
+
+    return $links;
+}
+
+/**
+ * Add a "Rate this plugin" link with star icons to the plugin row meta.
+ *
+ * @param array  $links Array of plugin row meta links.
+ * @param string $file  Plugin basename.
+ * @return array Modified array of plugin row meta links.
+ */
+function oopspam_plugin_row_meta($links, $file) {
+    static $this_plugin;
+
+    if (!$this_plugin) {
+        $this_plugin = plugin_basename(__FILE__);
+    }
+
+    if ($file == $this_plugin) {
+        $stars  = '<span class="dashicons dashicons-star-filled" style="color:#ffb900;font-size:14px;width:14px;height:14px;vertical-align:text-bottom;"></span>';
+        $stars .= '<span class="dashicons dashicons-star-filled" style="color:#ffb900;font-size:14px;width:14px;height:14px;vertical-align:text-bottom;"></span>';
+        $stars .= '<span class="dashicons dashicons-star-filled" style="color:#ffb900;font-size:14px;width:14px;height:14px;vertical-align:text-bottom;"></span>';
+        $stars .= '<span class="dashicons dashicons-star-filled" style="color:#ffb900;font-size:14px;width:14px;height:14px;vertical-align:text-bottom;"></span>';
+        $stars .= '<span class="dashicons dashicons-star-filled" style="color:#ffb900;font-size:14px;width:14px;height:14px;vertical-align:text-bottom;"></span>';
+
+        $links[] = '<a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/?filter=5#new-post" '
+                 . 'target="_blank" rel="noopener noreferrer" '
+                 . 'title="' . esc_attr__('Rate OOPSpam Anti-Spam on WordPress.org', 'oopspam-anti-spam') . '" '
+                 . 'aria-label="' . esc_attr__('Rate OOPSpam Anti-Spam on WordPress.org', 'oopspam-anti-spam') . '">'
+                 . $stars
+                 . '</a>';
     }
 
     return $links;
@@ -750,21 +791,21 @@ function oopspam_containsUrl($text) {
 
 function oopspam_isRateLimitingEnabled() {
     $options = get_option('oopspamantispam_ratelimit_settings');
-    $requiredKeys = [
-        'oopspam_is_rt_enabled',
-        'oopspamantispam_ratelimit_ip_limit', 
-        'oopspamantispam_ratelimit_email_limit', 
-        'oopspamantispam_ratelimit_block_duration', 
-        'oopspamantispam_ratelimit_cleanup_duration'
-    ];
 
-    // Check each required key in the provided or current settings
-    foreach ($requiredKeys as $key) {
-        if (empty($options[$key])) {
-            return false;
-        }
+    // The master toggle must be explicitly enabled (non-empty).
+    if (empty($options['oopspam_is_rt_enabled'])) {
+        return false;
     }
-    return true;
+
+    // At least one limit type must be set to a positive value.
+    // block_duration and cleanup_duration have sensible defaults in the
+    // OOPSpam_RateLimiter constructor, so they are not required here.
+    $ipLimit  = isset($options['oopspamantispam_ratelimit_ip_limit'])
+        ? intval($options['oopspamantispam_ratelimit_ip_limit']) : 0;
+    $emailLimit = isset($options['oopspamantispam_ratelimit_email_limit'])
+        ? intval($options['oopspamantispam_ratelimit_email_limit']) : 0;
+
+    return ($ipLimit > 0 || $emailLimit > 0);
 }
 
 function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnReason, $type, $metadata = '')

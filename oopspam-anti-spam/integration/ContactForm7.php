@@ -67,7 +67,7 @@ function oopspamantispam_cf7_pre_submission($spam)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => (string) $cf7_form_id,
+            "FormId" => \oopspam_format_form_id($cf7_form_id, get_post($cf7_form_id)->post_title),
         ];
 
         if (!$detectionResult["isItHam"]) {

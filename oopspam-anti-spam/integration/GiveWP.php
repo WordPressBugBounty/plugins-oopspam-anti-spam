@@ -56,7 +56,7 @@ function oopspamantispam_givewp_pre_submission($data)
                 "IP" => $userIP,
                 "Email" => $email,
                 "RawEntry" => $raw_entry,
-                "FormId" => $form_id,
+                "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_id)),
             ];
             oopspam_store_spam_submission($frmEntry, "Gateway mismatch");
             $error_to_show = (isset($options['oopspam_give_spam_message']) && !empty($options['oopspam_give_spam_message'])) ? $options['oopspam_give_spam_message'] : 'Your submission has been flagged as spam.';
@@ -75,7 +75,7 @@ function oopspamantispam_givewp_pre_submission($data)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_id)),
         ];
 
         if (!$detectionResult["isItHam"]) {

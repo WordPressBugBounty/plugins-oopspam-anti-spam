@@ -70,6 +70,9 @@ function export_spam_entries(){
         global $wpdb; 
         $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
         
+        // Ensure MySQL returns TIMESTAMP values in UTC
+        \oopspam_ensure_mysql_utc_timezone();
+        
         // Get column names securely
         $column_names = $wpdb->get_col($wpdb->prepare(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
@@ -161,6 +164,9 @@ class Spam_Entries extends \WP_List_Table {
 	public static function get_spam_entries($per_page = 5, $page_number = 1, $search = "") {
 		global $wpdb;
 		
+		// Ensure MySQL returns TIMESTAMP values in UTC
+		\oopspam_ensure_mysql_utc_timezone();
+		
 		// Validate and sanitize input parameters
 		$per_page = absint($per_page);
 		$page_number = absint($page_number);
@@ -201,11 +207,11 @@ class Spam_Entries extends \WP_List_Table {
 
 		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
 			$where[] = "date >= %s";
-			$values[] = $date_from . ' 00:00:00';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_from, '00:00:00');
 		}
 		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
 			$where[] = "date <= %s";
-			$values[] = $date_to . ' 23:59:59';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_to, '23:59:59');
 		}
 
 		// Combine WHERE clauses
@@ -378,6 +384,10 @@ class Spam_Entries extends \WP_List_Table {
  */
 public static function notify_spam_entry($id) {
     global $wpdb;
+    
+    // Ensure MySQL returns TIMESTAMP values in UTC
+    \oopspam_ensure_mysql_utc_timezone();
+    
     $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
     $spamEntry = $wpdb->get_row(
         $wpdb->prepare(
@@ -496,6 +506,10 @@ public static function maybe_notify_not_spam($id) {
  */
 public static function notify_not_spam_entry($id) {
     global $wpdb;
+    
+    // Ensure MySQL returns TIMESTAMP values in UTC
+    \oopspam_ensure_mysql_utc_timezone();
+    
     $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
     $spamEntry = $wpdb->get_row(
         $wpdb->prepare(
@@ -606,6 +620,10 @@ public static function notify_bulk_not_spam($entry_ids) {
     
     // Only send email if the setting is enabled
     if (!isset($misc_options['oopspam_email_admin_on_not_spam']) || empty($entry_ids)) {
+    
+    // Ensure MySQL returns TIMESTAMP values in UTC
+    \oopspam_ensure_mysql_utc_timezone();
+    
         return;
     }
 
@@ -984,6 +1002,10 @@ private static function process_form_fields($raw_entry) {
 	 */
 	public static function record_count() {
 		global $wpdb;
+		
+		// Ensure MySQL returns TIMESTAMP values in UTC
+		\oopspam_ensure_mysql_utc_timezone();
+		
 		$table = $wpdb->prefix . 'oopspam_frm_spam_entries';
 		
 		$where = array();
@@ -1021,11 +1043,11 @@ private static function process_form_fields($raw_entry) {
 
 		if (!empty($date_from) && oopspam_is_valid_date($date_from)) {
 			$where[] = "date >= %s";
-			$values[] = $date_from . ' 00:00:00';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_from, '00:00:00');
 		}
 		if (!empty($date_to) && oopspam_is_valid_date($date_to)) {
 			$where[] = "date <= %s";
-			$values[] = $date_to . ' 23:59:59';
+			$values[] = \oopspam_convert_date_filter_to_utc($date_to, '23:59:59');
 		}
 
 		// Combine WHERE clauses
@@ -1063,11 +1085,19 @@ private static function process_form_fields($raw_entry) {
             case 'score':
             case 'raw_entry':
 			case 'reason':
-			case 'form_id':
 				return esc_html( $item[ $column_name ] );
 			default:
 				return esc_html( print_r( $item, true ) );
 		}
+	}
+
+	function column_form_id( $item ) {
+		$parsed = \oopspam_parse_form_id( $item['form_id'] );
+		return sprintf(
+			'<span title="%s">%s</span>',
+			esc_attr( $parsed['title'] ),
+			esc_html( $parsed['display'] )
+		);
 	}
 
 	public function column_date( $item ) {

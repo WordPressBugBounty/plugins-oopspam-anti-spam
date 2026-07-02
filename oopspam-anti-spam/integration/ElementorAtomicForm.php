@@ -53,7 +53,7 @@ function oopspamantispam_atomic_el_pre_submission($is_spam, $form_fields, $widge
         'IP' => $userIP,
         'Email' => $email,
         'RawEntry' => $raw_entry,
-        'FormId' => $form_name,
+        'FormId' => \oopspam_format_form_id(isset($_POST['form_id']) ? sanitize_text_field(wp_unslash($_POST['form_id'])) : '', $form_name),
     ];
 
     if (!$detectionResult['isItHam']) {

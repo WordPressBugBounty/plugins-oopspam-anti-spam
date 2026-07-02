@@ -292,7 +292,7 @@ function render_number_field($args) {
     $value = isset($rtOptions[$option_name]) ? $rtOptions[$option_name] : '';
     
     ?>
-    <input type="number" min="1" step="1" 
+    <input type="number" min="0" step="1" 
            id="<?php echo esc_attr($option_name); ?>" 
            name="oopspamantispam_ratelimit_settings[<?php echo esc_attr($option_name); ?>]" 
            value="<?php echo esc_attr($value); ?>" 
@@ -316,7 +316,7 @@ function render_oopspamantispam_ratelimit_gclid_limit($args) {
             padding-left: 15px;
         }
     </style>
-    <input type="number" min="1" step="1" 
+    <input type="number" min="0" step="1" 
            id="<?php echo esc_attr($option_name); ?>" 
            name="oopspamantispam_ratelimit_settings[<?php echo esc_attr($option_name); ?>]" 
            value="<?php echo esc_attr($value); ?>" 
@@ -344,7 +344,7 @@ function render_oopspam_min_submission_time_field($args) {
         }
     </style>
     <div>
-        <input type="number" min="1" step="1" 
+        <input type="number" min="0" step="1" 
                id="<?php echo esc_attr($option_name); ?>" 
                name="oopspamantispam_ratelimit_settings[<?php echo esc_attr($option_name); ?>]" 
                value="<?php echo esc_attr($value); ?>" 
@@ -359,7 +359,7 @@ function render_oopspam_min_submission_time_field($args) {
 
 function sanitize_positive_int($value) {
     $value = absint($value);
-    return max(1, $value); // Ensure value is at least 1
+    return max(0, $value); // Ensure value is at least 0
 }
 
 function oopspam_sanitize_settings($input) {
@@ -5668,6 +5668,10 @@ function oopspam_send_scheduled_spam_report() {
 
     // Check if there are new spam entries since last report
     global $wpdb;
+    
+    // Ensure MySQL returns TIMESTAMP values in UTC
+    \oopspam_ensure_mysql_utc_timezone();
+    
     $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
     $last_sent = get_option('oopspam_spam_report_last_sent', '1970-01-01 00:00:00');
 

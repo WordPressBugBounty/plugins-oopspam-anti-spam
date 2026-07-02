@@ -48,7 +48,7 @@ function oopspamantispam_kb_adv_pre_submission($reject, $form_args, $processed_f
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $post_id,
+            "FormId" => \oopspam_format_form_id($post_id, get_the_title($post_id)),
         ];
 
         if (!$detectionResult["isItHam"]) {
@@ -118,7 +118,7 @@ function oopspamantispam_kb_pre_submission($form_args, $fields, $form_id, $post_
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id,
+            "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_id)),
         ];
 
         if (!$detectionResult["isItHam"]) {

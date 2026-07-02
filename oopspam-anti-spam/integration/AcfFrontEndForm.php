@@ -181,7 +181,7 @@ function oopspam_acf_validate_save_post() {
     
     if (!empty($page_id) && is_numeric($page_id)) {
         $page_title = get_the_title($page_id);
-        $form_id = 'ACF Form - Page ID: ' . $page_id . ' (' . $page_title . ')';
+        $form_id = \oopspam_format_form_id($page_id, $page_title);
     }
 
     $frmEntry = [
