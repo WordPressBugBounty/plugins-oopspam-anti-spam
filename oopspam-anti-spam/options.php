@@ -2421,9 +2421,29 @@ function oopspam_is_urls_allowed_render()
 // display custom admin notice
 function oopspam_custom_admin_notice()
 {
-    if (get_option('over_rate_limit')) {
-        ?>
-            <div class="notice notice-error is-dismissible">
+    if (!get_option('over_rate_limit')) {
+        return;
+    }
+
+    $screen = get_current_screen();
+    $oopspam_pages = array(
+        'wp_oopspam_settings_page',
+        'wp_oopspam_frm_spam_entries',
+        'wp_oopspam_frm_ham_entries',
+    );
+
+    // Check if we are on an OOPSpam plugin page,always show the notice here
+    $is_oopspam_page = $screen && isset($_GET['page']) && in_array($_GET['page'], $oopspam_pages, true);
+
+    // If not on an OOPSpam page, check if the user has dismissed it
+    if (!$is_oopspam_page && get_option('oopspam_rate_limit_notice_dismissed', false)) {
+        return;
+    }
+
+    $dismiss_nonce = wp_create_nonce('oopspam_dismiss_rate_limit');
+    ?>
+        <div class="notice notice-error" id="oopspam-rate-limit-notice" style="position: relative;">
+            <button type="button" id="oopspam-dismiss-rate-limit" class="notice-dismiss" title="<?php esc_attr_e('Dismiss this notice', 'oopspam-anti-spam'); ?>"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
             <h4>OOPSpam Anti-Spam</h4>
             <p><?php esc_html_e('Your API key exceeded your current plan\'s limit. The spam filtering functionality is disabled. Please upgrade to enable spam protection.', 'oopspam-anti-spam');?> </p>
             <p>
@@ -2435,15 +2455,40 @@ function oopspam_custom_admin_notice()
     </strong> </p>
 
 		<p><?php echo wp_kses(__('For any questions email us: <a href="mailto:contact@oopspam.com">contact@oopspam.com</a>',  'oopspam-anti-spam'), array('a' => array('href' => array()))); ?></p>
-            </div>
-            <?php
-}
-    ?>
-
-    <?php 
+        </div>
+        <script>
+        (function(){
+            var btn = document.getElementById('oopspam-dismiss-rate-limit');
+            if (!btn) return;
+            btn.addEventListener('click', function(){
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '<?php echo esc_url(admin_url('admin-ajax.php')); ?>', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onload = function(){
+                    if (xhr.status === 200) {
+                        var notice = document.getElementById('oopspam-rate-limit-notice');
+                        if (notice) notice.remove();
+                    }
+                };
+                xhr.send('action=oopspam_dismiss_rate_limit_notice&nonce=<?php echo esc_js($dismiss_nonce); ?>');
+            });
+        })();
+        </script>
+        <?php
 }
 
 add_action('admin_notices', 'oopspam_custom_admin_notice');
+
+// AJAX handler to persist dismissal of the rate limit notice
+add_action('wp_ajax_oopspam_dismiss_rate_limit_notice', 'oopspam_dismiss_rate_limit_notice');
+function oopspam_dismiss_rate_limit_notice() {
+    if (!check_ajax_referer('oopspam_dismiss_rate_limit', 'nonce', false)) {
+        wp_send_json_error('Invalid security token');
+        return;
+    }
+    update_option('oopspam_rate_limit_notice_dismissed', true);
+    wp_send_json_success();
+}
 
 function oopspam_api_key_usage_render() {
     $options = get_option('oopspamantispam_settings');
@@ -5442,10 +5487,12 @@ function oopspam_handle_usage_refresh() {
         if ($response_code === 200 || $response_code === 201) {
             // API call was successful, usage data was automatically updated by getAPIUsage()
             update_option('over_rate_limit', false);
+            delete_option('oopspam_rate_limit_notice_dismissed');
             wp_send_json_success('Usage updated successfully');
         } else {
             $response_body = wp_remote_retrieve_body($result);
             update_option('over_rate_limit', true);
+            delete_option('oopspam_rate_limit_notice_dismissed');
             // Check for invalid API key error
             if ($response_code === 403 && strpos($response_body, 'API_KEY_INVALID') !== false) {
                 wp_send_json_error('Invalid API key. Please check your API key and paste it again. Note: Password managers may interfere when pasting the key.');

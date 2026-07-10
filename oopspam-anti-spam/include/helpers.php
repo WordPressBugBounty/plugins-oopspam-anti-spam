@@ -522,7 +522,8 @@ function oopspam_store_spam_submission($frmEntry, $reason)
     $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
     
     // Enrich raw entry with HTTP headers and request metadata
-    $enriched_raw_entry = oopspam_enrich_raw_entry($frmEntry["RawEntry"]);
+    $extra_metadata = isset($frmEntry["OrderMetadata"]) ? $frmEntry["OrderMetadata"] : array();
+    $enriched_raw_entry = oopspam_enrich_raw_entry($frmEntry["RawEntry"], $extra_metadata);
     $sanitized_form_id = isset($frmEntry["FormId"]) ? sanitize_text_field(wp_unslash((string) $frmEntry["FormId"])) : '';
     
     $data = array(
@@ -749,7 +750,8 @@ function oopspam_store_ham_submission($frmEntry)
     $gclid = oopspam_get_gclid_from_url();
     
     // Enrich raw entry with HTTP headers and request metadata
-    $enriched_raw_entry = oopspam_enrich_raw_entry($frmEntry["RawEntry"]);
+    $extra_metadata = isset($frmEntry["OrderMetadata"]) ? $frmEntry["OrderMetadata"] : array();
+    $enriched_raw_entry = oopspam_enrich_raw_entry($frmEntry["RawEntry"], $extra_metadata);
     $sanitized_form_id = isset($frmEntry["FormId"]) ? sanitize_text_field(wp_unslash((string) $frmEntry["FormId"])) : '';
 
     $table_name = $wpdb->prefix . 'oopspam_frm_ham_entries';
@@ -878,9 +880,10 @@ function oopspam_get_request_metadata() {
  * Enriches a raw entry with HTTP headers and request metadata.
  *
  * @param string $raw_entry The original raw entry (JSON encoded form data)
+ * @param array  $extra_request_metadata Optional extra metadata to merge into request_metadata (e.g., order_metadata).
  * @return string JSON encoded data with form fields and request metadata
  */
-function oopspam_enrich_raw_entry($raw_entry) {
+function oopspam_enrich_raw_entry($raw_entry, $extra_request_metadata = array()) {
     // Decode the original raw entry
     $form_data = json_decode($raw_entry, true);
     
@@ -891,6 +894,11 @@ function oopspam_enrich_raw_entry($raw_entry) {
     
     // Get request metadata
     $metadata = oopspam_get_request_metadata();
+
+    // Merge any extra request metadata (e.g., order_metadata for WooCommerce)
+    if (!empty($extra_request_metadata) && is_array($extra_request_metadata)) {
+        $metadata = array_merge($metadata, $extra_request_metadata);
+    }
     
     // Create enriched entry structure
     $enriched_entry = array(

@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.74
+ * Version: 1.2.75
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -23,8 +23,8 @@ function oopspam_start_session() {
         // Get rate limiting settings first
         $rtOptions = get_option('oopspamantispam_ratelimit_settings');
         
-        // Only start session if minimum submission time is set
-        if (!isset($rtOptions['oopspamantispam_min_submission_time'])) {
+        // Only start session if rate limiting is enabled AND minimum submission time is set
+        if (empty($rtOptions['oopspam_is_rt_enabled']) || !isset($rtOptions['oopspamantispam_min_submission_time'])) {
             return;
         }
 
@@ -1169,6 +1169,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
         } else if (!is_wp_error($response) && $response_code == "429") {
             // The API limit is reached
             update_option('over_rate_limit', true);
+            // Reset dismissal so the notice reappears
+            delete_option('oopspam_rate_limit_notice_dismissed');
             // Return special score -1 to indicate rate limit
             return $returnReason ? ["Score" => -1, "isItHam" => true, "Reason" => "Rate limit reached"] : true;
         } else {

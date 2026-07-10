@@ -549,7 +549,7 @@ class WooSpamProtection
         if (empty($message)) {
             $message = sanitize_text_field($wc_order->get_customer_note());
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order));
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -624,7 +624,7 @@ class WooSpamProtection
             
         // Now check with OOPSpam API
         $message = sanitize_text_field($wc_order->get_customer_note());
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order));
         if ($showError) {
             $error_to_show = $this->get_error_message();
             $this->block_checkout_with_error($error_to_show);
@@ -684,7 +684,7 @@ class WooSpamProtection
         if (empty($message) && isset($posted_data['order_comments'])) {
             $message = sanitize_text_field($posted_data['order_comments']);
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message);
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order));
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -734,7 +734,20 @@ class WooSpamProtection
         // Note: Blocked order total and same-amount checks are handled in the order processing functions
         // to avoid duplicate entries and ensure proper logging
         
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), sanitize_text_field($message));
+        // Build lightweight order metadata from POST for pre-order validation
+        $postMetadata = array_filter(array(
+            'billing_country'  => isset($_POST['billing_country']) ? sanitize_text_field($_POST['billing_country']) : '',
+            'shipping_country' => isset($_POST['shipping_country']) ? sanitize_text_field($_POST['shipping_country']) : '',
+            'billing_state'    => isset($_POST['billing_state']) ? sanitize_text_field($_POST['billing_state']) : '',
+            'shipping_state'   => isset($_POST['shipping_state']) ? sanitize_text_field($_POST['shipping_state']) : '',
+            'billing_city'     => isset($_POST['billing_city']) ? sanitize_text_field($_POST['billing_city']) : '',
+            'shipping_city'    => isset($_POST['shipping_city']) ? sanitize_text_field($_POST['shipping_city']) : '',
+            'payment_method'   => isset($_POST['payment_method']) ? sanitize_text_field($_POST['payment_method']) : '',
+        ), function($value) {
+            return $value !== null && $value !== '';
+        });
+        
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), sanitize_text_field($message), $postMetadata);
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -976,8 +989,86 @@ class WooSpamProtection
         return $errors;
     }
 
-    public function checkEmailAndIPInOOPSpam($email, $message)
+    /**
+     * Build non-sensitive order metadata for fraud detection.
+     *
+     * @param \WC_Order|null $order The WooCommerce order object, or null.
+     * @return array Order metadata safe for logging and API reporting.
+     */
+    private function buildOrderMetadata($order) {
+        if (!$order || !is_a($order, 'WC_Order')) {
+            return array();
+        }
+
+        $metadata = array(
+            'payment_method'  => $order->get_payment_method(),
+            'currency'        => $order->get_currency(),
+            'order_total'     => floatval($order->get_total()),
+            'shipping_total'  => floatval($order->get_shipping_total()),
+            'discount_total'  => floatval($order->get_discount_total()),
+            'coupons'         => $order->get_coupon_codes(),
+            'item_count'      => $order->get_item_count(),
+            'is_guest'        => $order->get_user_id() === 0,
+            'billing_country' => $order->get_billing_country(),
+            'shipping_country'=> $order->get_shipping_country(),
+            'billing_state'   => $order->get_billing_state(),
+            'shipping_state'  => $order->get_shipping_state(),
+            'billing_city'    => $order->get_billing_city(),
+            'shipping_city'   => $order->get_shipping_city(),
+            'shipping_method' => $order->get_shipping_method(),
+        );
+
+        // Determine if order has digital/downloadable items
+        $has_digital = false;
+        $product_categories = array();
+        $product_skus = array();
+
+        foreach ($order->get_items() as $item) {
+            $product = $item->get_product();
+            if ($product) {
+                if ($product->is_virtual() || $product->is_downloadable()) {
+                    $has_digital = true;
+                }
+                $sku = $product->get_sku();
+                if (!empty($sku)) {
+                    $product_skus[] = $sku;
+                }
+                $cats = wp_get_post_terms($product->get_id(), 'product_cat', array('fields' => 'names'));
+                if (!empty($cats) && !is_wp_error($cats)) {
+                    foreach ($cats as $cat) {
+                        $product_categories[] = $cat;
+                    }
+                }
+            }
+        }
+
+        $metadata['has_digital_items']   = $has_digital;
+        $metadata['product_categories']  = array_values(array_unique($product_categories));
+        $metadata['product_skus']        = $product_skus;
+
+        // Strip empty/null values to keep metadata lean
+        return array_filter($metadata, function($value) {
+            return $value !== null && $value !== '' && $value !== array();
+        });
+    }
+
+    /**
+     * Build the raw entry array combining IP and email.
+     *
+     * @param string $userIP Client IP address.
+     * @param string $email  Customer email.
+     * @return array Raw entry data for storage.
+     */
+    private function buildRawEntry($userIP, $email) {
+        return array(
+            'IP'    => $userIP,
+            'email' => $email,
+        );
+    }
+
+    public function checkEmailAndIPInOOPSpam($email, $message, $orderMetadata = array())
     {
+
         $options = get_option('oopspamantispam_settings');
         
         // Check if WooCommerce integration is enabled
@@ -999,7 +1090,7 @@ class WooSpamProtection
             // If they have completed orders, consider them not spam
             if ($this->hasCompletedOrders($email)) {
                 // Log this as ham automatically
-                $rawEntry = (object) array("IP" => $userIP, "email" => $email);
+                $rawEntry = $this->buildRawEntry($userIP, $email);
                 $frmEntry = [
                     "Score" => 0, // Low score since we trust returning customers
                     "Message" => $message,
@@ -1007,6 +1098,7 @@ class WooSpamProtection
                     "Email" => $email,
                     "RawEntry" => json_encode($rawEntry),
                     "FormId" => "WooCommerce",
+                    "OrderMetadata" => $orderMetadata,
                 ];
                 
                 // Store as ham submission
@@ -1022,7 +1114,7 @@ class WooSpamProtection
             if (!isset($detectionResult["isItHam"])) {
                 return false;
             }
-            $rawEntry = (object) array("IP" => $userIP, "email" => $email);
+            $rawEntry = $this->buildRawEntry($userIP, $email);
             $frmEntry = [
                 "Score" => $detectionResult["Score"],
                 "Message" => $message,
@@ -1030,6 +1122,7 @@ class WooSpamProtection
                 "Email" => $email,
                 "RawEntry" => json_encode($rawEntry),
                 "FormId" => "WooCommerce",
+                "OrderMetadata" => $orderMetadata,
             ];
 
             if (!$detectionResult["isItHam"]) {
