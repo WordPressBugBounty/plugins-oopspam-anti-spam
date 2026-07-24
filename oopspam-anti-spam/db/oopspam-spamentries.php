@@ -1,7 +1,7 @@
 <?php
 
 global $oopspam_db_version;
-$oopspam_db_version = '1.5';
+$oopspam_db_version = '1.6';
 
 function oopspam_db_install() {
 	global $wpdb;
@@ -81,6 +81,16 @@ function oopspam_db_install() {
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		dbDelta( $sql );
+
+		// Backfill NULL date values with the current timestamp for any
+		// existing rows where the date column was not populated (e.g. due to
+		// a previous bug where the INSERT did not explicitly include `date`).
+		$wpdb->query(
+			"UPDATE " . esc_sql($table_name) . " SET `date` = NOW() WHERE `date` IS NULL"
+		);
+		$wpdb->query(
+			"UPDATE " . esc_sql($ham_table_name) . " SET `date` = NOW() WHERE `date` IS NULL"
+		);
 
 		update_option( "oopspam_db_version", $oopspam_db_version );
 	}

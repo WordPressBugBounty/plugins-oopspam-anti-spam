@@ -41,7 +41,7 @@ function oopspam_ensure_mysql_utc_timezone() {
 }
 
 function oopspam_format_entry_datetime($datetime) {
-    if (empty($datetime)) {
+    if (empty($datetime) || $datetime === '0000-00-00 00:00:00') {
         return '';
     }
 
@@ -60,7 +60,7 @@ function oopspam_format_entry_datetime($datetime) {
         try {
             $date = new DateTimeImmutable($datetime, $source_timezone);
         } catch (Exception $exception) {
-            return $datetime;
+            return '';
         }
     }
 
@@ -533,9 +533,10 @@ function oopspam_store_spam_submission($frmEntry, $reason)
         'score' => $frmEntry["Score"],
         'raw_entry' => $enriched_raw_entry,
         'form_id' => $sanitized_form_id,
-        'reason' => $reason
+        'reason' => $reason,
+        'date' => current_time('mysql', true)
     );
-    $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s');
+    $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s');
     $wpdb->insert($table_name, $data, $format);
 
     // Check threshold-based spam report and send immediately if threshold is met
@@ -762,9 +763,10 @@ function oopspam_store_ham_submission($frmEntry)
         'score' => $frmEntry["Score"],
         'raw_entry' => $enriched_raw_entry,
         'form_id' => $sanitized_form_id,
-        'gclid' => $gclid
+        'gclid' => $gclid,
+        'date' => current_time('mysql', true)
     );
-    $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s');
+    $format = array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s');
     $wpdb->insert($table_name, $data, $format);
 
 }

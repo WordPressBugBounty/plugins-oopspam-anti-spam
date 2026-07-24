@@ -64,6 +64,22 @@ class WooSpamProtection
         // Track failed payment attempts for velocity check
         add_action('woocommerce_order_status_failed', [$this, 'oopspam_track_failed_payment'], 10, 2);
 
+        // Admin order actions: Block as Spam / Undo Block
+        add_filter('woocommerce_order_actions', [$this, 'add_order_actions'], 10, 2);
+        add_action('woocommerce_order_action_oopspam_block_as_spam', [$this, 'handle_block_order_action']);
+        add_action('woocommerce_order_action_oopspam_undo_block', [$this, 'handle_undo_block_order_action']);
+
+        // Bulk actions on Orders list — legacy CPT screen
+        add_filter('bulk_actions-edit-shop_order', [$this, 'add_bulk_actions']);
+        add_filter('handle_bulk_actions-edit-shop_order', [$this, 'handle_bulk_block_orders'], 10, 3);
+
+        // Bulk actions on Orders list — HPOS screen
+        add_filter('bulk_actions-woocommerce_page_wc-orders', [$this, 'add_bulk_actions']);
+        add_filter('handle_bulk_actions-woocommerce_page_wc-orders', [$this, 'handle_bulk_block_orders'], 10, 3);
+
+        // Admin notice after bulk/manual action
+        add_action('admin_notices', [$this, 'display_block_action_notices']);
+
     }
 
     private function cleanSensitiveData($data) {
@@ -1384,5 +1400,320 @@ private function hasCompletedOrders($email, $debug = false) {
     
     // Return true if at least one completed order exists
     return $hasOrders;
+}
+
+/**
+ * Add custom order actions to the "Order actions" metabox on the Edit Order screen.
+ *
+ * @param array    $actions Existing order actions.
+ * @param \WC_Order $order   The order object.
+ * @return array Modified order actions.
+ */
+public function add_order_actions($actions, $order) {
+    if (!is_a($order, 'WC_Order')) {
+        return $actions;
+    }
+
+    $is_blocked = $order->get_meta('_oopspam_blocked', true);
+
+    if ($is_blocked) {
+        $actions['oopspam_undo_block'] = __('Undo Block (OOPSpam)', 'oopspam-anti-spam');
+    } else {
+        $actions['oopspam_block_as_spam'] = __('Block as Spam (OOPSpam)', 'oopspam-anti-spam');
+    }
+
+    return $actions;
+}
+
+/**
+ * Handle the "Block as Spam" order action from the Edit Order screen.
+ *
+ * @param \WC_Order $order The order object.
+ */
+public function handle_block_order_action($order) {
+    $this->block_order($order);
+}
+
+/**
+ * Handle the "Undo Block" order action from the Edit Order screen.
+ *
+ * @param \WC_Order $order The order object.
+ */
+public function handle_undo_block_order_action($order) {
+    $this->undo_block_order($order);
+}
+
+/**
+ * Core logic to block an order as spam.
+ * - Reports to OOPSpam API
+ * - Adds email/IP to manual moderation blocked lists
+ * - Stores a spam entry
+ * - Marks the order as blocked (metadata)
+ *
+ * @param \WC_Order $order The order object.
+ * @return bool True on success, false on failure.
+ */
+private function block_order($order) {
+    if (!is_a($order, 'WC_Order')) {
+        return false;
+    }
+
+    $email = $order->get_billing_email();
+    $userIP = $order->get_customer_ip_address();
+    if (empty($userIP)) {
+        $userIP = oopspamantispam_get_ip();
+    }
+
+    $customer_note = $order->get_customer_note();
+    $message = !empty($customer_note) ? $customer_note : '';
+
+    // Build raw entry with order metadata
+    $rawEntry = array(
+        'IP'            => $userIP,
+        'email'         => $email,
+        'order_id'      => $order->get_id(),
+        'order_total'   => $order->get_total(),
+        'order_status'  => $order->get_status(),
+        'payment_method'=> $order->get_payment_method(),
+    );
+
+    $orderMetadata = $this->buildOrderMetadata($order);
+
+    // Report to OOPSpam API as spam
+    $metadata = json_encode(array_merge($rawEntry, $orderMetadata));
+    $reportResult = oopspamantispam_report_OOPSpam($message, $userIP, $email, true, $metadata);
+
+    if ($reportResult === false) {
+        $this->set_action_notice(__('Failed to report order to OOPSpam API.', 'oopspam-anti-spam'), 'error');
+        return false;
+    }
+
+    // Add email to blocked list
+    if (!empty($email)) {
+        oopspam_add_manual_moderation_entry('mm_blocked_emails', $email, true);
+    }
+
+    // Add IP to blocked list
+    if (!empty($userIP)) {
+        oopspam_add_manual_moderation_entry('mm_blocked_ips', $userIP);
+    }
+
+    // Store spam entry
+    $frmEntry = [
+        "Score"      => 6,
+        "Message"    => $message,
+        "IP"         => $userIP,
+        "Email"      => $email,
+        "RawEntry"   => json_encode($rawEntry),
+        "FormId"     => "WooCommerce",
+        "OrderMetadata" => $orderMetadata,
+    ];
+    oopspam_store_spam_submission($frmEntry, "Manually blocked from Orders admin");
+
+    // Mark order as blocked
+    $order->update_meta_data('_oopspam_blocked', true);
+    $order->add_order_note(
+        sprintf(
+            /* translators: 1: email, 2: IP address */
+            __('Order blocked as spam by OOPSpam. Email: %1$s, IP: %2$s', 'oopspam-anti-spam'),
+            $email,
+            $userIP
+        )
+    );
+    $order->save();
+
+    $this->set_action_notice(
+        sprintf(
+            /* translators: %s: order number */
+            __('Order #%s has been blocked as spam.', 'oopspam-anti-spam'),
+            $order->get_order_number()
+        ),
+        'success'
+    );
+
+    return true;
+}
+
+/**
+ * Core logic to undo a block on an order.
+ * - Removes email/IP from manual moderation blocked lists
+ * - Adds email/IP to allowed lists
+ * - Removes the blocked metadata flag
+ *
+ * @param \WC_Order $order The order object.
+ * @return bool True on success, false on failure.
+ */
+private function undo_block_order($order) {
+    if (!is_a($order, 'WC_Order')) {
+        return false;
+    }
+
+    $email = $order->get_billing_email();
+    $userIP = $order->get_customer_ip_address();
+    if (empty($userIP)) {
+        $userIP = oopspamantispam_get_ip();
+    }
+
+    $success = false;
+
+    // Remove email from blocked list and add to allowed list
+    if (!empty($email)) {
+        $email_removed = oopspam_remove_manual_moderation_entry('mm_blocked_emails', $email, true);
+        $email_allowed = oopspam_add_manual_moderation_entry('mm_allowed_emails', $email, true);
+        $success = $email_removed || $email_allowed || $success;
+    }
+
+    // Remove IP from blocked list and add to allowed list
+    if (!empty($userIP)) {
+        $ip_removed = oopspam_remove_manual_moderation_entry('mm_blocked_ips', $userIP);
+        $ip_allowed = oopspam_add_manual_moderation_entry('mm_allowed_ips', $userIP);
+        $success = $ip_removed || $ip_allowed || $success;
+    }
+
+    // Remove blocked metadata flag
+    $order->delete_meta_data('_oopspam_blocked');
+    $order->add_order_note(
+        sprintf(
+            /* translators: 1: email, 2: IP address */
+            __('Order block undone by OOPSpam. Email: %1$s, IP: %2$s added to allow list.', 'oopspam-anti-spam'),
+            $email,
+            $userIP
+        )
+    );
+    $order->save();
+
+    $this->set_action_notice(
+        sprintf(
+            /* translators: %s: order number */
+            __('Block on order #%s has been undone. Email &amp; IP added to allow list.', 'oopspam-anti-spam'),
+            $order->get_order_number()
+        ),
+        'success'
+    );
+
+    return $success;
+}
+
+/**
+ * Add custom bulk actions to the Orders list page dropdown.
+ *
+ * @param array $bulk_actions Existing bulk actions.
+ * @return array Modified bulk actions.
+ */
+public function add_bulk_actions($bulk_actions) {
+    $bulk_actions['oopspam_bulk_block'] = __('Block as Spam (OOPSpam)', 'oopspam-anti-spam');
+    $bulk_actions['oopspam_bulk_undo_block'] = __('Undo Block (OOPSpam)', 'oopspam-anti-spam');
+    return $bulk_actions;
+}
+
+/**
+ * Handle bulk actions on the Orders list page.
+ *
+ * @param string $redirect_url The redirect URL.
+ * @param string $action       The action being performed.
+ * @param array  $order_ids    Array of order IDs.
+ * @return string Modified redirect URL.
+ */
+public function handle_bulk_block_orders($redirect_url, $action, $order_ids) {
+    if ($action === 'oopspam_bulk_block') {
+        $blocked = 0;
+        $failed = 0;
+
+        foreach ($order_ids as $order_id) {
+            $order = wc_get_order($order_id);
+            if ($order && $this->block_order($order)) {
+                $blocked++;
+            } else {
+                $failed++;
+            }
+        }
+
+        // Clear per-order notices since we're setting a bulk one
+        $this->clear_action_notice();
+
+        $notice_type = ($failed === 0) ? 'success' : 'warning';
+        $message = sprintf(
+            /* translators: 1: number blocked, 2: number failed */
+            __('%1$d order(s) blocked as spam. %2$d failed.', 'oopspam-anti-spam'),
+            $blocked,
+            $failed
+        );
+        $this->set_action_notice($message, $notice_type);
+    }
+
+    if ($action === 'oopspam_bulk_undo_block') {
+        $undone = 0;
+        $failed = 0;
+
+        foreach ($order_ids as $order_id) {
+            $order = wc_get_order($order_id);
+            if ($order && $this->undo_block_order($order)) {
+                $undone++;
+            } else {
+                $failed++;
+            }
+        }
+
+        $this->clear_action_notice();
+
+        $notice_type = ($failed === 0) ? 'success' : 'warning';
+        $message = sprintf(
+            /* translators: 1: number undone, 2: number failed */
+            __('%1$d order(s) block undone. %2$d failed.', 'oopspam-anti-spam'),
+            $undone,
+            $failed
+        );
+        $this->set_action_notice($message, $notice_type);
+    }
+
+    return $redirect_url;
+}
+
+/**
+ * Store a notice to be displayed after redirect (using transients).
+ *
+ * @param string $message The notice message.
+ * @param string $type    Notice type: success, error, warning.
+ */
+private function set_action_notice($message, $type = 'success') {
+    set_transient('oopspam_order_action_notice', array(
+        'message' => $message,
+        'type'    => $type,
+    ), 60);
+}
+
+/**
+ * Clear the stored action notice.
+ */
+private function clear_action_notice() {
+    delete_transient('oopspam_order_action_notice');
+}
+
+/**
+ * Display admin notice after a manual/bulk block action.
+ */
+public function display_block_action_notices() {
+    $screen = get_current_screen();
+    if (!$screen || !in_array($screen->id, array('shop_order', 'edit-shop_order', 'woocommerce_page_wc-orders'), true)) {
+        return;
+    }
+
+    $notice = get_transient('oopspam_order_action_notice');
+    if (!$notice || !is_array($notice)) {
+        return;
+    }
+
+    $type = isset($notice['type']) ? $notice['type'] : 'success';
+    $message = isset($notice['message']) ? $notice['message'] : '';
+
+    if (!empty($message)) {
+        printf(
+            '<div class="notice notice-%s is-dismissible"><p>%s</p></div>',
+            esc_attr($type),
+            wp_kses_post($message)
+        );
+    }
+
+    delete_transient('oopspam_order_action_notice');
 }
 }

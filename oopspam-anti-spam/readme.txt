@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 7.0
-Stable tag: 1.2.75
+Stable tag: 1.2.76
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -116,6 +116,10 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
 == Changelog ==
+= 1.2.76 =
+* **NEW:** [WooCommerce] Block orders in bulk or individually under WooCommerce → Orders
+* **IMPROVEMENT:** Prevent email notifications in Kadence Forms
+* **FIX:** Handle blank dates in Valid and Spam Entries tables
 = 1.2.75 =
 * **IMPROVEMENT:** Improved meta-logs collection in the WooCommerce integration.
 * **IMPROVEMENT:** Admin notice dismissals are now remembered.
