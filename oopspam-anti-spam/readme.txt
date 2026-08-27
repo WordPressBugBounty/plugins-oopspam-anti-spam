@@ -3,8 +3,8 @@ Contributors: oopspam
 Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
-Tested up to: 7.0
-Stable tag: 1.2.76
+Tested up to: 7.1
+Stable tag: 1.2.78
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -115,7 +115,15 @@ That's it! Your forms are now protected from spam. The plugin works automaticall
 
 For advanced configuration options and detailed usage instructions, visit our [WordPress documentation](https://help.oopspam.com/wordpress/).
 
+
 == Changelog ==
+= 1.2.78 =
+* **FIX:** Tools import/export page is now a standalone submenu page with its styles loaded correctly
+= 1.2.77 =
+* **NEW:** WP-CLI support: `wp oopspam` commands to view, change, export, and import settings
+* **NEW:** Import/Export settings from the plugin interface (Tools submenu)
+* **NEW:** Bulk-apply settings across all sites with `--all-sites` on multisite networks
+* **IMPROVEMENT:** Exposed `Block Cloud Providers` and `Extra Screening` settings in the Setup Wizard
 = 1.2.76 =
 * **NEW:** [WooCommerce] Block orders in bulk or individually under WooCommerce → Orders
 * **IMPROVEMENT:** Prevent email notifications in Kadence Forms
@@ -496,6 +504,10 @@ Yes! OOPSpam is fully GDPR compliant:
 - Optional IP and email analysis
 - All logs stored in your WordPress database
 - Ability to remove sensitive information from messages
+
+= Does the plugin support WP-CLI? =
+
+Yes. OOPSpam Anti-Spam ships with a `wp oopspam` command. You can view the plugin status (`wp oopspam status`), read and change settings (`wp oopspam get` / `wp oopspam set`), and export/import the full configuration (`wp oopspam export` / `wp oopspam import`). Run `wp help oopspam` for the full reference or check out our [WordPress guide](https://help.oopspam.com/wordpress/).
 
 == Screenshots ==
 

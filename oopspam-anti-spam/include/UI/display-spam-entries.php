@@ -1525,29 +1525,12 @@ class OOPSpam_Spam {
 	// class constructor
 	public function __construct() {
 		add_filter( 'set-screen-option', [ __CLASS__, 'set_screen' ], 10, 3 );
-		add_action( 'admin_menu', array($this, 'plugin_menu') );
 	}
 
 
 	public static function set_screen( $status, $option, $value ) {
 		return $value;
 	}
-
-	public function plugin_menu() {
-
-        add_submenu_page( 'wp_oopspam_settings_page', __('Settings', "oopspam-anti-spam"),  __('Settings', "oopspam-anti-spam"), 'manage_options', 'wp_oopspam_settings_page');
-
-        $hook =  add_submenu_page(
-            'wp_oopspam_settings_page',
-            __('Spam Entries', "oopspam-anti-spam"),
-            __('Spam Entries', "oopspam-anti-spam"),
-            'edit_pages',
-            'wp_oopspam_frm_spam_entries',
-            [ $this, 'plugin_settings_page' ] );
-
-        add_action( "load-$hook", [ $this, 'screen_option' ] );
-	}
-
 
 	/**
 	 * Plugin settings page

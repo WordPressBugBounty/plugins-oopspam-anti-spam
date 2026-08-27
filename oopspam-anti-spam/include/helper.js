@@ -105,13 +105,7 @@ jQuery(document).ready(function($) {
                     updateIntegrationState(section, isActive);
                     updateStatusBadge(section, isActive);
                     
-                    // Add activation animation
-                    if (isActive) {
-                        section.classList.add('oopspam-just-activated');
-                        setTimeout(() => {
-                            section.classList.remove('oopspam-just-activated');
-                        }, 600);
-                    }
+
                 });
             }
         });

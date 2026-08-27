@@ -48,6 +48,18 @@
             }
         });
         
+        // Make entire checkbox wrapper row clickable to toggle the checkbox
+        $('.oopspam-checkbox-wrapper').on('click', function(e) {
+            // Let native label/input clicks work normally without double-firing
+            if (e.target.tagName === 'LABEL' || e.target.tagName === 'INPUT') {
+                return;
+            }
+            const $checkbox = $(this).find('input[type="checkbox"]');
+            if ($checkbox.length) {
+                $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
+            }
+        });
+
         // Form selection change handler
         $('input[name="oopspam-forms[]"]').on('change', function() {
             // Check if any forms are selected
@@ -465,7 +477,7 @@
                 // Uncheck all WooCommerce options when WooCommerce is unchecked
                 $('#oopspam-woo-under-attack').prop('checked', false);
                 $('#oopspam-woo-attack-options').slideUp(300);
-                $('#oopspam-woo-check-origin, #oopspam-woo-require-device-type').prop('checked', false);
+                $('#oopspam-woo-check-origin, #oopspam-woo-require-device-type, #oopspam-woo-block-cloud-providers, #oopspam-woo-extra-screening').prop('checked', false);
             }
         });
         
@@ -473,9 +485,11 @@
         $('#oopspam-woo-under-attack').on('change', function() {
             if ($(this).is(':checked')) {
                 $('#oopspam-woo-attack-options').slideDown(300);
+                // Turn all enhanced options on automatically
+                $('#oopspam-woo-check-origin, #oopspam-woo-require-device-type, #oopspam-woo-block-cloud-providers, #oopspam-woo-extra-screening').prop('checked', true);
             } else {
                 $('#oopspam-woo-attack-options').slideUp(300);
-                $('#oopspam-woo-check-origin, #oopspam-woo-require-device-type').prop('checked', false);
+                $('#oopspam-woo-check-origin, #oopspam-woo-require-device-type, #oopspam-woo-block-cloud-providers, #oopspam-woo-extra-screening').prop('checked', false);
             }
         });
     }

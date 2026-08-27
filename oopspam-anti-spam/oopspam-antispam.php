@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.76
+ * Version: 1.2.78
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -85,6 +85,7 @@ require_once dirname(__FILE__) . '/include/UI/display-ham-entries.php';
 require_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
 require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
 require_once dirname(__FILE__) . '/include/Background/AsyncProcessor.php';
+require_once dirname(__FILE__) . '/include/class-oopspam-settings-transfer.php';
 
 // Used to detect installed plugins.
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -130,6 +131,12 @@ add_action('plugins_loaded', array('\OOPSPAM\WOOCOMMERCE\WooSpamProtection', 'ge
 
 require_once dirname(__FILE__) . '/db/oopspam-spamentries.php';
 require_once dirname(__FILE__) . '/db/oopspam-db-ratelimit.php';
+
+// WP-CLI support (wp oopspam ...).
+if (defined('WP_CLI') && WP_CLI) {
+    require_once dirname(__FILE__) . '/cli/class-oopspam-cli.php';
+    WP_CLI::add_command('oopspam', 'OOPSpam_Command');
+}
 
 register_activation_hook(__FILE__, 'oopspam_plugin_activate');
 register_activation_hook(__FILE__, 'oopspam_db_install');
@@ -1681,6 +1688,7 @@ function oopspam_admin_init()
     // Ensure styles are added only on plugin settings pages
     if (isset($_GET['page']) && (
         $_GET['page'] === 'wp_oopspam_settings_page' ||
+        $_GET['page'] === 'wp_oopspam_settings_tools_page' ||
         $_GET['page'] === 'wp_oopspam_frm_ham_entries' ||
         $_GET['page'] === 'wp_oopspam_frm_spam_entries'
     )) {

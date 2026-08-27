@@ -6,18 +6,17 @@
     max-width: 800px;
     margin: 40px auto;
     background-color: #ffffff;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+    border: 1px solid #000000;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 .oopspam-wizard-header {
-    background: linear-gradient(135deg, #FBF6ED 0%, #ffffff 100%);
+    background: #FBF6ED;
     padding: 30px;
     text-align: center;
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: 2px solid #000000;
 }
 
 .oopspam-wizard-header h1 {
@@ -52,26 +51,27 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: #f0f0f0;
+    background-color: #FBF6ED;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     color: #666666;
     position: relative;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid #000000;
+    transition: all 0.2s ease;
 }
 
 .oopspam-progress-step.active {
-    background: linear-gradient(135deg, #FCDD56 0%, #e5c338 100%);
+    background: #FCDD56;
     color: #000000;
-    box-shadow: 0 2px 8px rgba(252, 221, 86, 0.4);
+    border-color: #000000;
 }
 
 .oopspam-progress-step.completed {
-    background: linear-gradient(135deg, #FCDD56 0%, #e5c338 100%);
+    background: #FCDD56;
     color: transparent;
-    box-shadow: 0 2px 8px rgba(252, 221, 86, 0.4);
+    border-color: #000000;
 }
 
 .oopspam-progress-step.completed::after {
@@ -81,19 +81,19 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    color: #fff; /* Ensure the checkmark is white */
+    color: #000000;
 }
 
 .oopspam-progress-line {
     flex-grow: 1;
     height: 3px;
-    background-color: #f0f0f0;
+    background-color: #FBF6ED;
     margin: 0 10px;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s ease;
 }
 
 .oopspam-progress-line.active {
-    background: linear-gradient(90deg, #FCDD56 0%, #e5c338 100%);
+    background: #FCDD56;
 }
 
 .oopspam-wizard-body {
@@ -112,22 +112,19 @@
 .oopspam-quick-buttons .button {
     background: #ffffff !important;
     color: #000000 !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
-    border-radius: 8px !important;
+    border: 1px solid #000000 !important;
+    border-radius: 4px !important;
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 14px !important;
     cursor: pointer !important;
-    transition: all 0.25s ease !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
 }
 
 .oopspam-quick-buttons button:hover,
 .oopspam-quick-buttons .button:hover {
     background: #FBF6ED !important;
-    border-color: #FCDD56 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border-color: #000000 !important;
 }
 
 .oopspam-wizard-step {
@@ -163,29 +160,27 @@
     width: 100%;
     padding: 10px 14px;
     font-size: 14px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 8px;
+    border: 1px solid #000000;
+    border-radius: 4px;
     background: #ffffff;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s ease;
 }
 
 .oopspam-form-group input[type="text"]:focus,
 .oopspam-form-group input[type="password"]:focus,
 .oopspam-form-group select:focus {
     border-color: #FCDD56;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(252, 221, 86, 0.15), 0 1px 2px rgba(0, 0, 0, 0.04);
+    outline: 2px solid #FCDD56;
+    outline-offset: 1px;
 }
 
 .oopspam-form-checkbox-group {
     max-height: 200px;
     overflow-y: auto;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid #000000;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: 4px;
     background: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.2) #f5f5f5;
 }
@@ -231,14 +226,16 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    border-radius: 4px;
+    transition: background 0.2s ease;
     background: #ffffff;
+    border: 1px solid transparent;
+    cursor: pointer;
 }
 
 .oopspam-checkbox-wrapper:hover {
-    background-color: rgba(252, 221, 86, 0.08);
-    border-radius: 6px;
+    background-color: #FBF6ED;
+    border-color: #000000;
 }
 
 .oopspam-checkbox-wrapper:last-child {
@@ -257,10 +254,9 @@
     cursor: pointer !important;
     border-radius: 999px !important;
     overflow: hidden !important;
-    background: linear-gradient(180deg, #8b8b8b 0%, #707070 100%) !important;
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18) !important;
-    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+    background: #757575 !important;
+    border: 2px solid #000000 !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
     font-size: 12px;
 }
 
@@ -270,25 +266,22 @@
     display: block !important;
     position: absolute !important;
     z-index: 2 !important;
-    width: 24px !important;
-    height: 24px !important;
+    width: 22px !important;
+    height: 22px !important;
     top: 1px !important;
     left: 1px !important;
     background: #ffffff !important;
     border-radius: 999px !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
-    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    transition: transform 0.2s ease !important;
 }
 
 .oopspam-toggle:checked {
-    background: linear-gradient(135deg, #FCDD56 0%, #e5c338 100%) !important;
-    border-color: rgba(252, 221, 86, 0.6) !important;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+    background: #FCDD56 !important;
+    border-color: #000000 !important;
 }
 
 .oopspam-toggle:checked:before {
     transform: translateX(20px) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
 .oopspam-toggle:focus-visible {
@@ -297,7 +290,7 @@
 }
 
 .oopspam-toggle:hover:not(:checked) {
-    background: linear-gradient(180deg, #6b6b6b 0%, #505050 100%) !important;
+    background: #616161 !important;
 }
 
 .oopspam-radio-group {
@@ -307,13 +300,13 @@
 .oopspam-radio-option {
     margin-bottom: 15px;
     padding: 15px;
-    border: 1px solid #e2e4e7;
+    border: 1px solid #000000;
     border-radius: 4px;
-    transition: all 0.3s ease;
+    transition: background 0.2s ease;
 }
 
 .oopspam-radio-option:hover {
-    background-color: #f8f9fa;
+    background-color: #FBF6ED;
 }
 
 .oopspam-radio-option input[type="radio"] {
@@ -341,28 +334,24 @@
 .oopspam-wizard-buttons a.button {
     background: #ffffff !important;
     color: #000000 !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
-    border-radius: 8px !important;
+    border: 1px solid #000000 !important;
+    border-radius: 4px !important;
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 14px !important;
     cursor: pointer !important;
-    transition: all 0.25s ease !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
 }
 
 .oopspam-wizard-buttons button:hover,
 .oopspam-wizard-buttons a.button:hover {
     background: #FBF6ED !important;
-    border-color: #FCDD56 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border-color: #000000 !important;
 }
 
 .oopspam-wizard-buttons button:active,
 .oopspam-wizard-buttons a.button:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+    background: #FCDD56 !important;
 }
 
 /* Ensure all button types are styled */
@@ -370,22 +359,19 @@
 .oopspam-wizard-buttons input[type="submit"] {
     background: #ffffff !important;
     color: #000000 !important;
-    border: 1px solid rgba(0, 0, 0, 0.2) !important;
-    border-radius: 8px !important;
+    border: 1px solid #000000 !important;
+    border-radius: 4px !important;
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 14px !important;
     cursor: pointer !important;
-    transition: all 0.25s ease !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
 }
 
 .oopspam-wizard-buttons input[type="button"]:hover,
 .oopspam-wizard-buttons input[type="submit"]:hover {
     background: #FBF6ED !important;
-    border-color: #FCDD56 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    border-color: #000000 !important;
 }
 
 .oopspam-completion-message {
@@ -404,9 +390,9 @@
 .oopspam-next-steps {
     background: #FBF6ED;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 4px;
     margin-bottom: 30px;
-    border: 1px solid rgba(252, 221, 86, 0.3);
+    border: 1px solid #000000;
 }
 
 .oopspam-next-steps h3 {
@@ -443,19 +429,19 @@
 .oopspam-wizard-footer {
     padding: 20px;
     text-align: center;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid #000000;
     color: #666666;
     font-size: 13px;
 }
 
 .oopspam-success-message {
-    background: rgba(252, 221, 86, 0.08);
-    border-left: 4px solid #FCDD56;
+    background: #FBF6ED;
+    border-left: 4px solid #000000;
     padding: 12px 16px;
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    border-radius: 6px;
+    border-radius: 4px;
 }
 
 .oopspam-success-message .dashicons {
@@ -464,9 +450,9 @@
 }
 
 .oopspam-notice {
-    background: rgba(252, 221, 86, 0.08);
-    border-left: 4px solid #FCDD56;
-    border-radius: 6px;
+    background: #FBF6ED;
+    border-left: 4px solid #000000;
+    border-radius: 4px;
     padding: 15px;
     margin-bottom: 20px;
 }

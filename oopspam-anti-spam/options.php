@@ -12,6 +12,10 @@ use OOPSPAM\RateLimiting\OOPSpam_RateLimiter;
 add_action('admin_menu', 'oopspamantispam_admin_menu');
 add_action('admin_init', 'oopspamantispam_settings_init');
 
+// Settings import/export handlers (Tools tab).
+add_action('admin_post_oopspam_export_settings', 'oopspam_handle_export_settings');
+add_action('admin_post_oopspam_import_settings', 'oopspam_handle_import_settings');
+
 function oopspamantispam_admin_menu()
 {
     $hook = add_menu_page(
@@ -23,6 +27,62 @@ function oopspamantispam_admin_menu()
         'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDIwIDE3Ij48cGF0aCBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xOS41MTk1NDAyLDE0Ljg0ODI3NTkgQzE3Ljc3OTMxMDMsMTQuMzEyNjQzNyAxNi4wNDgyNzU5LDEzLjQ5NDI1MjkgMTUuNTcyNDEzOCwxMS41MzU2MzIyIEMxNS4xNzI0MTM4LDkuOTEyNjQzNjggMTUuOTUxNzI0MSw4LjAwNjg5NjU1IDE3LjEwMzQ0ODMsNi44NjY2NjY2NyBDMTcuODI3NTg2Miw2LjE0NzEyNjQ0IDE4Ljc4MzkwOCw1LjUwNTc0NzEzIDE5LjI2ODk2NTUsNC41Njc4MTYwOSBDMTkuNjg3MzU2MywzLjc3MDExNDk0IDE5LjM0MDIyOTksMi45MzEwMzQ0OCAxOC40MDIyOTg5LDIuODk2NTUxNzIgQzE3LjAxMTQ5NDMsMi44NTUxNzI0MSAxNS40OTY1NTE3LDQuMzQyNTI4NzQgMTQuMTEyNjQzNywzLjg4NTA1NzQ3IEMxMy4xNzkzMTAzLDMuNTc3MDExNDkgMTIuOTg4NTA1NywyLjI3NTg2MjA3IDEyLjQ4NzM1NjMsMS41NzAxMTQ5NCBDMTIuMTY1ODU5MiwxLjEwODkyNzUxIDExLjcxNDU3OTcsMC43NTM2NjQ5OTUgMTEuMTkwODA0NiwwLjU0OTQyNTI4NyBDMTAuMTEwOTIyMywwLjExMjk4NTUxNyA4LjkwMTgzNTYzLDAuMTIzNzM2NjMgNy44Mjk4ODUwNiwwLjU3OTMxMDM0NSBDNi41MjQxMzc5MywxLjE3MjQxMzc5IDYuMDU1MTcyNDEsMi41Mjg3MzU2MyA1LjEzNzkzMTAzLDMuNTM3OTMxMDMgQzUuMTA3NDQxODYsMy41NzI0NDMxNyA1LjA3OTc2NzA4LDMuNjA5MzQyODUgNS4wNTUxNzI0MSwzLjY0ODI3NTg2IEM0LjI2NjY2NjY3LDQuMTc5MzEwMzQgMy44NDgyNzU4Niw0LjE5MDgwNDYgMy4wNjY2NjY2NywzLjUxNDk0MjUzIEMyLjU1ODYyMDY5LDMuMDc1ODYyMDcgMi4wMzkwODA0NiwyLjI5ODg1MDU3IDEuMzE3MjQxMzgsMi4yMTgzOTA4IEMtMC4xOTc3MDExNDksMi4wNjg5NjU1MiAtMC4yMDQ1OTc3MDEsMy43NDk0MjUyOSAwLjMwMTE0OTQyNSw0LjcwMzQ0ODI4IEMwLjc3NDcxMjY0NCw1LjU5MzEwMzQ1IDEuNTMzMzMzMzMsNi4yNzgxNjA5MiAxLjgzOTA4MDQ2LDcuMjY0MzY3ODIgQzIuMTQxNDg0MDMsOC4zMDI1MDA2IDIuMDU5ODc1ODMsOS40MTQ4MjAzIDEuNjA5MTk1NCwxMC4zOTc3MDExIEMxLjA0NTk3NzAxLDExLjc0MjUyODcgMC4xOTc3MDExNDksMTMuMzMzMzMzMyAxLjE5MDgwNDYsMTQuNjk2NTUxNyBDMi4xMjE4MzkwOCwxNS45ODM5MDggMy44OTE5NTQwMiwxNS44MDY4OTY2IDUuMjMyMTgzOTEsMTUuMzg2MjA2OSBDNi4wMzkwODA0NiwxNS4xNDAyMjk5IDYuODExNDk0MjUsMTQuNzY3ODE2MSA3LjY0MTM3OTMxLDE0LjYgQzguNzI4NzM1NjMsMTQuMzcwMTE0OSA5Ljc3MjQxMzc5LDE0LjY0ODI3NTkgMTAuNzkzMTAzNCwxNS4wMjA2ODk3IEMxMi40MzIxODM5LDE1LjYxODM5MDggMTMuODQxMzc5MywxNi4xNzAxMTQ5IDE1LjYwNjg5NjYsMTYuMTQ5NDI1MyBDMTYuODEzNzkzMSwxNi4xNDk0MjUzIDE4LjM0NzEyNjQsMTYuMzI2NDM2OCAxOS41MTQ5NDI1LDE1Ljk2NTUxNzIgQzE5Ljc2MDE3MzgsMTUuODkwNjgyNyAxOS45MzAzNTg1LDE1LjY2Nzc3NzggMTkuOTM3OTMxLDE1LjQxMTQ5NDMgTDE5LjkzNzkzMSwxNS40MDIyOTg5IEMxOS45MzY4MjYsMTUuMTQ1MjUzNyAxOS43NjY0NzI0LDE0LjkxOTY3NTYgMTkuNTE5NTQwMiwxNC44NDgyNzU5IFogTTcuNjk0MjUyODcsOS4yOTg4NTA1NyBDNi41MTEzNjU1NCw5LjI2ODc1MDg1IDUuNTc2MzEzNDcsOC4yODYzODA0MSA1LjYwNDU5NzcsNy4xMDM0NDgyOCBDNS41NzYzMTM0Nyw1LjkyMDUxNjE0IDYuNTExMzY1NTQsNC45MzgxNDU3IDcuNjk0MjUyODcsNC45MDgwNDU5OCBDOC44NzcxNDAyMSw0LjkzODE0NTcgOS44MTIxOTIyOCw1LjkyMDUxNjE0IDkuNzgzOTA4MDUsNy4xMDM0NDgyOCBDOS44MTIxOTIyOCw4LjI4NjM4MDQxIDguODc3MTQwMjEsOS4yNjg3NTA4NSA3LjY5NDI1Mjg3LDkuMjk4ODUwNTcgWiBNMTIuMzM1NjMyMiw5LjEzMzMzMzMzIEMxMS42NjIzNzQ4LDkuMTI5NTI5NTYgMTEuMTE5MzE1NCw4LjU4MTMzNTMzIDExLjEyMTgzODksNy45MDgwNzE5MyBDMTEuMTI0MzgsNy4yMzQ4MDg1NSAxMS42NzE1NDc2LDYuNjkwNzE0ODcgMTIuMzQ0ODE0Niw2LjY5MTk3MzQ3IEMxMy4wMTgwODE2LDYuNjkzMjM2NDEgMTMuNTYzMjIwNiw3LjIzOTM3NTUyIDEzLjU2MzIyMDYsNy45MTI2NDM2OCBDMTMuNTYzODQxMSw4LjIzNzc3ODggMTMuNDM0NDg0Myw4LjU0OTY3NTkzIDEzLjIwMzkzMiw4Ljc3ODkzMzA4IEMxMi45NzMzNzk2LDkuMDA4MTkwMjEgMTIuNjYwNzU4Niw5LjEzNTc4Nzc5IDEyLjMzNTYzMjIsOS4xMzMzMzMzMyBaIi8+PC9zdmc+'
     );
 
+    // Remove the auto-generated submenu item (older WP adds a duplicate of the parent name).
+    remove_submenu_page('wp_oopspam_settings_page', 'wp_oopspam_settings_page');
+
+    // Submenu: Settings.
+    // Registered first (with the parent's own slug) so newer WordPress versions
+    // do not lazily insert an auto-generated "OOPSpam Anti-Spam" parent link
+    // as the first submenu item.
+    add_submenu_page(
+        'wp_oopspam_settings_page',
+        'OOPSpam Anti-Spam Settings',
+        'Settings',
+        'manage_options',
+        'wp_oopspam_settings_page',
+        'oopspamantispam_options_page'
+    );
+
+    // Submenu: Spam Entries.
+    $spam_entries_hook = add_submenu_page(
+        'wp_oopspam_settings_page',
+        'Spam Entries',
+        'Spam Entries',
+        'manage_options',
+        'wp_oopspam_frm_spam_entries',
+        array( \OOPSPAM\UI\OOPSpam_Spam::get_instance(), 'plugin_settings_page' )
+    );
+    add_action('load-' . $spam_entries_hook, array( \OOPSPAM\UI\OOPSpam_Spam::get_instance(), 'screen_option' ));
+
+    // Submenu: Valid Entries.
+    $ham_entries_hook = add_submenu_page(
+        'wp_oopspam_settings_page',
+        'Valid Entries',
+        'Valid Entries',
+        'manage_options',
+        'wp_oopspam_frm_ham_entries',
+        array( \OOPSPAM\UI\OOPSpam_Ham::get_instance(), 'plugin_settings_page' )
+    );
+    add_action('load-' . $ham_entries_hook, array( \OOPSPAM\UI\OOPSpam_Ham::get_instance(), 'screen_option' ));
+
+    // Submenu: Tools (import / export).
+    add_submenu_page(
+        'wp_oopspam_settings_page',
+        'Tools',
+        'Tools',
+        'manage_options',
+        'wp_oopspam_settings_tools_page',
+        'oopspamantispam_tools_submenu_page'
+    );
+}
+
+/**
+ * Render the standalone Tools (import / export) submenu page.
+ *
+ * @return void
+ */
+function oopspamantispam_tools_submenu_page() {
+    oopspamantispam_tools_tab_render();
 }
 
 add_action('wp_ajax_update_cloud_providers_setting', 'oopspam_update_cloud_providers_setting');
@@ -2203,8 +2263,8 @@ function oopspam_spam_score_threshold_render()
             <label class="oopspam-experimental-option" for="oopspam_smart_accuracy">
                 <input class="oopspam-toggle" type="checkbox" id="oopspam_smart_accuracy" name="oopspamantispam_settings[oopspam_smart_accuracy]" value="1" <?php checked($isSmartAccuracyEnabled); ?>/>
                 <span>
-                    <strong><?php echo esc_html__('Smart Accuracy', 'oopspam-anti-spam'); ?></strong>
-                    <span class="oopspam-experimental-tag"><?php echo esc_html__('Experimental', 'oopspam-anti-spam'); ?></span>
+                    <strong><?php echo esc_html__('Reduce False Positives', 'oopspam-anti-spam'); ?></strong>
+                    <span class="oopspam-experimental-tag"><?php echo esc_html__('Beta', 'oopspam-anti-spam'); ?></span>
                     <span class="description"><?php echo esc_html__('Improves detection accuracy to reduce false positives, though some spam may be missed.', 'oopspam-anti-spam'); ?></span>
                 </span>
             </label>
@@ -2212,7 +2272,6 @@ function oopspam_spam_score_threshold_render()
                 <input class="oopspam-toggle" type="checkbox" id="oopspam_extra_screening" name="oopspamantispam_settings[oopspam_extra_screening]" value="1" <?php checked($isExtraScreeningEnabled); ?>/>
                 <span>
                     <strong><?php echo esc_html__('Extra Screening', 'oopspam-anti-spam'); ?></strong>
-                    <span class="oopspam-experimental-tag"><?php echo esc_html__('Experimental', 'oopspam-anti-spam'); ?></span>
                     <span class="description"><?php echo esc_html__('Applies additional checks for stricter spam filtering.', 'oopspam-anti-spam'); ?></span>
                 </span>
             </label>
@@ -5164,7 +5223,6 @@ if( isset( $_GET[ 'tab' ] ) ) {
         <a href="?page=wp_oopspam_settings_page&tab=misc" class="nav-tab <?php echo esc_attr($active_tab == 'misc' ? 'nav-tab-active' : ''); ?>">Misc</a>
     </h2>
 
-
         <form action='options.php' method='post'>
             
         <?php
@@ -5370,8 +5428,8 @@ if( isset( $_GET[ 'tab' ] ) ) {
         }
         ?>
         <?php submit_button(); ?>
-    </form>
-    
+        </form>
+
     <script>
     jQuery(document).ready(function($) {
         $('#oopspam-refresh-usage').on('click', function(e) {
@@ -5803,4 +5861,192 @@ function oopspam_spam_report_schedule_cron($option, $old_value, $new_value) {
     $next_run = isset($next_run_map[$new_frequency]) ? $next_run_map[$new_frequency] : '+1 day';
 
     wp_schedule_event(strtotime($next_run), $schedule, 'oopspam_spam_report_cron');
+}
+
+/**
+ * Handle the settings export download (Tools tab).
+ *
+ * @return void
+ */
+function oopspam_handle_export_settings() {
+    if (!current_user_can('manage_options')) {
+        wp_die(esc_html__('Insufficient permissions.', 'oopspam-anti-spam'));
+    }
+
+    if (!isset($_GET['nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_GET['nonce'])), 'oopspam_export_settings')) {
+        wp_die(esc_html__('Invalid security token.', 'oopspam-anti-spam'));
+    }
+
+    $payload = OOPSpam_Settings_Transfer::build_export();
+    $json    = wp_json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+    if (false === $json) {
+        wp_die(esc_html__('Could not encode the settings.', 'oopspam-anti-spam'));
+    }
+
+    nocache_headers();
+    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Disposition: attachment; filename="oopspam-settings-' . gmdate('Y-m-d') . '.json"');
+    header('Content-Length: ' . strlen($json));
+
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON download.
+    echo $json;
+    exit;
+}
+
+/**
+ * Handle the settings import POST (Tools tab).
+ *
+ * @return void
+ */
+function oopspam_handle_import_settings() {
+    if (!current_user_can('manage_options')) {
+        wp_die(esc_html__('Insufficient permissions.', 'oopspam-anti-spam'));
+    }
+
+    check_admin_referer('oopspam_import_settings', 'oopspam_import_nonce');
+
+    $replace = !empty($_POST['oopspam_import_replace']);
+    $raw     = '';
+
+    // 1. Uploaded JSON file.
+    if (!empty($_FILES['oopspam_import_file']['tmp_name']) && is_uploaded_file($_FILES['oopspam_import_file']['tmp_name'])) {
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading an uploaded temp file.
+        $raw = file_get_contents($_FILES['oopspam_import_file']['tmp_name']);
+    }
+
+    // 2. Pasted JSON in the textarea.
+    if ('' === $raw && isset($_POST['oopspam_import_json'])) {
+        $raw = wp_unslash((string) $_POST['oopspam_import_json']);
+    }
+
+    $data = json_decode($raw, true);
+
+    $redirect = admin_url('admin.php?page=wp_oopspam_settings_tools_page');
+
+    if (null === $data || !OOPSpam_Settings_Transfer::is_valid_export($data)) {
+        wp_safe_redirect(add_query_arg('oopspam_import', 'invalid', $redirect));
+        exit;
+    }
+
+    $result = OOPSpam_Settings_Transfer::import($data, $replace);
+
+    if ($result['errors']) {
+        wp_safe_redirect(add_query_arg('oopspam_import', 'error', $redirect));
+    } else {
+        wp_safe_redirect(add_query_arg('oopspam_import', 'success', $redirect));
+    }
+    exit;
+}
+
+/**
+ * Render the Tools page (import / export / WP-CLI help).
+ *
+ * @return void
+ */
+function oopspamantispam_tools_tab_render() {
+    $export_url = wp_nonce_url(admin_url('admin-post.php?action=oopspam_export_settings'), 'oopspam_export_settings', 'nonce');
+
+    $notice_type = isset($_GET['oopspam_import']) ? sanitize_key(wp_unslash($_GET['oopspam_import'])) : '';
+
+    ?>
+    <div class="wrap">
+        <?php if ('success' === $notice_type) : ?>
+            <div class="notice notice-success is-dismissible">
+                <p><?php esc_html_e('OOPSpam settings imported successfully.', 'oopspam-anti-spam'); ?></p>
+            </div>
+        <?php elseif ('invalid' === $notice_type) : ?>
+            <div class="notice notice-error is-dismissible">
+                <p><?php esc_html_e('The file does not contain a valid OOPSpam settings export. Please export the settings from the source site and try again.', 'oopspam-anti-spam'); ?></p>
+            </div>
+        <?php elseif ('error' === $notice_type) : ?>
+            <div class="notice notice-error is-dismissible">
+                <p><?php esc_html_e('Some settings could not be imported. Please check the values and try again.', 'oopspam-anti-spam'); ?></p>
+            </div>
+        <?php endif; ?>
+
+        <h2><?php esc_html_e('Import / Export Settings', 'oopspam-anti-spam'); ?></h2>
+        <p><?php esc_html_e('Move your OOPSpam configuration between sites, or manage it from the command line with WP-CLI.', 'oopspam-anti-spam'); ?></p>
+
+        <div class="card" style="max-width: 900px;">
+            <h3><?php esc_html_e('Export Settings', 'oopspam-anti-spam'); ?></h3>
+            <p>
+                <?php esc_html_e('Download a JSON file containing all of this site\'s OOPSpam settings, including the API key, country/language filters, manual moderation lists, and rate limiting configuration. You can import this file on another site.', 'oopspam-anti-spam'); ?>
+            </p>
+            <p>
+                <a class="button button-primary" href="<?php echo esc_url($export_url); ?>">
+                    <?php esc_html_e('Download Settings', 'oopspam-anti-spam'); ?>
+                </a>
+            </p>
+            <p class="description">
+                <?php esc_html_e('The exported file contains your API key. Store it securely and delete it after moving it to the destination site.', 'oopspam-anti-spam'); ?>
+            </p>
+        </div>
+
+        <div class="card" style="max-width: 900px;">
+            <h3><?php esc_html_e('Import Settings', 'oopspam-anti-spam'); ?></h3>
+            <p>
+                <?php esc_html_e('Import settings from a JSON file exported from another site (or from the WP-CLI export command).', 'oopspam-anti-spam'); ?>
+            </p>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
+                <?php wp_nonce_field('oopspam_import_settings', 'oopspam_import_nonce'); ?>
+                <input type="hidden" name="action" value="oopspam_import_settings" />
+
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row">
+                            <label for="oopspam_import_file"><?php esc_html_e('Upload file', 'oopspam-anti-spam'); ?></label>
+                        </th>
+                        <td>
+                            <input type="file" id="oopspam_import_file" name="oopspam_import_file" accept="application/json,.json" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="oopspam_import_json"><?php esc_html_e('…or paste JSON', 'oopspam-anti-spam'); ?></label>
+                        </th>
+                        <td>
+                            <textarea id="oopspam_import_json" name="oopspam_import_json" class="large-text code" rows="8" placeholder='{"plugin":"oopspam-anti-spam","settings":{...}}'></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Import mode', 'oopspam-anti-spam'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="oopspam_import_replace" value="1" />
+                                <?php esc_html_e('Replace existing settings entirely', 'oopspam-anti-spam'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When unchecked (default), current settings are kept and imported values override them. When checked, each imported option replaces the current one completely.', 'oopspam-anti-spam'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <p>
+                    <?php submit_button(esc_html__('Import Settings', 'oopspam-anti-spam'), 'primary', 'oopspam_import_submit', false); ?>
+                </p>
+            </form>
+        </div>
+
+        <div class="card" style="max-width: 900px;">
+            <h3><?php esc_html_e('WP-CLI', 'oopspam-anti-spam'); ?></h3>
+            <p>
+                <?php esc_html_e('The plugin ships with WP-CLI commands so you can read, change, export, and import settings from the command line.', 'oopspam-anti-spam'); ?>
+            </p>
+            <ul style="list-style: disc; padding-left: 20px;">
+                <li><code>wp oopspam status</code> – <?php esc_html_e('show plugin configuration status', 'oopspam-anti-spam'); ?></li>
+                <li><code>wp oopspam get</code> – <?php esc_html_e('print all settings', 'oopspam-anti-spam'); ?></li>
+                <li><code>wp oopspam get oopspamantispam_settings.oopspam_api_key</code> – <?php esc_html_e('read one setting', 'oopspam-anti-spam'); ?></li>
+                <li><code>wp oopspam set &lt;setting&gt; &lt;value&gt;</code> – <?php esc_html_e('change one setting', 'oopspam-anti-spam'); ?></li>
+                <li><code>wp oopspam export settings.json</code> – <?php esc_html_e('export settings to a file', 'oopspam-anti-spam'); ?></li>
+                <li><code>wp oopspam import settings.json</code> – <?php esc_html_e('import settings from a file', 'oopspam-anti-spam'); ?></li>
+                <li><code>wp oopspam set-many '{"key":"value"}' --all-sites</code> – <?php esc_html_e('bulk-apply settings across a multisite network', 'oopspam-anti-spam'); ?></li>
+            </ul>
+            <p class="description">
+                <?php esc_html_e('See the plugin readme or run "wp help oopspam" for the full command reference.', 'oopspam-anti-spam'); ?>
+            </p>
+        </div>
+    </div>
+    <?php
 }

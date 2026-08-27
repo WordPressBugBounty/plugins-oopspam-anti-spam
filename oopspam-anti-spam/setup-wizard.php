@@ -198,6 +198,17 @@ function oopspam_process_wizard_step() {
                                 if ($woo_option === 'require_device_type') {
                                     $options['oopspam_woo_require_device_type'] = 1;
                                 }
+                                if ($woo_option === 'extra_screening') {
+                                    $options['oopspam_extra_screening'] = 1;
+                                }
+                                if ($woo_option === 'block_cloud_providers') {
+                                    $ip_filtering_options = get_option('oopspamantispam_ipfiltering_settings', array());
+                                    if (!is_array($ip_filtering_options)) {
+                                        $ip_filtering_options = array();
+                                    }
+                                    $ip_filtering_options['oopspam_block_cloud_providers'] = '1';
+                                    update_option('oopspamantispam_ipfiltering_settings', $ip_filtering_options);
+                                }
                             }
                         }
                     }
@@ -380,6 +391,22 @@ function oopspam_setup_wizard_content() {
                                         Require valid device type
                                     </label>
                                     <p class="description">Spam orders often use fake browsers that don't properly identify themselves. This setting enforces device type validation.</p>
+                                </div>
+
+                                <div class="oopspam-checkbox-wrapper" style="margin-bottom: 10px;">
+                                    <label for="oopspam-woo-block-cloud-providers">
+                                        <input type="checkbox" id="oopspam-woo-block-cloud-providers" name="oopspam-woo-enhanced-options[]" value="block_cloud_providers">
+                                        Block Cloud Providers
+                                    </label>
+                                    <p class="description">Blocks traffic from cloud hosting providers and datacenters, which are often used by bots to send spam orders.</p>
+                                </div>
+
+                                <div class="oopspam-checkbox-wrapper" style="margin-bottom: 10px;">
+                                    <label for="oopspam-woo-extra-screening">
+                                        <input type="checkbox" id="oopspam-woo-extra-screening" name="oopspam-woo-enhanced-options[]" value="extra_screening">
+                                        Extra Screening
+                                    </label>
+                                    <p class="description">Applies additional experimental checks for stricter spam filtering on the OOPSpam API side.</p>
                                 </div>
                             </div>
                         </div>
