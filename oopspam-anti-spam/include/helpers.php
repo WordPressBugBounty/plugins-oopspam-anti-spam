@@ -400,17 +400,31 @@ function oopspam_is_spamprotection_enabled($form_builder) {
     return isset($options[$option_name]) && $options[$option_name];
 }
 
+// Option name used by the core "Connectors" screen (WordPress 7.0+) to store the OOPSpam API key.
+if (!defined('OOPSPAM_CONNECTOR_API_KEY')) {
+    define('OOPSPAM_CONNECTOR_API_KEY', 'oopspam_api_key');
+}
+
 function oopspamantispam_get_key() {
-    // Check if the constant is defined in wp-config.php
+    // 1) Highest priority: constant defined in wp-config.php.
     if (defined('OOPSPAM_API_KEY')) {
         return OOPSPAM_API_KEY;
     }
 
-    // Fallback to GUI settings
+    // 2) OOPSpam settings page.
     $options = get_option('oopspamantispam_settings');
-    
-    // Safely return the API key from options (avoids undefined index notices)
-    return isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '';
+    if (isset($options['oopspam_api_key']) && '' !== $options['oopspam_api_key']) {
+        return $options['oopspam_api_key'];
+    }
+
+    // 3) Low priority fallback: key saved on the core Connectors screen
+    //    (Settings > Connectors, WordPress 7.0+), registered by oopspam-connectors.php.
+    $connector_key = get_option(OOPSPAM_CONNECTOR_API_KEY, '');
+    if (is_string($connector_key) && '' !== $connector_key) {
+        return $connector_key;
+    }
+
+    return '';
 }
 
 function oopspamantispam_get_spamscore_threshold()

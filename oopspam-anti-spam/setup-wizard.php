@@ -90,10 +90,23 @@ add_action('admin_init', 'oopspam_maybe_redirect_to_wizard');
 
 /**
  * Check if API key exists
+ *
+ * Mirrors the same precedence as oopspamantispam_get_key() so the setup wizard
+ * and admin notices also recognize a key saved on the core Connectors screen.
  */
 function oopspam_has_api_key() {
-    $options = get_option('oopspamantispam_settings');
-    $has_key = defined('OOPSPAM_API_KEY') || (isset($options['oopspam_api_key']) && !empty($options['oopspam_api_key']));
+    $has_key = defined('OOPSPAM_API_KEY');
+
+    if (!$has_key) {
+        $options = get_option('oopspamantispam_settings');
+        $has_key = isset($options['oopspam_api_key']) && !empty($options['oopspam_api_key']);
+    }
+
+    if (!$has_key && defined('OOPSPAM_CONNECTOR_API_KEY')) {
+        $connector_key = get_option(OOPSPAM_CONNECTOR_API_KEY, '');
+        $has_key = is_string($connector_key) && '' !== $connector_key;
+    }
+
     return $has_key;
 }
 

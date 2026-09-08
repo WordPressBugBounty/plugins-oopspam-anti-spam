@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 7.1
-Stable tag: 1.2.78
+Stable tag: 1.2.79
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -117,6 +117,9 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.79 =
+* **NEW:** Added support for the Abilities API.
+* **NEW:** Added the plugin to Settings → Connectors for convenient API key management.
 = 1.2.78 =
 * **FIX:** Tools import/export page is now a standalone submenu page with its styles loaded correctly
 = 1.2.77 =

@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.78
+ * Version: 1.2.79
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -86,6 +86,13 @@ require_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
 require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
 require_once dirname(__FILE__) . '/include/Background/AsyncProcessor.php';
 require_once dirname(__FILE__) . '/include/class-oopspam-settings-transfer.php';
+
+// WordPress Abilities API (6.9+) support. No-ops when the API or the feature is unavailable.
+require_once dirname(__FILE__) . '/include/oopspam-abilities.php';
+
+// WordPress Connectors API (7.0+) support for registering the OOPSpam API key
+// from Settings > Connectors as a low-priority fallback source.
+require_once dirname(__FILE__) . '/include/oopspam-connectors.php';
 
 // Used to detect installed plugins.
 require_once ABSPATH . 'wp-admin/includes/plugin.php';

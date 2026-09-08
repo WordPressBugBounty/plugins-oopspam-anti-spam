@@ -446,6 +446,10 @@ function oopspam_sanitize_misc_settings($input) {
         $sanitized['oopspam_email_admin_on_not_spam'] = '1';
     }
 
+    if (isset($input['oopspam_abilities_enabled'])) {
+        $sanitized['oopspam_abilities_enabled'] = '1';
+    }
+
     $allowed_frequencies = array('disabled', 'threshold', 'twicedaily', 'daily', 'weekly', 'monthly');
     $frequency = isset($input['oopspam_spam_report_frequency']) ? sanitize_key($input['oopspam_spam_report_frequency']) : 'disabled';
     $sanitized['oopspam_spam_report_frequency'] = in_array($frequency, $allowed_frequencies, true) ? $frequency : 'disabled';
@@ -1958,6 +1962,14 @@ function oopspam_jform_spam_message_render()
     );
 
     add_settings_field(
+        'oopspam_abilities_enabled',
+        esc_html__('Enable Abilities API (AI & automation)', 'oopspam-anti-spam'),
+        'oopspam_abilities_enabled_render',
+        'oopspamantispam-misc-settings-group',
+        'oopspam_misc_settings_section'
+    );
+
+    add_settings_field(
         'oopspam_entries_display_timezone',
         esc_html__('Entries table timezone',  'oopspam-anti-spam'),
         'oopspam_entries_display_timezone_render',
@@ -2161,6 +2173,38 @@ function oopspam_email_admin_on_not_spam_render() {
     <?php
 }
 
+function oopspam_abilities_enabled_render() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+
+    $option_set   = isset($options['oopspam_abilities_enabled']);
+    $force_value  = defined('OOPSPAM_ENABLE_ABILITIES') ? (bool) OOPSPAM_ENABLE_ABILITIES : null;
+    $is_enabled   = (null !== $force_value) ? $force_value : $option_set;
+    $forced       = (null !== $force_value);
+    $api_available = function_exists('wp_register_ability');
+    ?>
+    <div>
+        <label for="oopspam_abilities_enabled">
+            <input class="oopspam-toggle" type="checkbox" id="oopspam_abilities_enabled"
+                   name="oopspamantispam_misc_settings[oopspam_abilities_enabled]"
+                   <?php checked($is_enabled, true, true); ?>
+                   <?php echo $forced ? esc_attr('disabled') : ''; ?>/>
+            <p class="description">
+                <?php echo esc_html__('Let AI assistants and automation tools (for example, through the official WordPress MCP Adapter plugin) check submissions for spam, review and report what was blocked, and manage the blocked/allowed lists.', 'oopspam-anti-spam'); ?>
+            </p>
+        </label>
+        <?php if (!$api_available): ?>
+            <p class="description" style="color:#d63638;">
+                <?php echo esc_html__('Requires WordPress 6.9 or newer. The Abilities API is not available on this site yet, so enabling this has no effect until WordPress is updated.', 'oopspam-anti-spam'); ?>
+            </p>
+        <?php elseif ($forced): ?>
+            <p class="description">
+                <?php echo esc_html__('Controlled by the OOPSPAM_ENABLE_ABILITIES constant in wp-config.php; this toggle is disabled.', 'oopspam-anti-spam'); ?>
+            </p>
+        <?php endif; ?>
+    </div>
+    <?php
+}
+
 function oopspam_entries_display_timezone_render() {
     $options = get_option('oopspamantispam_misc_settings', array());
     $selected_timezone = isset($options['oopspam_entries_display_timezone']) ? $options['oopspam_entries_display_timezone'] : 'site';
@@ -2199,6 +2243,15 @@ function oopspam_api_key_render()
     $options = get_option('oopspamantispam_settings');
     $api_key = defined('OOPSPAM_API_KEY') ? OOPSPAM_API_KEY : (isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '');
     $is_constant = defined('OOPSPAM_API_KEY');
+    $plugin_key = isset($options['oopspam_api_key']) ? $options['oopspam_api_key'] : '';
+
+    // A key may also be supplied by the core Connectors screen (WordPress 7.0+).
+    // It is only used when no key is set here or via the constant.
+    $connector_key = get_option(
+        defined('OOPSPAM_CONNECTOR_API_KEY') ? OOPSPAM_CONNECTOR_API_KEY : 'oopspam_api_key',
+        ''
+    );
+    $is_using_connector = !$is_constant && '' === $plugin_key && is_string($connector_key) && '' !== $connector_key;
     ?>
         <div class="api_key_section">
             <label for="oopspam_api_key">
@@ -2206,6 +2259,10 @@ function oopspam_api_key_render()
                 <button class="button button-secondary" type="button" id="toggleApiKey" style="margin-left: 5px;">Show</button>
                 <?php if ($is_constant): ?>
                     <p class="description"><?php echo esc_html__('API key is defined in wp-config.php'); ?></p>
+                <?php elseif ($is_using_connector): ?>
+                    <p class="description" style="color:#1d2327;background:#f0f6fc;border-left:4px solid #72aee6;padding:6px 10px;">
+                        <?php echo esc_html__('Your API key is set under Settings > Connectors. You can also add it here.', 'oopspam-anti-spam'); ?>
+                    </p>
                 <?php endif; ?>
             </label>
         </div>
@@ -5214,13 +5271,13 @@ if( isset( $_GET[ 'tab' ] ) ) {
 ?>
 
 <h2 class="nav-tab-wrapper">
-        <a href="?page=wp_oopspam_settings_page&tab=general" class="nav-tab <?php echo esc_attr($active_tab == 'general' ? 'nav-tab-active' : ''); ?>">General</a>
-        <a href="?page=wp_oopspam_settings_page&tab=privacy" class="nav-tab <?php echo esc_attr($active_tab == 'privacy' ? 'nav-tab-active' : ''); ?>">Privacy</a>
-        <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo esc_attr($active_tab == 'manual_moderation' ? 'nav-tab-active' : ''); ?>">Manual Moderation</a>
-        <a href="?page=wp_oopspam_settings_page&tab=rate_limiting" class="nav-tab <?php echo esc_attr($active_tab == 'rate_limiting' ? 'nav-tab-active' : ''); ?>">Rate Limiting</a>
-        <a href="?page=wp_oopspam_settings_page&tab=ip_filtering" class="nav-tab <?php echo esc_attr($active_tab == 'ip_filtering' ? 'nav-tab-active' : ''); ?>">IP Filtering</a>
-        <a href="?page=wp_oopspam_settings_page&tab=contextai" class="nav-tab <?php echo esc_attr($active_tab == 'contextai' ? 'nav-tab-active' : ''); ?>">Contextual Detection</a>
-        <a href="?page=wp_oopspam_settings_page&tab=misc" class="nav-tab <?php echo esc_attr($active_tab == 'misc' ? 'nav-tab-active' : ''); ?>">Misc</a>
+        <a href="?page=wp_oopspam_settings_page&tab=general" class="nav-tab <?php echo esc_attr($active_tab == 'general' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'general' ? ' aria-current="page"' : ''; ?>>General</a>
+        <a href="?page=wp_oopspam_settings_page&tab=privacy" class="nav-tab <?php echo esc_attr($active_tab == 'privacy' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'privacy' ? ' aria-current="page"' : ''; ?>>Privacy</a>
+        <a href="?page=wp_oopspam_settings_page&tab=manual_moderation" class="nav-tab <?php echo esc_attr($active_tab == 'manual_moderation' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'manual_moderation' ? ' aria-current="page"' : ''; ?>>Manual Moderation</a>
+        <a href="?page=wp_oopspam_settings_page&tab=rate_limiting" class="nav-tab <?php echo esc_attr($active_tab == 'rate_limiting' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'rate_limiting' ? ' aria-current="page"' : ''; ?>>Rate Limiting</a>
+        <a href="?page=wp_oopspam_settings_page&tab=ip_filtering" class="nav-tab <?php echo esc_attr($active_tab == 'ip_filtering' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'ip_filtering' ? ' aria-current="page"' : ''; ?>>IP Filtering</a>
+        <a href="?page=wp_oopspam_settings_page&tab=contextai" class="nav-tab <?php echo esc_attr($active_tab == 'contextai' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'contextai' ? ' aria-current="page"' : ''; ?>>Contextual Detection</a>
+        <a href="?page=wp_oopspam_settings_page&tab=misc" class="nav-tab <?php echo esc_attr($active_tab == 'misc' ? 'nav-tab-active' : ''); ?>"<?php echo $active_tab == 'misc' ? ' aria-current="page"' : ''; ?>>Misc</a>
     </h2>
 
         <form action='options.php' method='post'>
