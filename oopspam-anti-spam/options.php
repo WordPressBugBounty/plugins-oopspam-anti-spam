@@ -422,15 +422,77 @@ function sanitize_positive_int($value) {
     return max(0, $value); // Ensure value is at least 0
 }
 
+/**
+ * Whether the form plugin behind an `oopspam_is_*_activated` option is present.
+ *
+ * @param string $integration Option name suffix, e.g. "sure" or "wpregister".
+ * @return bool True when the plugin is around, meaning its settings section renders.
+ */
+function oopspam_integration_is_detected($integration) {
+    /*
+     * The stored option suffix and the oopspamantispam_plugin_check() key differ
+     * for three integrations, so the two naming schemes cannot be used
+     * interchangeably:
+     *
+     *   nj         -> nf          Ninja Forms stores "nj" but is detected as "nf".
+     *   wpregister -> wp-register WordPress default registration.
+     *   wplogin    -> wp-register WordPress login protection rides on the same
+     *                             section, so it is gated by the same check.
+     *
+     * These names are baked into saved options and the OOPSPAM_IS_*_ACTIVATED
+     * constants, so they are mapped rather than renamed.
+     */
+    $detection_keys = array(
+        'nj'         => 'nf',
+        'wpregister' => 'wp-register',
+        'wplogin'    => 'wp-register',
+    );
+
+    $detection_key = isset($detection_keys[$integration]) ? $detection_keys[$integration] : $integration;
+
+    return oopspamantispam_plugin_check($detection_key);
+}
+
 function oopspam_sanitize_settings($input) {
+    if (!is_array($input)) {
+        $input = array();
+    }
+
     // Get existing settings
     $existing_settings = get_option('oopspamantispam_settings');
-    
+    if (!is_array($existing_settings)) {
+        $existing_settings = array();
+    }
+
     // Preserve the API usage value
     if (isset($existing_settings['oopspam_api_key_usage'])) {
         $input['oopspam_api_key_usage'] = $existing_settings['oopspam_api_key_usage'];
     }
-    
+
+    /*
+     * The settings API rebuilds the whole option array from the fields that were
+     * posted, and an integration toggle is only rendered when its plugin is
+     * detected. A plugin that is temporarily inactive - while it is being updated,
+     * for example - would otherwise silently lose its "enabled" flag on save, so
+     * carry those flags over.
+     *
+     * A toggle whose section *was* rendered is left exactly as posted: a missing
+     * checkbox there means the user deliberately switched that integration off.
+     */
+    foreach ($existing_settings as $key => $value) {
+        if (!preg_match('/^oopspam_is_(.+)_activated$/', $key, $matches)) {
+            continue;
+        }
+
+        if (array_key_exists($key, $input)) {
+            continue;
+        }
+
+        if (!oopspam_integration_is_detected($matches[1])) {
+            $input[$key] = $value;
+        }
+    }
+
     return $input;
 }
 
@@ -561,6 +623,12 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-avada-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-metform-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-acf-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-tnl-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-jform-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-pmp-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-sure-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-surecart-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-superforms-settings-group', 'oopspamantispam_settings');
 
     // Add settings section
     add_settings_section(
@@ -1866,6 +1934,44 @@ function oopspam_jform_spam_message_render()
             'oopspam_sure_exclude_form_render',
             'oopspamantispam-sure-settings-group',
             'oopspam_sure_settings_section'
+        );
+
+    }
+
+    // Super Forms settings section
+    if (oopspamantispam_plugin_check('superforms') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_superforms_settings_section',
+            esc_html__('Super Forms',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-superforms-settings-group'
+        );
+        add_settings_field('oopspam_is_superforms_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_superforms_activated_render',
+            'oopspamantispam-superforms-settings-group',
+            'oopspam_superforms_settings_section'
+        );
+
+        add_settings_field('oopspam_superforms_spam_message',
+            esc_html__('Super Forms Spam Message',  'oopspam-anti-spam'),
+            'oopspam_superforms_spam_message_render',
+            'oopspamantispam-superforms-settings-group',
+            'oopspam_superforms_settings_section'
+        );
+
+        add_settings_field('oopspam_superforms_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_superforms_content_field_render',
+            'oopspamantispam-superforms-settings-group',
+            'oopspam_superforms_settings_section'
+        );
+
+        add_settings_field('oopspam_superforms_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_superforms_exclude_form_render',
+            'oopspamantispam-superforms-settings-group',
+            'oopspam_superforms_settings_section'
         );
 
     }
@@ -3947,6 +4053,78 @@ function oopspam_sure_spam_message_render()
 
 /* SureForms UI settings section ends */
 
+/* Super Forms UI settings section starts */
+
+function oopspam_is_superforms_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_SUPERFORMS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_SUPERFORMS_ACTIVATED : (isset($options['oopspam_is_superforms_activated']) && 1 == $options['oopspam_is_superforms_activated']);
+    ?>
+    <div>
+        <label for="superforms_support">
+            <input class="oopspam-toggle" type="checkbox" id="superforms_support" 
+                   name="oopspamantispam_settings[oopspam_is_superforms_activated]" 
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?> 
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_superforms_content_field_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+            <div>
+                    <label for="oopspam_superforms_content_field">
+                    <input type="text" class="regular-text" name="oopspamantispam_settings[oopspam_superforms_content_field]" value="<?php if (isset($options['oopspam_superforms_content_field'])) {
+        echo esc_html($options['oopspam_superforms_content_field']);
+    }
+    ?>">
+                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea/content field in your Super Forms. If you have multiple such fields, specify the main content/message field name here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field names separated by commas.', 'oopspam-anti-spam'); ?></p>
+                        </label>
+                </div>
+            <?php
+}
+
+function oopspam_superforms_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+       <div>
+               <label for="oopspam_superforms_exclude_form">
+               <input id="oopspam_superforms_exclude_form" type="text" placeholder="Enter form IDs (e.g 1,5,2 or 5)" class="regular-text" name="oopspamantispam_settings[oopspam_superforms_exclude_form]" value="<?php if (isset($options['oopspam_superforms_exclude_form'])) {
+        echo esc_html($options['oopspam_superforms_exclude_form']);
+    }
+    ?>">
+                   </label>
+           </div>
+       <?php
+}
+
+function oopspam_superforms_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_superforms_spam_message">
+                  <input id="oopspam_superforms_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_superforms_spam_message]" value="<?php if (isset($options['oopspam_superforms_spam_message'])) {
+        esc_html_e($options['oopspam_superforms_spam_message'], "oopspam-anti-spam");
+    }
+    ?>">
+                      <p class="description"><?php echo esc_html__('Enter a short message to display when a spam Super Forms entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* Super Forms UI settings section ends */
+
 /* QuForm UI settings section starts */
 
 function oopspam_is_quform_activated_render()
@@ -5454,6 +5632,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                     <div class="surecart form-setting">
                     <?php
                     do_settings_sections('oopspamantispam-surecart-settings-group');
+                    ?>
+                    </div>
+                    <div class="superforms form-setting">
+                    <?php
+                    do_settings_sections('oopspamantispam-superforms-settings-group');
                     ?>
                     </div>
                     <div class="quform form-setting">

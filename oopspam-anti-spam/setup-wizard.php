@@ -149,6 +149,7 @@ function oopspam_get_active_form_plugins() {
         'quform' => 'Quform',
         'surecart' => 'SureCart',
         'sure' => 'SureForms',
+        'superforms' => 'Super Forms',
         'avada' => 'Avada Forms',
     );
     
@@ -226,6 +227,27 @@ function oopspam_process_wizard_step() {
                         }
                     }
                 }
+                // The list rendered on this step is built from the *detected* plugins, so
+                // anything left unticked here has just been switched off by the user.
+                // Prune those flags, but only when something was selected, so that
+                // unticking everything (or posting nothing) can never wipe every
+                // integration by accident.
+                $selected_option_ids = array();
+                foreach ((array) $_POST['forms'] as $selected_form) {
+                    $selected_form         = sanitize_text_field($selected_form);
+                    $selected_option_ids[] = ($selected_form === 'wp-register') ? 'wpregister' : $selected_form;
+                }
+
+                if (!empty($selected_option_ids)) {
+                    foreach (array_keys(oopspam_get_active_form_plugins()) as $plugin_key) {
+                        $option_id = ($plugin_key === 'wp-register') ? 'wpregister' : $plugin_key;
+
+                        if (!in_array($option_id, $selected_option_ids, true)) {
+                            unset($options['oopspam_is_' . $option_id . '_activated']);
+                        }
+                    }
+                }
+
                 update_option('oopspamantispam_settings', $options);
                 wp_send_json_success('Form protection settings saved');
             } else {
@@ -365,9 +387,15 @@ function oopspam_setup_wizard_content() {
                     <div class="oopspam-form-group">
                         <div class="oopspam-form-checkbox-group">
                             <?php foreach ($form_plugins as $key => $name): ?>
+                            <?php
+                            // Reflect what is actually stored, so an integration that is already
+                            // protected does not look switched off every time this page is loaded.
+                            $option_form_id = ($key === 'wp-register') ? 'wpregister' : $key;
+                            $is_protected   = oopspam_is_spamprotection_enabled($option_form_id);
+                            ?>
                             <div class="oopspam-checkbox-wrapper">
                                 <label for="oopspam-form-<?php echo esc_attr($key); ?>"><?php echo esc_html($name); ?></label>
-                                <input type="checkbox" class="oopspam-toggle" id="oopspam-form-<?php echo esc_attr($key); ?>" name="oopspam-forms[]" value="<?php echo esc_attr($key); ?>">
+                                <input type="checkbox" class="oopspam-toggle" id="oopspam-form-<?php echo esc_attr($key); ?>" name="oopspam-forms[]" value="<?php echo esc_attr($key); ?>" <?php echo $is_protected ? 'checked="checked"' : ''; ?>>
                             </div>
                             <?php endforeach; ?>
                         </div>

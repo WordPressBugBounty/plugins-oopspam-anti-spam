@@ -1084,8 +1084,9 @@ private static function process_form_fields($raw_entry) {
 			case 'email':
             case 'score':
             case 'raw_entry':
-			case 'reason':
 				return esc_html( $item[ $column_name ] );
+			case 'reason':
+				return esc_html( empty( $item[ $column_name ] ) ? '—' : $item[ $column_name ] );
 			default:
 				return esc_html( print_r( $item, true ) );
 		}
@@ -1102,12 +1103,13 @@ private static function process_form_fields($raw_entry) {
 
 	public function column_date( $item ) {
 		$formatted_date = \oopspam_format_entry_datetime( $item['date'] );
+		$display_date = $formatted_date !== '' ? $formatted_date : '—';
 		$timezone_label = \oopspam_get_entries_display_timezone_label();
 
 		return sprintf(
 			'<span title="%s">%s</span>',
 			esc_attr( $timezone_label ),
-			esc_html( $formatted_date )
+			esc_html( $display_date )
 		);
 	}
 

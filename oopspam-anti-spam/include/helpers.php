@@ -307,6 +307,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'superforms':
+                if (is_plugin_active('super-forms/super-forms.php')) {
+                    $result = true;
+                }
+            break;
     }
 
     return $result;
@@ -349,7 +354,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'buddypress' => 'OOPSPAM_IS_BUDDYPRESS_ACTIVATED',
         'avada' => 'OOPSPAM_IS_AVADA_ACTIVATED',
         'metform' => 'OOPSPAM_IS_METFORM_ACTIVATED',
-        'acf' => 'OOPSPAM_IS_ACF_ACTIVATED'
+        'acf' => 'OOPSPAM_IS_ACF_ACTIVATED',
+        'superforms' => 'OOPSPAM_IS_SUPERFORMS_ACTIVATED'
     );
 
     // Check if there's a constant defined for this form builder
@@ -393,7 +399,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'buddypress' => 'oopspam_is_buddypress_activated',
         'avada' => 'oopspam_is_avada_activated',
         'metform' => 'oopspam_is_metform_activated',
-        'acf' => 'oopspam_is_acf_activated'
+        'acf' => 'oopspam_is_acf_activated',
+        'superforms' => 'oopspam_is_superforms_activated'
     );
 
     $option_name = isset($option_map[$form_builder]) ? $option_map[$form_builder] : $form_builder;

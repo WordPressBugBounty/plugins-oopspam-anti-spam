@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.79
+ * Version: 1.2.80
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -131,6 +131,7 @@ require_once dirname(__FILE__) . '/integration/Quform.php';
 require_once dirname(__FILE__) . '/integration/HappyForms.php';
 require_once dirname(__FILE__) . '/integration/AvadaForm.php';
 require_once dirname(__FILE__) . '/integration/Metform.php';
+require_once dirname(__FILE__) . '/integration/SuperForms.php';
 require_once dirname(__FILE__) . '/integration/AcfFrontEndForm.php';
 
 require_once dirname(__FILE__) . '/integration/WooCommerce.php';
@@ -364,29 +365,48 @@ function oopspam_plugin_activate() {
     }
 }
 
-// Set default values
+/**
+ * Seed default settings.
+ *
+ * Runs on every activation, including the reactivation WordPress performs while
+ * updating a plugin, so it must never overwrite settings that are already there.
+ */
 function oopspam_default_options()
 {
-
     $options = get_option('oopspamantispam_settings');
+    if (!is_array($options)) {
+        $options = array();
+    }
+
     $rtOptions = get_option('oopspamantispam_ratelimit_settings');
 
-    $defaultRt = array(
-        'oopspamantispam_ratelimit_ip_limit' => 2,
-        'oopspamantispam_ratelimit_email_limit' => 2
+    // Only seed rate limiting defaults on a site that has none yet.
+    if (!is_array($rtOptions) || empty($rtOptions)) {
+        update_option('oopspamantispam_ratelimit_settings', array(
+            'oopspamantispam_ratelimit_ip_limit' => 2,
+            'oopspamantispam_ratelimit_email_limit' => 2
+        ));
+    }
+
+    // Backfill individual defaults. Everything else - the API key and every
+    // oopspam_is_*_activated integration toggle - is left as it is.
+    $defaults = array(
+        'oopspam_api_key_source' => 'OOPSpamDashboard',
+        'oopspam_api_key_usage' => '0/0',
+        'oopspam_clear_spam_entries' => 'monthly',
+        'oopspam_clear_ham_entries' => 'monthly',
     );
 
-    update_option('oopspamantispam_ratelimit_settings', $defaultRt);
+    $changed = false;
+    foreach ($defaults as $key => $value) {
+        if (!isset($options[$key]) || '' === $options[$key]) {
+            $options[$key] = $value;
+            $changed = true;
+        }
+    }
 
-    if (!isset($options['oopspam_api_key_source'])) {
-        $default = array(
-            'oopspam_api_key_source' => 'OOPSpamDashboard',
-            'oopspam_api_key_usage' => '0/0',
-            'oopspam_clear_spam_entries' => 'monthly',
-            'oopspam_clear_ham_entries' => 'monthly',
-        );
-       
-        update_option('oopspamantispam_settings', $default);
+    if ($changed) {
+        update_option('oopspamantispam_settings', $options);
     }
 }
 
