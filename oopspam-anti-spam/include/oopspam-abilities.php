@@ -585,7 +585,7 @@ function oopspam_register_oopspam_abilities() {
 
 		'oopspam/list-moderation-lists' => array(
 			'label'             => __( 'List Moderation Lists', 'oopspam-anti-spam' ),
-			'description'       => __( 'Returns the current manual moderation lists: blocked and allowed emails, IPs, and blocked keywords.', 'oopspam-anti-spam' ),
+			'description'       => __( 'Returns the current manual moderation lists: blocked and allowed emails, IPs, and blocked keywords and phrases.', 'oopspam-anti-spam' ),
 			'input_schema'      => array( 'type' => 'object', 'properties' => array() ),
 			'output_schema'     => array(
 				'type'       => 'object',

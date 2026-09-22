@@ -119,8 +119,6 @@ function oopspamantispam_superforms_pre_submission($atts)
             "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_id)),
         ];
 
-        error_log("OOPSpam SuperForms Detection Result: " . print_r($detectionResult, true));
-        error_log("OOPSpam SuperForms Entry Data: " . print_r($frmEntry, true));
         if (!$detectionResult["isItHam"]) {
             // It's spam, store the submission and block it
             $reason = !empty($detectionResult["Reason"]) ? $detectionResult["Reason"] : __('Spam detected', 'oopspam-anti-spam');

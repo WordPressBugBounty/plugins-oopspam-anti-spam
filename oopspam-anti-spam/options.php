@@ -273,16 +273,38 @@ function manual_moderation_keywords_render() {
     $mm_blocked_keywords = isset($manual_moderation_options['mm_blocked_keywords']) ? $manual_moderation_options['mm_blocked_keywords'] : '';
     ?>
     <details>
-        <summary><?php echo esc_html__('View blocked keywords', 'oopspam-anti-spam'); ?></summary>
+        <summary><?php echo esc_html__('View blocked keywords and phrases', 'oopspam-anti-spam'); ?></summary>
         <div style="margin-top: 10px;">
             <textarea name="manual_moderation_settings[mm_blocked_keywords]" 
-                      placeholder="seo&#10;invest"  
+                      placeholder="seo&#10;invest&#10;buy now"  
                       rows="10" 
                       cols="50" 
                       id="mm_blocked_keywords" 
                       class="large-text code"><?php echo esc_textarea($mm_blocked_keywords); ?></textarea>
             <p class="description">
-                <?php echo esc_html__('One keyword per line. It will do exact match, so "seo" will match "seo", not "seoul".', 'oopspam-anti-spam'); ?>
+                <?php echo esc_html__('One keyword or phrase per line. Matching is case-insensitive and exact, so "seo" matches "seo" but not "seoul".', 'oopspam-anti-spam'); ?>
+            </p>
+            <p>
+                <?php foreach (oopspam_get_spam_words() as $oopspam_word_list_code => $oopspam_word_list) : ?>
+                    <button type="button" class="button oopspam-add-spam-words" data-lang="<?php echo esc_attr($oopspam_word_list_code); ?>">
+                        <?php
+                        printf(
+                            /* translators: %s: language name. */
+                            esc_html__('Add %s spam words', 'oopspam-anti-spam'),
+                            esc_html($oopspam_word_list['label'])
+                        );
+                        ?>
+                    </button>
+                <?php endforeach; ?>
+            </p>
+            <p class="description">
+                <?php
+                printf(
+                    /* translators: %s: link to the OOPSpam spam-words list on GitHub. */
+                    esc_html__('Words are appended to the list above and duplicates are skipped. Click "Save Changes" to apply. Source: %s', 'oopspam-anti-spam'),
+                    '<a href="https://github.com/OOPSpam/spam-words" target="_blank" rel="noopener noreferrer">OOPSpam/spam-words</a>'
+                );
+                ?>
             </p>
         </div>
     </details>
@@ -552,7 +574,7 @@ function oopspamantispam_settings_init()
     add_settings_section('manual_moderation_section', 'Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
     add_settings_field('mm_blocked_emails', esc_html__('Blocked emails'), 'manual_moderation_blockedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_blocked_ips', esc_html__('Blocked IPs'), 'manual_moderation_blockedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
-    add_settings_field('mm_blocked_keywords', esc_html__('Blocked keywords'), 'manual_moderation_keywords_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+    add_settings_field('mm_blocked_keywords', esc_html__('Blocked keywords & phrases'), 'manual_moderation_keywords_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_allowed_emails', esc_html__('Allowed emails'), 'manual_moderation_allowedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
     add_settings_field('mm_allowed_ips', esc_html__('Allowed IPs'), 'manual_moderation_allowedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
 
@@ -2828,6 +2850,14 @@ foreach ($countrylist as $key => $value) {
         <p class="description">
             <?php echo esc_html__('Highest priority: Submissions from these countries will always be allowed and bypass all spam checks.', 'oopspam-anti-spam'); ?>
         </p>
+        <div id="oopspam-trusted-countries-alert" class="notice notice-warning inline" style="display: none;" role="status" aria-live="polite">
+            <p>
+                <?php echo esc_html__('Submissions from these countries will always bypass spam checks. Use this for countries you fully trust.', 'oopspam-anti-spam'); ?>
+            </p>
+            <p>
+                <?php echo esc_html__('Generally, we don\'t recommend using this setting unless you are not receiving any spam from these countries.', 'oopspam-anti-spam'); ?>
+            </p>
+        </div>
 <?php
 }
 

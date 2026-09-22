@@ -65,8 +65,91 @@ jQuery(document).ready(function($) {
             settings.create = false;
         }
 
-        new TomSelect(el, settings);
+        const selectInstance = new TomSelect(el, settings);
+
+        if (el.name === 'oopspam_country_always_allow[]') {
+            initializeTrustedCountriesAlert(selectInstance);
+        }
     });
+
+    // Warn admins as soon as a country is added to the "Trusted Countries"
+    // setting, since submissions from those countries bypass all spam checks.
+    function initializeTrustedCountriesAlert(select) {
+        const alertElement = document.getElementById('oopspam-trusted-countries-alert');
+
+        if (!alertElement || !select) {
+            return;
+        }
+
+        const toggleAlert = function() {
+            alertElement.style.display = select.getValue().length ? 'block' : 'none';
+        };
+
+        select.on('change', toggleAlert);
+        select.on('item_add', toggleAlert);
+        toggleAlert();
+    }
+
+    // Manual Moderation: append the bundled spam word lists to the
+    // "Blocked keywords and phrases" field.
+    const spamWordsField = document.getElementById('mm_blocked_keywords');
+    const spamWordsLists = (typeof customScript !== 'undefined' && customScript.spamWords) ? customScript.spamWords : null;
+
+    if (spamWordsField && spamWordsLists) {
+        const normalizeSpamWord = (line) => line.replace(/\s+/g, ' ').trim();
+
+        const collectSpamWords = () => {
+            const existing = new Set();
+
+            spamWordsField.value.split(/\r?\n/).forEach((line) => {
+                const word = normalizeSpamWord(line).toLowerCase();
+
+                if (word) {
+                    existing.add(word);
+                }
+            });
+
+            return existing;
+        };
+
+        document.querySelectorAll('.oopspam-add-spam-words').forEach((button) => {
+            button.addEventListener('click', () => {
+                const list = spamWordsLists[button.dataset.lang];
+
+                if (!list) {
+                    return;
+                }
+
+                const originalLabel = button.textContent;
+                const existing = collectSpamWords();
+                const additions = [];
+
+                list.split(/\r?\n/).forEach((line) => {
+                    const word = normalizeSpamWord(line);
+                    const key = word.toLowerCase();
+
+                    if (!word || existing.has(key)) {
+                        return;
+                    }
+
+                    existing.add(key);
+                    additions.push(word);
+                });
+
+                if (additions.length) {
+                    const current = spamWordsField.value.replace(/\s*$/, '');
+                    spamWordsField.value = current ? current + '\n' + additions.join('\n') : additions.join('\n');
+                    button.textContent = 'Added ' + additions.length + ' words';
+                } else {
+                    button.textContent = 'Already added';
+                }
+
+                setTimeout(() => {
+                    button.textContent = originalLabel;
+                }, 2000);
+            });
+        });
+    }
 
     let adminEmailList = document.getElementById('admin-email-list');
     if (adminEmailList) {

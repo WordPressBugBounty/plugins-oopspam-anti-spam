@@ -1,52 +1,45 @@
-.oopspam-toggle {
+input[type="checkbox"].oopspam-toggle {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
     appearance: none !important;
-    position: relative !important;
-    display: inline-block !important;
     box-sizing: border-box !important;
-    width: 48px !important;
-    height: 28px !important;
-    padding: 2px !important;
-    cursor: pointer !important;
-    border-radius: 999px !important;
-    overflow: hidden !important;
-    background: #757575 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    width: 42px !important;
+    height: 24px !important;
+    padding: 0 !important;
     border: 2px solid #000000 !important;
-    transition: background 0.2s ease, border-color 0.2s ease !important;
-    font-size: 12px;
- }
-
-.oopspam-toggle:before {
-    margin: 0 !important;
-    content: "" !important;
-    display: block !important;
-    position: absolute !important;
-    z-index: 2 !important;
-    width: 22px !important;
-    height: 22px !important;
-    top: 1px !important;
-    left: 1px !important;
-    background: #ffffff !important;
     border-radius: 999px !important;
-    transition: transform 0.2s ease !important;
- }
+    background-color: #ffffff !important;
+    background-image: radial-gradient(circle closest-side, #000000 94%, rgba(0, 0, 0, 0) 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 16px 16px !important;
+    background-position: 2px center !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s ease, background-position 0.2s ease !important;
+}
 
-.oopspam-toggle:checked {
-    background: #FCDD56 !important;
-    border-color: #000000 !important;
- }
+input[type="checkbox"].oopspam-toggle::before,
+input[type="checkbox"].oopspam-toggle::after {
+    content: none !important;
+    display: none !important;
+}
 
-.oopspam-toggle:checked:before {
-    transform: translateX(20px) !important;
- }
+input[type="checkbox"].oopspam-toggle:checked {
+    background-color: #000000 !important;
+    background-image: radial-gradient(circle closest-side, #ffffff 94%, rgba(255, 255, 255, 0) 100%) !important;
+    background-position: calc(100% - 2px) center !important;
+}
 
-.oopspam-toggle:focus-visible {
-    outline: 2px solid #FCDD56 !important;
+input[type="checkbox"].oopspam-toggle:hover:not(:checked) {
+    background-color: #f0f0f0 !important;
+}
+
+input[type="checkbox"].oopspam-toggle:focus-visible {
+    outline: 2px solid #000000 !important;
     outline-offset: 2px !important;
- }
-
-.oopspam-toggle:hover:not(:checked) {
-    background: #616161 !important;
- }
+}
 
 
 
@@ -540,11 +533,6 @@
 .form-setting .form-table th {
    font-weight: 600;
    color: #1a1a1a;
-   padding: 14px 10px;
-}
-
-.form-setting .form-table td {
-   padding: 14px 10px;
 }
 
 /* Inactive integration - collapsed state: only header + toggle row visible */
@@ -746,20 +734,47 @@
    background: rgba(251, 246, 237, 0.3);
 }
 
-/* Simple and accessible checkbox/radio styling */
-.form-setting input[type="checkbox"],
-.form-setting input[type="radio"] {
+/* Monochrome checkboxes - white square, 2px black border, black check when selected
+   (the .oopspam-toggle switch and the radios have their own rules) */
+.form-setting input[type="checkbox"]:not(.oopspam-toggle),
+form .form-table input[type="checkbox"]:not(.oopspam-toggle) {
+   -webkit-appearance: none !important;
+   -moz-appearance: none !important;
+   appearance: none !important;
+   box-sizing: border-box !important;
    width: 18px !important;
    height: 18px !important;
-   margin: 0 8px 0 0 !important;
+   border: 2px solid #000000 !important;
+   border-radius: 3px !important;
+   background-color: #ffffff !important;
+   background-image: none !important;
+   background-repeat: no-repeat !important;
+   background-position: center !important;
+   background-size: 12px 12px !important;
+   box-shadow: none !important;
    cursor: pointer !important;
    vertical-align: middle !important;
-   accent-color: #FCDD56 !important;
 }
 
-.form-setting input[type="checkbox"]:focus-visible,
-.form-setting input[type="radio"]:focus-visible {
-   outline: 2px solid #FCDD56 !important;
+.form-setting input[type="checkbox"]:not(.oopspam-toggle) {
+   margin: 0 8px 0 0 !important;
+}
+
+/* WP core paints its own checkmark on ::before - not wanted on the custom box */
+.form-setting input[type="checkbox"]:not(.oopspam-toggle)::before,
+form .form-table input[type="checkbox"]:not(.oopspam-toggle)::before {
+   content: none !important;
+   display: none !important;
+}
+
+.form-setting input[type="checkbox"]:not(.oopspam-toggle):checked,
+form .form-table input[type="checkbox"]:not(.oopspam-toggle):checked {
+   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="%23000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7"/></svg>') !important;
+}
+
+.form-setting input[type="checkbox"]:not(.oopspam-toggle):focus-visible,
+form .form-table input[type="checkbox"]:not(.oopspam-toggle):focus-visible {
+   outline: 2px solid #000000 !important;
    outline-offset: 2px !important;
 }
 
@@ -926,132 +941,6 @@ table button[onclick*="deleteRow"]:hover {
    font-weight: 600 !important;
 }
 
-/* Setup Wizard styling */
-.oopspam-wizard-container {
-   background: #ffffff;
-   border-radius: 4px;
-   padding: 40px;
-   border: 1px solid #000000;
-   margin: 20px 0;
-}
-
-.oopspam-wizard-step {
-   margin-bottom: 30px;
-   padding: 20px;
-   background: #FBF6ED;
-   border-radius: 4px;
-   border: 1px solid #000000;
-   transition: border-color 0.2s ease;
-}
-
-.oopspam-wizard-step:hover {
-   border-color: #FCDD56;
-}
-
-.oopspam-wizard-step h3 {
-   color: #000000;
-   font-size: 18px;
-   font-weight: 600;
-   margin: 0 0 12px 0;
-}
-
-.oopspam-wizard-step p {
-   color: #666666;
-   margin: 8px 0;
-   line-height: 1.6;
-}
-
-.oopspam-wizard-progress {
-   display: flex;
-   gap: 8px;
-   margin-bottom: 30px;
-}
-
-.oopspam-wizard-progress-item {
-   flex: 1;
-   height: 6px;
-   background: #e5e5e5;
-   border-radius: 999px;
-   overflow: hidden;
-}
-
-.oopspam-wizard-progress-item.active {
-   background: #FCDD56;
-}
-
-.oopspam-wizard-progress-item.completed {
-   background: #000000;
-}
-
-.oopspam-wizard-form-group {
-   margin-bottom: 20px;
-}
-
-.oopspam-wizard-form-group label {
-   display: block;
-   font-weight: 600;
-   margin-bottom: 8px;
-   color: #000000;
-}
-
-.oopspam-wizard-form-group input,
-.oopspam-wizard-form-group textarea,
-.oopspam-wizard-form-group select {
-   width: 100%;
-   padding: 4px 12px !important;
-   border: 1px solid #000000 !important;
-   border-radius: 4px !important;
-   font-size: 13px !important;
-   transition: border-color 0.2s ease !important;
-}
-
-.oopspam-wizard-form-group input:focus,
-.oopspam-wizard-form-group textarea:focus,
-.oopspam-wizard-form-group select:focus {
-   border-color: #FCDD56 !important;
-   outline: 2px solid #FCDD56 !important;
-   outline-offset: 1px !important;
-}
-
-.oopspam-wizard-buttons {
-   display: flex;
-   gap: 12px;
-   margin-top: 30px;
-   justify-content: flex-end;
-}
-
-.oopspam-wizard-btn {
-   padding: 12px 28px;
-   border-radius: 8px;
-   font-weight: 600;
-   font-size: 14px;
-   cursor: pointer;
-   border: none;
-   transition: all 0.25s ease;
-}
-
-.oopspam-wizard-btn-primary {
-   background: #000000;
-   color: #FCDD56;
-   border: 1px solid #000000;
-}
-
-.oopspam-wizard-btn-primary:hover {
-   background: #FCDD56;
-   color: #000000;
-}
-
-.oopspam-wizard-btn-secondary {
-   background: #ffffff;
-   color: #000000;
-   border: 1px solid #000000;
-}
-
-.oopspam-wizard-btn-secondary:hover {
-   background: #FBF6ED;
-   border-color: #000000;
-}
-
 /* Field labels */
 .form-setting .form-table th label {
    font-weight: 600;
@@ -1073,18 +962,11 @@ table button[onclick*="deleteRow"]:hover {
    vertical-align: middle;
 }
 
-/* Radio and checkbox styling for better visibility */
+/* Radio label styling for better visibility */
 .form-setting input[type="radio"] + label {
    display: inline !important;
    margin-left: 4px !important;
    font-weight: 400 !important;
-}
-
-.form-setting input[type="checkbox"] {
-   vertical-align: middle !important;
-   appearance: auto !important;
-   -webkit-appearance: checkbox !important;
-   border-radius: 4px !important;
 }
 
 /* Better select styling */
@@ -1174,33 +1056,70 @@ form .form-table select:focus:not(.ts-control select) {
    outline-offset: 1px !important;
 }
 
-/* Simple and accessible checkbox/radio styling - scoped */
-form .form-table input[type="checkbox"],
-form .form-table input[type="radio"] {
-   width: 18px !important;
-   height: 18px !important;
+/* Monochrome checkboxes - only the margin differs in this scope,
+   the rest of the styling is shared with the .form-setting rule above */
+form .form-table input[type="checkbox"]:not(.oopspam-toggle) {
    margin-right: 8px !important;
-   cursor: pointer !important;
-   vertical-align: middle !important;
-   accent-color: #FCDD56 !important;
-   appearance: auto !important;
-   -webkit-appearance: auto !important;
 }
 
 input[type="checkbox"]:focus, input[type="radio"]:focus {
-  outline: 2px solid #FCDD56;
-  outline-offset: 1px;
-}
-
-form .form-table input[type="checkbox"]:focus-visible,
-form .form-table input[type="radio"]:focus-visible {
-   outline: 2px solid #FCDD56 !important;
-   outline-offset: 2px !important;
+   outline: 2px solid #000000;
+   outline-offset: 1px;
 }
 
 form .form-table input[type="radio"] + label {
    cursor: pointer !important;
    user-select: none !important;
+}
+
+/* Monochrome radios - white circle, 2px black border, black dot when selected */
+.form-setting input[type="radio"],
+form .form-table input[type="radio"] {
+   -webkit-appearance: none !important;
+   -moz-appearance: none !important;
+   appearance: none !important;
+   box-sizing: border-box !important;
+   width: 18px !important;
+   height: 18px !important;
+   border: 2px solid #000000 !important;
+   border-radius: 50% !important;
+   background-color: #ffffff !important;
+   background-image: none !important;
+   background-repeat: no-repeat !important;
+   background-position: center !important;
+   background-size: 8px 8px !important;
+   box-shadow: none !important;
+   cursor: pointer !important;
+   vertical-align: middle !important;
+}
+
+.form-setting input[type="radio"] {
+   margin: 0 8px 0 0 !important;
+}
+
+form .form-table input[type="radio"] {
+   margin-right: 8px !important;
+}
+
+/* WP core paints its own white dot on :checked::before - it would sit exactly on
+   top of the black dot and hide it */
+.form-setting input[type="radio"]::before,
+.form-setting input[type="radio"]::after,
+form .form-table input[type="radio"]::before,
+form .form-table input[type="radio"]::after {
+   content: none !important;
+   display: none !important;
+}
+
+.form-setting input[type="radio"]:checked,
+form .form-table input[type="radio"]:checked {
+   background-image: radial-gradient(circle closest-side, #000000 94%, rgba(0, 0, 0, 0) 100%) !important;
+}
+
+.form-setting input[type="radio"]:focus-visible,
+form .form-table input[type="radio"]:focus-visible {
+   outline: 2px solid #000000 !important;
+   outline-offset: 2px !important;
 }
 
 /* Select dropdown styling - scoped */
@@ -1343,6 +1262,29 @@ form:has(.form-table) .button-secondary:hover,
    border-color: #000000 !important;
 }
 
+/* Warning shown when countries are added to the "Trusted Countries" setting */
+#oopspam-trusted-countries-alert {
+   max-width: 600px;
+   margin: 12px 0 0;
+   padding: 10px 14px;
+   border-left-color: #FCDD56;
+   box-shadow: none;
+}
+
+#oopspam-trusted-countries-alert p {
+   margin: 0 0 6px;
+   font-size: 13px;
+   color: #000000;
+}
+
+#oopspam-trusted-countries-alert p:first-child {
+   font-weight: 600;
+}
+
+#oopspam-trusted-countries-alert p:last-child {
+   margin-bottom: 0;
+}
+
 /* TomSelect adjustments */
 .ts-wrapper {
    position: relative !important;
@@ -1385,6 +1327,7 @@ form:has(.form-table) .button-secondary:hover,
 .range-input {
    background: #FBF6ED;
    -webkit-appearance: none;
+   appearance: none;
    height: 20px;
    border-radius: 4px;
    border: 1px solid #000000;

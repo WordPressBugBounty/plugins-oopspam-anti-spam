@@ -3,7 +3,7 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.80
+ * Version: 1.2.81
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -81,6 +81,7 @@ if (is_admin()) { //if admin include the admin specific functions
 require_once dirname(__FILE__) . '/include/helpers.php';
 require_once dirname(__FILE__) . '/include/oopspam-country-list.php';
 require_once dirname(__FILE__) . '/include/oopspam-language-list.php';
+require_once dirname(__FILE__) . '/include/oopspam-spam-words.php';
 require_once dirname(__FILE__) . '/include/UI/display-ham-entries.php';
 require_once dirname(__FILE__) . '/include/UI/display-spam-entries.php';
 require_once dirname(__FILE__) . '/include/oopspam-rate-limiting.php';
@@ -889,7 +890,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
                 $reason = [
                     "Score" => 6,
                     "isItHam" => false,
-                    "Reason" => "Blocked keyword under the Manual Moderation"
+                    "Reason" => "Blocked keyword or phrase under the Manual Moderation"
                 ];
                 return $reason;
             }
@@ -1297,7 +1298,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 
 /**
  * Public API for checking spam from custom forms or any custom PHP code.
- * Runs the full OOPSpam pipeline: local checks (blocked/allowed keywords, emails, IPs),
+ * Runs the full OOPSpam pipeline: local checks (blocked/allowed keywords and phrases, emails, IPs),
  * rate limiting, country/language filters, and the OOPSpam API call.
  *
  * @param string $ip      The submitter's IP address.
