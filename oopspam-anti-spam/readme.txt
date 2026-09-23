@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: anti-spam, form protection, security, contact forms, spam blocker
 Requires at least: 3.6
 Tested up to: 7.1
-Stable tag: 1.2.81
+Stable tag: 1.2.82
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -118,6 +118,8 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.82 =
+* **FIX:** Resolved an error in the MC4WP integration.
 = 1.2.81 =
 * **NEW:** Blocked keywords now comes pre-filled with spam words in English, Russian, and Chinese.
 * **IMPROVEMENT:** Minor UI and UX improvements

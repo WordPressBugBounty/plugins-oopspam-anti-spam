@@ -67,7 +67,7 @@ if ( ! class_exists( 'OOPSpam_Settings_Transfer' ) ) {
 			static $version = null;
 
 			if ( null === $version ) {
-				$version = '1.2.81';
+				$version = '1.2.82';
 
 				if ( function_exists( 'get_plugin_data' ) ) {
 					$data = get_plugin_data( dirname( dirname( __FILE__ ) ) . '/oopspam-antispam.php', false, false );
