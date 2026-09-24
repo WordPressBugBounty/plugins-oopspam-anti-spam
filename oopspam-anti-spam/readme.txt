@@ -1,10 +1,10 @@
 === OOPSpam Anti-Spam: Spam Protection for WordPress Forms & Comments (No CAPTCHA) ===
 Contributors: oopspam
 Link: https://www.oopspam.com/
-Tags: anti-spam, form protection, security, contact forms, spam blocker
-Requires at least: 3.6
+Tags: spam, anti-spam, antispam, spam-protection, spam blocker
+Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.82
+Stable tag: 1.2.83
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -118,6 +118,10 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.83 =
+* **FIX:** Fixed CSS issues with the "Sensitivity Level" setting slider.
+* **IMPROVEMENT:** Added the plugin text domain and marked previously untranslatable strings.
+* **IMPROVEMENT:** Increased the minimum required WordPress version to 4.6.
 = 1.2.82 =
 * **FIX:** Resolved an error in the MC4WP integration.
 = 1.2.81 =

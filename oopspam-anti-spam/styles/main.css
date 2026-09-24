@@ -830,11 +830,8 @@ form .form-table input[type="checkbox"]:not(.oopspam-toggle):focus-visible {
    transform: rotate(90deg);
 }
 
-/* Range slider styling */
 .form-setting input[type="range"] {
    accent-color: #FCDD56;
-   height: 6px;
-   border-radius: 999px;
 }
 
 /* Code/pre blocks */
@@ -1186,11 +1183,10 @@ form .form-table details[open] summary::before {
    transform: rotate(90deg);
 }
 
-/* Range slider styling - scoped */
+/* Range slider styling - scoped.
+   As above, geometry must not be declared here: this selector outranks .range-input. */
 form .form-table input[type="range"] {
    accent-color: #FCDD56;
-   height: 6px;
-   border-radius: 999px;
 }
 
 /* Code/pre blocks in form tables - scoped */
@@ -1324,30 +1320,60 @@ form:has(.form-table) .button-secondary:hover,
 }
 
 
+/* Range input. Reset the native widget in every engine, then draw the track and thumb
+   explicitly. Styling only the WebKit thumb left Firefox painting its own native track, and
+   setting height on the input itself collapsed the box and clipped the thumb, which is why
+   the slider appeared borderless in some browsers. */
 .range-input {
-   background: #FBF6ED;
    -webkit-appearance: none;
+   -moz-appearance: none;
    appearance: none;
+
+   background: transparent;
+   border: none;
+   box-sizing: border-box;
    height: 20px;
-   border-radius: 4px;
-   border: 1px solid #000000;
+   padding: 0;
+   cursor: pointer;
 }
 
+/* Track. The fill is passed in as a custom property by updateRangeColor() so that both
+   engines can use the same gradient; it falls back to the flat colour on first paint. */
+.range-input::-webkit-slider-runnable-track {
+   height: 6px;
+   background: var(--oopspam-range-track, #FBF6ED);
+   border: 1px solid #000000;
+   border-radius: 999px;
+}
+
+.range-input::-moz-range-track {
+   height: 6px;
+   background: var(--oopspam-range-track, #FBF6ED);
+   border: 1px solid #000000;
+   border-radius: 999px;
+}
+
+/* Thumb. Negative top margin centres it on the 6px track, allowing for the 1px border. */
 .range-input::-webkit-slider-thumb {
    -webkit-appearance: none;
    appearance: none;
    width: 20px;
    height: 20px;
+   margin-top: -8px;
    background: #fff;
+   border: 1px solid #000000;
    border-radius: 50%;
+   box-shadow: none;
    cursor: pointer;
 }
 
 .range-input::-moz-range-thumb {
-   width: 20px;
-   height: 20px;
+   width: 18px;
+   height: 18px;
    background: #fff;
+   border: 1px solid #000000;
    border-radius: 50%;
+   box-shadow: none;
    cursor: pointer;
 }
 

@@ -268,7 +268,7 @@ class OOPSpam_RateLimiter {
             
             $schedules['oopspam_ratelimit_cleanup'] = [
                 'interval' => $interval,
-                'display' => sprintf(__('Every %d hours'), ceil($interval / HOUR_IN_SECONDS))
+                'display' => sprintf(__('Every %d hours', 'oopspam-anti-spam'), ceil($interval / HOUR_IN_SECONDS))
             ];
             
         }

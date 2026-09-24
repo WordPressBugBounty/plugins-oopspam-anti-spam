@@ -572,11 +572,11 @@ function oopspamantispam_settings_init()
 
 
     add_settings_section('manual_moderation_section', 'Manual Moderation Settings', false, 'oopspamantispam-manual-moderation');
-    add_settings_field('mm_blocked_emails', esc_html__('Blocked emails'), 'manual_moderation_blockedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
-    add_settings_field('mm_blocked_ips', esc_html__('Blocked IPs'), 'manual_moderation_blockedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
-    add_settings_field('mm_blocked_keywords', esc_html__('Blocked keywords & phrases'), 'manual_moderation_keywords_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
-    add_settings_field('mm_allowed_emails', esc_html__('Allowed emails'), 'manual_moderation_allowedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
-    add_settings_field('mm_allowed_ips', esc_html__('Allowed IPs'), 'manual_moderation_allowedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+    add_settings_field('mm_blocked_emails', esc_html__('Blocked emails', 'oopspam-anti-spam'), 'manual_moderation_blockedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+    add_settings_field('mm_blocked_ips', esc_html__('Blocked IPs', 'oopspam-anti-spam'), 'manual_moderation_blockedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+    add_settings_field('mm_blocked_keywords', esc_html__('Blocked keywords & phrases', 'oopspam-anti-spam'), 'manual_moderation_keywords_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+    add_settings_field('mm_allowed_emails', esc_html__('Allowed emails', 'oopspam-anti-spam'), 'manual_moderation_allowedemails_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
+    add_settings_field('mm_allowed_ips', esc_html__('Allowed IPs', 'oopspam-anti-spam'), 'manual_moderation_allowedips_render', 'oopspamantispam-manual-moderation', 'manual_moderation_section');
 
 
     add_settings_section(
@@ -2491,26 +2491,17 @@ function oopspam_spam_score_threshold_render()
 
         function updateRangeColor(rangeInput) {
             var rangeElement = document.getElementById('oopspam_spam_score_threshold');
-            switch (parseInt(rangeInput.value)) {
-                case 1:
-                    rangeElement.style.background = 'linear-gradient(to right, red 0%, red 100%)';
-                    break;
-                case 2:
-                    rangeElement.style.background = 'linear-gradient(to right, red 0%, rgba(255, 0, 0, 0.58) 100%)';
-                    break;
-                case 3:
-                    rangeElement.style.background = 'linear-gradient(to right, rgba(255, 0, 0, 0.58) 0%, rgb(56, 239, 93) 100%)';
-                    break;
-                case 4:
-                    rangeElement.style.background = 'linear-gradient(to right, rgba(0, 128, 0, 0.54) 0%, rgba(0, 128, 0, 0.76) 100%)';
-                    break;
-                case 5:
-                     rangeElement.style.background = 'linear-gradient(to right, rgba(0, 128, 0, 0.76) 0%, rgb(0, 128, 0) 100%)';
-                    break;
-                case 6:
-                    rangeElement.style.background = 'linear-gradient(to right, green 0%, green 100%)';
-                    break;
-            }
+            var trackGradients = {
+                1: 'linear-gradient(to right, red 0%, red 100%)',
+                2: 'linear-gradient(to right, red 0%, rgba(255, 0, 0, 0.58) 100%)',
+                3: 'linear-gradient(to right, rgba(255, 0, 0, 0.58) 0%, rgb(56, 239, 93) 100%)',
+                4: 'linear-gradient(to right, rgba(0, 128, 0, 0.54) 0%, rgba(0, 128, 0, 0.76) 100%)',
+                5: 'linear-gradient(to right, rgba(0, 128, 0, 0.76) 0%, rgb(0, 128, 0) 100%)',
+                6: 'linear-gradient(to right, green 0%, green 100%)'
+            };
+
+            var value = parseInt(rangeInput.value);
+            rangeElement.style.setProperty('--oopspam-range-track', trackGradients[value] || trackGradients[3]);
         }
     </script>
     <?php

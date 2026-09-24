@@ -3,10 +3,11 @@
  * Plugin Name: OOPSpam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.82
+ * Version: 1.2.83
  * Author: OOPSpam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
+ * Text Domain: oopspam-anti-spam
  * Copyright: (c) 2017 - 2026, OOPSpam LLC
  * License: GPL3
  */
@@ -209,15 +210,15 @@ function oopspam_schedule_intervals($schedules)
         // add a 'weekly' interval
         $schedules['oopspam-biweekly'] = array(
             'interval' => 1209600,
-            'display' => __('Every two weeks'),
+            'display' => __('Every two weeks', 'oopspam-anti-spam'),
         );
         $schedules['oopspam-monthly'] = array(
             'interval' => MONTH_IN_SECONDS,
-            'display' => __('Once a month'),
+            'display' => __('Once a month', 'oopspam-anti-spam'),
         );
         $schedules['weekly'] = array(
             'interval' => WEEK_IN_SECONDS,
-            'display' => __('Once a week'),
+            'display' => __('Once a week', 'oopspam-anti-spam'),
         );
         return $schedules;
     } catch (Exception $e) {
