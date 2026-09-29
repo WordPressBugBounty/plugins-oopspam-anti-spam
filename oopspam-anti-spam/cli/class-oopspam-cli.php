@@ -1,6 +1,6 @@
 <?php
 /**
- * WP-CLI commands for the OOPSpam Anti-Spam plugin.
+ * WP-CLI commands for the oopspam Anti-Spam plugin.
  *
  * Provides:
  *   wp oopspam status
@@ -334,7 +334,7 @@ class OOPSpam_Command extends WP_CLI_Command {
 		}
 
 		if ( ! OOPSpam_Settings_Transfer::is_valid_export( $data ) ) {
-			WP_CLI::error( "The file does not look like an OOPSpam settings export. Use 'wp oopspam export' to create one." );
+			WP_CLI::error( "The file does not look like an oopspam settings export. Use 'wp oopspam export' to create one." );
 		}
 
 		$replace   = WP_CLI_Utils\get_flag_value( $assoc_args, 'replace', false );
@@ -389,7 +389,7 @@ class OOPSpam_Command extends WP_CLI_Command {
 	public function reset( $args, $assoc_args ) {
 		$this->ensure_transfer_class();
 
-		WP_CLI::confirm( 'Are you sure you want to reset all OOPSpam settings?', $assoc_args );
+		WP_CLI::confirm( 'Are you sure you want to reset all oopspam settings?', $assoc_args );
 
 		$all_sites = WP_CLI_Utils\get_flag_value( $assoc_args, 'all-sites', false );
 

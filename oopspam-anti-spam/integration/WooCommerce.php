@@ -1233,7 +1233,7 @@ private function should_check_honeypot() {
 /**
  * Blocks WooCommerce checkout endpoints in the REST API
  * This helps prevent spam orders from automated tools and bots that bypass the normal checkout flow
- * Can be enabled/disabled via the WooCommerce settings in the OOPSpam options
+ * Can be enabled/disabled via the WooCommerce settings in the oopspam options
  */
 public function oopspam_disable_wc_rest_checkout() {
     $options = get_option('oopspamantispam_settings');
@@ -1378,7 +1378,7 @@ public function oopspam_disable_wc_rest_checkout() {
 private function hasCompletedOrders($email, $debug = false) {
     if (empty($email)) {
         if ($debug) {
-            error_log("OOPSpam: hasCompletedOrders - Empty email provided");
+            error_log("oopspam: hasCompletedOrders - Empty email provided");
         }
         return false;
     }
@@ -1395,7 +1395,7 @@ private function hasCompletedOrders($email, $debug = false) {
     $hasOrders = !empty($orders);
     
     if ($debug) {
-        error_log("OOPSpam: hasCompletedOrders - Email: $email, Has orders: " . ($hasOrders ? 'Yes' : 'No'));
+        error_log("oopspam: hasCompletedOrders - Email: $email, Has orders: " . ($hasOrders ? 'Yes' : 'No'));
     }
     
     // Return true if at least one completed order exists
@@ -1417,9 +1417,9 @@ public function add_order_actions($actions, $order) {
     $is_blocked = $order->get_meta('_oopspam_blocked', true);
 
     if ($is_blocked) {
-        $actions['oopspam_undo_block'] = __('Undo Block (OOPSpam)', 'oopspam-anti-spam');
+        $actions['oopspam_undo_block'] = __('Undo Block (oopspam)', 'oopspam-anti-spam');
     } else {
-        $actions['oopspam_block_as_spam'] = __('Block as Spam (OOPSpam)', 'oopspam-anti-spam');
+        $actions['oopspam_block_as_spam'] = __('Block as Spam (oopspam)', 'oopspam-anti-spam');
     }
 
     return $actions;
@@ -1445,7 +1445,7 @@ public function handle_undo_block_order_action($order) {
 
 /**
  * Core logic to block an order as spam.
- * - Reports to OOPSpam API
+ * - Reports to oopspam API
  * - Adds email/IP to manual moderation blocked lists
  * - Stores a spam entry
  * - Marks the order as blocked (metadata)
@@ -1479,12 +1479,12 @@ private function block_order($order) {
 
     $orderMetadata = $this->buildOrderMetadata($order);
 
-    // Report to OOPSpam API as spam
+    // Report to oopspam API as spam
     $metadata = json_encode(array_merge($rawEntry, $orderMetadata));
     $reportResult = oopspamantispam_report_OOPSpam($message, $userIP, $email, true, $metadata);
 
     if ($reportResult === false) {
-        $this->set_action_notice(__('Failed to report order to OOPSpam API.', 'oopspam-anti-spam'), 'error');
+        $this->set_action_notice(__('Failed to report order to oopspam API.', 'oopspam-anti-spam'), 'error');
         return false;
     }
 
@@ -1515,7 +1515,7 @@ private function block_order($order) {
     $order->add_order_note(
         sprintf(
             /* translators: 1: email, 2: IP address */
-            __('Order blocked as spam by OOPSpam. Email: %1$s, IP: %2$s', 'oopspam-anti-spam'),
+            __('Order blocked as spam by oopspam. Email: %1$s, IP: %2$s', 'oopspam-anti-spam'),
             $email,
             $userIP
         )
@@ -1575,7 +1575,7 @@ private function undo_block_order($order) {
     $order->add_order_note(
         sprintf(
             /* translators: 1: email, 2: IP address */
-            __('Order block undone by OOPSpam. Email: %1$s, IP: %2$s added to allow list.', 'oopspam-anti-spam'),
+            __('Order block undone by oopspam. Email: %1$s, IP: %2$s added to allow list.', 'oopspam-anti-spam'),
             $email,
             $userIP
         )

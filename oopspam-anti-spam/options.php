@@ -19,8 +19,8 @@ add_action('admin_post_oopspam_import_settings', 'oopspam_handle_import_settings
 function oopspamantispam_admin_menu()
 {
     $hook = add_menu_page(
-        'OOPSpam Anti-Spam',
-        'OOPSpam Anti-Spam',
+        'oopspam Anti-Spam',
+        'oopspam Anti-Spam',
         'manage_options',
         'wp_oopspam_settings_page',
         'oopspamantispam_options_page',
@@ -32,11 +32,11 @@ function oopspamantispam_admin_menu()
 
     // Submenu: Settings.
     // Registered first (with the parent's own slug) so newer WordPress versions
-    // do not lazily insert an auto-generated "OOPSpam Anti-Spam" parent link
+    // do not lazily insert an auto-generated "oopspam Anti-Spam" parent link
     // as the first submenu item.
     add_submenu_page(
         'wp_oopspam_settings_page',
-        'OOPSpam Anti-Spam Settings',
+        'oopspam Anti-Spam Settings',
         'Settings',
         'manage_options',
         'wp_oopspam_settings_page',
@@ -726,7 +726,7 @@ function oopspamantispam_settings_init()
 
 
     add_settings_section('oopspam_settings_section',
-        esc_html__('OOPSpam - General Settings',  'oopspam-anti-spam'),
+        esc_html__('oopspam - General Settings',  'oopspam-anti-spam'),
         false,
         'oopspamantispam-settings-group'
     );
@@ -775,7 +775,7 @@ function oopspamantispam_settings_init()
 
 
     add_settings_field('oopspam_is_loggable',
-    esc_html__('Log submissions to OOPSpam',  'oopspam-anti-spam'),
+    esc_html__('Log submissions to oopspam',  'oopspam-anti-spam'),
     'oopspam_is_loggable_render',
     'oopspamantispam-settings-group',
     'oopspam_settings_section'
@@ -2612,7 +2612,7 @@ function oopspam_is_loggable_render()
                    name="oopspamantispam_settings[oopspam_is_loggable]"
                    <?php checked(!isset($options['oopspam_is_loggable']), false, true); ?>
                    <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
-            <p class="description"><?php echo esc_html__('Allows you to view logs in the OOPSpam Dashboard', 'oopspam-anti-spam'); ?></p>
+            <p class="description"><?php echo esc_html__('Allows you to view logs in the oopspam Dashboard', 'oopspam-anti-spam'); ?></p>
             <?php if ($is_constant): ?>
                 <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
             <?php endif; ?>
@@ -2667,10 +2667,10 @@ function oopspam_custom_admin_notice()
         'wp_oopspam_frm_ham_entries',
     );
 
-    // Check if we are on an OOPSpam plugin page,always show the notice here
+    // Check if we are on an oopspam plugin page,always show the notice here
     $is_oopspam_page = $screen && isset($_GET['page']) && in_array($_GET['page'], $oopspam_pages, true);
 
-    // If not on an OOPSpam page, check if the user has dismissed it
+    // If not on an oopspam page, check if the user has dismissed it
     if (!$is_oopspam_page && get_option('oopspam_rate_limit_notice_dismissed', false)) {
         return;
     }
@@ -2679,10 +2679,10 @@ function oopspam_custom_admin_notice()
     ?>
         <div class="notice notice-error" id="oopspam-rate-limit-notice" style="position: relative;">
             <button type="button" id="oopspam-dismiss-rate-limit" class="notice-dismiss" title="<?php esc_attr_e('Dismiss this notice', 'oopspam-anti-spam'); ?>"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
-            <h4>OOPSpam Anti-Spam</h4>
+            <h4>oopspam Anti-Spam</h4>
             <p><?php esc_html_e('Your API key exceeded your current plan\'s limit. The spam filtering functionality is disabled. Please upgrade to enable spam protection.', 'oopspam-anti-spam');?> </p>
             <p>
-                   <?php esc_html_e("For the API key obtained through OOPSpam Dashboard visit:", 'oopspam-anti-spam');?> <a href="https://app.oopspam.com/" target="_blank">https://app.oopspam.com</a>.
+                   <?php esc_html_e("For the API key obtained through oopspam Dashboard visit:", 'oopspam-anti-spam');?> <a href="https://app.oopspam.com/" target="_blank">https://app.oopspam.com</a>.
                    </p>
                    <p>
                    <strong>
@@ -2735,7 +2735,7 @@ function oopspam_api_key_usage_render() {
     $percentage = $limit > 0 ? ($used / $limit) * 100 : 0;
     
     // Determine color based on usage percentage
-    $bar_color = '#2271b1'; // Default WordPress blue
+    $bar_color = '#166239'; // Default WordPress blue
     if ($percentage >= 90) {
         $bar_color = '#d63638'; // Red for high usage
     } else if ($percentage >= 70) {
@@ -2784,7 +2784,7 @@ function oopspam_anonym_content_render()
             <div>
                 <label for="anonym_content_support">
                 <input class="oopspam-toggle" type="checkbox" id="anonym_content_support" name="oopspamantispam_privacy_settings[oopspam_anonym_content]"  <?php checked(!isset($privacyOptions['oopspam_anonym_content']), false ,true);?>/>
-                <p class="description"><?php echo esc_html__('Before sending a message to OOPSpam for spam detection, try to remove Emails, Addresses, Phone Numbers.
+                <p class="description"><?php echo esc_html__('Before sending a message to oopspam for spam detection, try to remove Emails, Addresses, Phone Numbers.
 It should be noted, however, that there is no guarantee that these data points will be accurately removed. Turning on this setting may weaken the spam protection', 'oopspam-anti-spam'); ?></p>
 
                 </label>
@@ -2943,7 +2943,7 @@ function oopspam_api_key_source_render()
     ?>
         <div id="oopspam-api-key-source">
         <label for="oopspam_api_key_source_rapidapi"><input type="radio" id="oopspam_api_key_source_rapidapi" name="oopspamantispam_settings[oopspam_api_key_source]" value="RapidAPI" <?php checked("RapidAPI", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>RapidAPI</label>
-        <label for="oopspam_api_key_source_dashboard"><input type="radio" id="oopspam_api_key_source_dashboard" name="oopspamantispam_settings[oopspam_api_key_source]" value="OOPSpamDashboard" <?php checked("OOPSpamDashboard", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>OOPSpam Dashboard</label>
+        <label for="oopspam_api_key_source_dashboard"><input type="radio" id="oopspam_api_key_source_dashboard" name="oopspamantispam_settings[oopspam_api_key_source]" value="OOPSpamDashboard" <?php checked("OOPSpamDashboard", isset($options["oopspam_api_key_source"]) ? $options["oopspam_api_key_source"] : false, true);?>>oopspam Dashboard</label>
         </div>
    <?php
 }
@@ -3305,7 +3305,7 @@ function oopspam_nj_content_field_render()
         echo esc_html($options['oopspam_nj_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your Ninja Forms. If you have multiple textarea fields, specify the main content/message FIELD KEY here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your Ninja Forms. If you have multiple textarea fields, specify the main content/message FIELD KEY here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field keys separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -3378,7 +3378,7 @@ function oopspam_pionet_content_field_render()
         echo esc_html($options['oopspam_pionet_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your Pionet Forms. If you have multiple textarea fields, specify the main content/message Field ID here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your Pionet Forms. If you have multiple textarea fields, specify the main content/message Field ID here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -3489,7 +3489,7 @@ function oopspam_fable_content_field_render()
         echo esc_html($options['oopspam_fable_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your Formidable Forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your Formidable Forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -3829,7 +3829,7 @@ function oopspam_br_content_field_render()
         echo esc_html($options['oopspam_br_content_field']);
     }
     ?>">
-                      <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your Bricks forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
+                      <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your Bricks forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
                       <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
                       </label>
               </div>
@@ -4034,7 +4034,7 @@ function oopspam_sure_content_field_render()
         echo esc_html($options['oopspam_sure_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your SureForms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your SureForms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -4106,7 +4106,7 @@ function oopspam_superforms_content_field_render()
         echo esc_html($options['oopspam_superforms_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea/content field in your Super Forms. If you have multiple such fields, specify the main content/message field name here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea/content field in your Super Forms. If you have multiple such fields, specify the main content/message field name here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field names separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -4178,7 +4178,7 @@ function oopspam_quform_content_field_render()
         echo esc_html($options['oopspam_quform_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your QuForms. If you have multiple textarea fields, specify the main content/message Unique ID here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your QuForms. If you have multiple textarea fields, specify the main content/message Unique ID here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -4499,7 +4499,7 @@ function oopspam_bd_content_field_render()
         echo esc_html($options['oopspam_bd_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field in your Breakdance Forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your Breakdance Forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -4595,7 +4595,7 @@ function oopspam_cf7_content_field_render()
         echo esc_html($options['oopspam_is_cf7_content_field']);
     }
     ?>">
-                        <p class="description"><?php echo esc_html__('By default, OOPSpam looks for a textarea field with "your_message" name in your CF7 form. If you have multiple textarea fields, specify the main content/message field name here.', 'oopspam-anti-spam'); ?></p>
+                        <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field with "your_message" name in your CF7 form. If you have multiple textarea fields, specify the main content/message field name here.', 'oopspam-anti-spam'); ?></p>
                         <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field names separated by commas.', 'oopspam-anti-spam'); ?></p>
                         </label>
                 </div>
@@ -5411,7 +5411,7 @@ function oopspamantispam_options_page()
             <span style="font-size: 26px; line-height: 1;">✨</span>
             <div>
                 <strong style="font-size: 14px; color: #000000;">OOPVulns – Vulnerability Scanner</strong> <?php esc_html_e('is officially out on WordPress.org.', 'oopspam-anti-spam'); ?><br>
-                <span style="color: #666666; font-size: 13px;"><?php esc_html_e('Scan your WordPress core, plugins, and themes for known vulnerabilities. Free for all OOPSpam customers.', 'oopspam-anti-spam'); ?></span>
+                <span style="color: #666666; font-size: 13px;"><?php esc_html_e('Scan your WordPress core, plugins, and themes for known vulnerabilities. Free for all oopspam customers.', 'oopspam-anti-spam'); ?></span>
             </div>
         </div>
         <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">

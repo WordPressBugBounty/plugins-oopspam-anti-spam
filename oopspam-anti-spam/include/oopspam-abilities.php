@@ -1,8 +1,8 @@
 <?php
 /**
- * OOPSpam Abilities API integration.
+ * oopspam Abilities API integration.
  *
- * Exposes curated OOPSpam Anti-Spam functionality through the WordPress
+ * Exposes curated oopspam Anti-Spam functionality through the WordPress
  * Abilities API (WordPress 6.9+). Abilities are machine-readable, schema
  * validated, permission-gated units of work that can be consumed by the
  * official MCP Adapter plugin (AI agents), the REST API, or other plugins.
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Whether OOPSpam abilities should be registered.
+ * Whether oopspam abilities should be registered.
  *
  * Respects (in order of precedence):
  *  1. The OOPSPAM_ENABLE_ABILITIES constant (true = force on).
@@ -205,7 +205,7 @@ function oopspam_ability_status() {
 }
 
 /**
- * Execute callback: analyze a submission with the full OOPSpam pipeline.
+ * Execute callback: analyze a submission with the full oopspam pipeline.
  *
  * @param array $input Validated input.
  * @return array|\WP_Error
@@ -230,7 +230,7 @@ function oopspam_ability_check_submission( $input ) {
 	}
 
 	if ( ! function_exists( 'oopspam_check_spam' ) ) {
-		return new WP_Error( 'oopspam_unavailable', __( 'The OOPSpam detection function is unavailable.', 'oopspam-anti-spam' ) );
+		return new WP_Error( 'oopspam_unavailable', __( 'The oopspam detection function is unavailable.', 'oopspam-anti-spam' ) );
 	}
 
 	$result = oopspam_check_spam(
@@ -352,7 +352,7 @@ function oopspam_ability_list_moderation_lists() {
 }
 
 /**
- * Execute callback: report a submission to the OOPSpam API as spam/ham (feedback).
+ * Execute callback: report a submission to the oopspam API as spam/ham (feedback).
  *
  * @param array $input Validated input.
  * @return array|\WP_Error
@@ -361,7 +361,7 @@ function oopspam_ability_report_submission( $input ) {
 	$input = is_array( $input ) ? $input : array();
 
 	if ( ! function_exists( 'oopspamantispam_checkIfValidKey' ) || ! oopspamantispam_checkIfValidKey() ) {
-		return new WP_Error( 'oopspam_api_key_missing', __( 'OOPSpam is not configured with an API key.', 'oopspam-anti-spam' ) );
+		return new WP_Error( 'oopspam_api_key_missing', __( 'oopspam is not configured with an API key.', 'oopspam-anti-spam' ) );
 	}
 
 	$content = isset( $input['content'] ) ? sanitize_textarea_field( (string) $input['content'] ) : '';
@@ -477,14 +477,14 @@ function oopspam_register_ability_category() {
 	wp_register_ability_category(
 		'oopspam',
 		array(
-			'label'       => __( 'OOPSpam Anti-Spam', 'oopspam-anti-spam' ),
-			'description' => __( 'Spam detection and moderation abilities provided by the OOPSpam Anti-Spam plugin.', 'oopspam-anti-spam' ),
+			'label'       => __( 'oopspam Anti-Spam', 'oopspam-anti-spam' ),
+			'description' => __( 'Spam detection and moderation abilities provided by the oopspam Anti-Spam plugin.', 'oopspam-anti-spam' ),
 		)
 	);
 }
 
 /**
- * Register all OOPSpam abilities.
+ * Register all oopspam abilities.
  *
  * @return void
  */
@@ -496,8 +496,8 @@ function oopspam_register_oopspam_abilities() {
 	// Curated tool registry. Each entry maps 1:1 to a wp_register_ability() call.
 	$tools = array(
 		'oopspam/status' => array(
-			'label'             => __( 'OOPSpam Status', 'oopspam-anti-spam' ),
-			'description'       => __( 'Returns the OOPSpam configuration and health snapshot: whether it is configured, the (masked) API key, spam score threshold, and which protections are active.', 'oopspam-anti-spam' ),
+			'label'             => __( 'oopspam Status', 'oopspam-anti-spam' ),
+			'description'       => __( 'Returns the oopspam configuration and health snapshot: whether it is configured, the (masked) API key, spam score threshold, and which protections are active.', 'oopspam-anti-spam' ),
 			'input_schema'      => array( 'type' => 'object', 'properties' => array() ),
 			'output_schema'     => array(
 				'type'       => 'object',
@@ -519,7 +519,7 @@ function oopspam_register_oopspam_abilities() {
 
 		'oopspam/check-submission' => array(
 			'label'             => __( 'Check Submission', 'oopspam-anti-spam' ),
-			'description'       => __( 'Analyzes content, an IP, and an email through the full OOPSpam pipeline (local moderation lists, rate limiting, country/language filters, and the OOPSpam API) and returns whether it is spam with a score and reason. Does not log results unless log is set to true.', 'oopspam-anti-spam' ),
+			'description'       => __( 'Analyzes content, an IP, and an email through the full oopspam pipeline (local moderation lists, rate limiting, country/language filters, and the oopspam API) and returns whether it is spam with a score and reason. Does not log results unless log is set to true.', 'oopspam-anti-spam' ),
 			'input_schema'      => array(
 				'type'       => 'object',
 				'properties' => array(
@@ -546,7 +546,7 @@ function oopspam_register_oopspam_abilities() {
 
 		'oopspam/get-stats' => array(
 			'label'             => __( 'Get Spam Stats', 'oopspam-anti-spam' ),
-			'description'       => __( 'Returns the number of spam and ham (false positive) entries tracked by OOPSpam, both all-time and today.', 'oopspam-anti-spam' ),
+			'description'       => __( 'Returns the number of spam and ham (false positive) entries tracked by oopspam, both all-time and today.', 'oopspam-anti-spam' ),
 			'input_schema'      => array( 'type' => 'object', 'properties' => array() ),
 			'output_schema'     => array(
 				'type'       => 'object',
@@ -563,7 +563,7 @@ function oopspam_register_oopspam_abilities() {
 
 		'oopspam/list-recent-spam' => array(
 			'label'             => __( 'List Recent Spam', 'oopspam-anti-spam' ),
-			'description'       => __( 'Returns the most recent entries OOPSpam blocked, with the reason, score, email, IP, and form that triggered them.', 'oopspam-anti-spam' ),
+			'description'       => __( 'Returns the most recent entries oopspam blocked, with the reason, score, email, IP, and form that triggered them.', 'oopspam-anti-spam' ),
 			'input_schema'      => array(
 				'type'       => 'object',
 				'properties' => array(
@@ -603,7 +603,7 @@ function oopspam_register_oopspam_abilities() {
 
 		'oopspam/report-submission' => array(
 			'label'             => __( 'Report Submission', 'oopspam-anti-spam' ),
-			'description'       => __( 'Sends feedback to the OOPSpam API classifying a submission as spam or ham. Use this to report false positives or missed spam and help improve detection. This only reports; it does not modify moderation lists.', 'oopspam-anti-spam' ),
+			'description'       => __( 'Sends feedback to the oopspam API classifying a submission as spam or ham. Use this to report false positives or missed spam and help improve detection. This only reports; it does not modify moderation lists.', 'oopspam-anti-spam' ),
 			'input_schema'      => array(
 				'type'       => 'object',
 				'properties' => array(
@@ -630,14 +630,14 @@ function oopspam_register_oopspam_abilities() {
 
 	// Email / IP moderation tools (blocked & allowed lists, add & remove).
 	$moderation = array(
-		'block-email'  => array( __( 'Block Email', 'oopspam-anti-spam' ), __( 'Adds an email address (or wildcard like *@example.com) to the OOPSpam blocked list.', 'oopspam-anti-spam' ), 'email', 'mm_blocked_emails', 'add' ),
-		'unblock-email'=> array( __( 'Unblock Email', 'oopspam-anti-spam' ), __( 'Removes an email address (or wildcard) from the OOPSpam blocked list.', 'oopspam-anti-spam' ), 'email', 'mm_blocked_emails', 'remove' ),
-		'allow-email'  => array( __( 'Allow Email', 'oopspam-anti-spam' ), __( 'Adds an email address (or wildcard) to the OOPSpam allowed list so it is never flagged.', 'oopspam-anti-spam' ), 'email', 'mm_allowed_emails', 'add' ),
-		'unallow-email'=> array( __( 'Unallow Email', 'oopspam-anti-spam' ), __( 'Removes an email address (or wildcard) from the OOPSpam allowed list.', 'oopspam-anti-spam' ), 'email', 'mm_allowed_emails', 'remove' ),
-		'block-ip'     => array( __( 'Block IP', 'oopspam-anti-spam' ), __( 'Adds an IP, CIDR block, or IP range to the OOPSpam blocked list.', 'oopspam-anti-spam' ), 'ip', 'mm_blocked_ips', 'add' ),
-		'unblock-ip'   => array( __( 'Unblock IP', 'oopspam-anti-spam' ), __( 'Removes an IP, CIDR block, or IP range from the OOPSpam blocked list.', 'oopspam-anti-spam' ), 'ip', 'mm_blocked_ips', 'remove' ),
-		'allow-ip'     => array( __( 'Allow IP', 'oopspam-anti-spam' ), __( 'Adds an IP, CIDR block, or IP range to the OOPSpam allowed list.', 'oopspam-anti-spam' ), 'ip', 'mm_allowed_ips', 'add' ),
-		'unallow-ip'   => array( __( 'Unallow IP', 'oopspam-anti-spam' ), __( 'Removes an IP, CIDR block, or IP range from the OOPSpam allowed list.', 'oopspam-anti-spam' ), 'ip', 'mm_allowed_ips', 'remove' ),
+		'block-email'  => array( __( 'Block Email', 'oopspam-anti-spam' ), __( 'Adds an email address (or wildcard like *@example.com) to the oopspam blocked list.', 'oopspam-anti-spam' ), 'email', 'mm_blocked_emails', 'add' ),
+		'unblock-email'=> array( __( 'Unblock Email', 'oopspam-anti-spam' ), __( 'Removes an email address (or wildcard) from the oopspam blocked list.', 'oopspam-anti-spam' ), 'email', 'mm_blocked_emails', 'remove' ),
+		'allow-email'  => array( __( 'Allow Email', 'oopspam-anti-spam' ), __( 'Adds an email address (or wildcard) to the oopspam allowed list so it is never flagged.', 'oopspam-anti-spam' ), 'email', 'mm_allowed_emails', 'add' ),
+		'unallow-email'=> array( __( 'Unallow Email', 'oopspam-anti-spam' ), __( 'Removes an email address (or wildcard) from the oopspam allowed list.', 'oopspam-anti-spam' ), 'email', 'mm_allowed_emails', 'remove' ),
+		'block-ip'     => array( __( 'Block IP', 'oopspam-anti-spam' ), __( 'Adds an IP, CIDR block, or IP range to the oopspam blocked list.', 'oopspam-anti-spam' ), 'ip', 'mm_blocked_ips', 'add' ),
+		'unblock-ip'   => array( __( 'Unblock IP', 'oopspam-anti-spam' ), __( 'Removes an IP, CIDR block, or IP range from the oopspam blocked list.', 'oopspam-anti-spam' ), 'ip', 'mm_blocked_ips', 'remove' ),
+		'allow-ip'     => array( __( 'Allow IP', 'oopspam-anti-spam' ), __( 'Adds an IP, CIDR block, or IP range to the oopspam allowed list.', 'oopspam-anti-spam' ), 'ip', 'mm_allowed_ips', 'add' ),
+		'unallow-ip'   => array( __( 'Unallow IP', 'oopspam-anti-spam' ), __( 'Removes an IP, CIDR block, or IP range from the oopspam allowed list.', 'oopspam-anti-spam' ), 'ip', 'mm_allowed_ips', 'remove' ),
 	);
 
 	foreach ( $moderation as $slug => $config ) {

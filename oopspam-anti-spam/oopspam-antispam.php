@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: OOPSpam Anti-Spam
+ * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.83
- * Author: OOPSpam
+ * Version: 1.2.84
+ * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
  * Text Domain: oopspam-anti-spam
- * Copyright: (c) 2017 - 2026, OOPSpam LLC
+ * Copyright: (c) 2017 - 2026, oopspam LLC
  * License: GPL3
  */
 if (!function_exists('add_action')) {
@@ -39,7 +39,7 @@ function oopspam_start_session() {
             ]);
             
             if (!$session_started) {
-                error_log('OOPSpam: Failed to start session');
+                error_log('oopspam: Failed to start session');
             } else {
                 // Initialize entry time if not set
                 if (!isset($_SESSION['oopspam_entry_time'])) {
@@ -50,7 +50,7 @@ function oopspam_start_session() {
             }
         }
     } catch (Exception $e) {
-        error_log('OOPSpam: Session start error - ' . $e->getMessage());
+        error_log('oopspam: Session start error - ' . $e->getMessage());
     }
 }
 
@@ -92,7 +92,7 @@ require_once dirname(__FILE__) . '/include/class-oopspam-settings-transfer.php';
 // WordPress Abilities API (6.9+) support. No-ops when the API or the feature is unavailable.
 require_once dirname(__FILE__) . '/include/oopspam-abilities.php';
 
-// WordPress Connectors API (7.0+) support for registering the OOPSpam API key
+// WordPress Connectors API (7.0+) support for registering the oopspam API key
 // from Settings > Connectors as a low-priority fallback source.
 require_once dirname(__FILE__) . '/include/oopspam-connectors.php';
 
@@ -471,8 +471,8 @@ function oopspam_plugin_row_meta($links, $file) {
 
         $links[] = '<a href="https://wordpress.org/support/plugin/oopspam-anti-spam/reviews/?filter=5#new-post" '
                  . 'target="_blank" rel="noopener noreferrer" '
-                 . 'title="' . esc_attr__('Rate OOPSpam Anti-Spam on WordPress.org', 'oopspam-anti-spam') . '" '
-                 . 'aria-label="' . esc_attr__('Rate OOPSpam Anti-Spam on WordPress.org', 'oopspam-anti-spam') . '">'
+                 . 'title="' . esc_attr__('Rate oopspam Anti-Spam on WordPress.org', 'oopspam-anti-spam') . '" '
+                 . 'aria-label="' . esc_attr__('Rate oopspam Anti-Spam on WordPress.org', 'oopspam-anti-spam') . '">'
                  . $stars
                  . '</a>';
     }
@@ -1299,8 +1299,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
 
 /**
  * Public API for checking spam from custom forms or any custom PHP code.
- * Runs the full OOPSpam pipeline: local checks (blocked/allowed keywords and phrases, emails, IPs),
- * rate limiting, country/language filters, and the OOPSpam API call.
+ * Runs the full oopspam pipeline: local checks (blocked/allowed keywords and phrases, emails, IPs),
+ * rate limiting, country/language filters, and the oopspam API call.
  *
  * @param string $ip      The submitter's IP address.
  * @param string $email   The submitter's email address.
@@ -1605,7 +1605,7 @@ function oopspamantispam_check_pingback($approved, $commentdata)
         if ($checkForLength && strlen($commentdata['comment_content']) <= 20) {
             $isItSpam = true;
         } else if (oopspamantispam_call_OOPSpam($content, $senderIp, $email, false, "comment") == false) {
-            // if Spam filtering is on and the OOPSpam Service considers it spam then mark it as spam
+            // if Spam filtering is on and the oopspam Service considers it spam then mark it as spam
             $isItSpam = true;
         }
 
@@ -1637,7 +1637,7 @@ add_action('admin_init', 'oopspam_admin_init');
 
 add_action('pre_get_posts', 'oopspam_check_search_for_spam');
 
-// When a comment flagged as spam, let OOPSpam know too
+// When a comment flagged as spam, let oopspam know too
 add_action('transition_comment_status', 'oopspam_comment_spam_transition', 10, 3);
 function oopspam_comment_spam_transition($new_status, $old_status, $comment) {
     if ($new_status === 'spam' && $old_status !== 'spam') {
@@ -1792,7 +1792,7 @@ function oopspam_admin_setup_notice() {
         ?>
         <div class="notice notice-warning is-dismissible">
             <p>
-                <strong><?php esc_html_e('OOPSpam Anti-Spam is not fully set up!', 'oopspam-anti-spam'); ?></strong>
+                <strong><?php esc_html_e('oopspam Anti-Spam is not fully set up!', 'oopspam-anti-spam'); ?></strong>
                 <?php esc_html_e('Complete the setup wizard to protect your site from spam.', 'oopspam-anti-spam'); ?>
                 <a href="<?php echo esc_url(admin_url('admin.php?page=oopspam_setup_wizard')); ?>" class="button button-primary">
                     <?php esc_html_e('Run Setup Wizard', 'oopspam-anti-spam'); ?>
@@ -1847,7 +1847,7 @@ function oopspam_proxy_headers_notice() {
     ?>
     <div class="notice notice-warning" style="position: relative;">
         <p>
-            <strong><?php esc_html_e('OOPSpam: Proxy/CDN Detected!', 'oopspam-anti-spam'); ?></strong>
+            <strong><?php esc_html_e('oopspam: Proxy/CDN Detected!', 'oopspam-anti-spam'); ?></strong>
             <?php 
             printf(
                 /* translators: %s: detected proxy service name */
@@ -1865,7 +1865,7 @@ function oopspam_proxy_headers_notice() {
             </a>
         </p>
         <p class="description" style="margin-top: 5px;">
-            <?php esc_html_e('Without this setting, OOPSpam may capture the proxy IP instead of the real visitor IP, reducing spam detection accuracy.', 'oopspam-anti-spam'); ?>
+            <?php esc_html_e('Without this setting, oopspam may capture the proxy IP instead of the real visitor IP, reducing spam detection accuracy.', 'oopspam-anti-spam'); ?>
         </p>
     </div>
     <?php

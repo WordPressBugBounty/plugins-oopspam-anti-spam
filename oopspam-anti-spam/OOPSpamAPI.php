@@ -3,9 +3,9 @@
 namespace OOPSPAM\API;
 
 /**
- * Helper class for sending a request to OOPSpam API
+ * Helper class for sending a request to oopspam API
  * 
- * @author OOPSpam LLC
+ * @author oopspam LLC
  * @link   https://www.oopspam.com/
  * @copyright Copyright (c) 2017 - 2026, oopspam.com
  */
@@ -59,7 +59,7 @@ class OOPSpamAPI {
     }
 
     /**
-    * Calls the Web Service of OOPSpam API
+    * Calls the Web Service of oopspam API
     * 
     * @param array $POSTparameters
     * 
@@ -68,7 +68,7 @@ class OOPSpamAPI {
     protected function RequestToOOPSpamAPI($POSTparameters) {
         $options = get_option('oopspamantispam_settings', array());
 
-        // By default use OOPSpam API
+        // By default use oopspam API
         $apiEndpoint = "https://api.oopspam.com/";
         $headers = array(
             'content-type' => 'application/json',
@@ -95,7 +95,7 @@ class OOPSpamAPI {
 
         // Debug response
         if (is_wp_error($response)) {
-            error_log('OOPSpam API Error: ' . $response->get_error_message());
+            error_log('oopspam API Error: ' . $response->get_error_message());
             return $response;
         }
         
@@ -107,7 +107,7 @@ class OOPSpamAPI {
     }
 
      /**
-    * Submit false positives to OOPSpam's Reporting API
+    * Submit false positives to oopspam's Reporting API
     * 
     * @param array $POSTparameters
     * 
@@ -147,7 +147,7 @@ class OOPSpamAPI {
     public function getAPIUsage($response, $currentEndpointSource)
     {       
         if (is_wp_error($response)) {
-            error_log('OOPSpam getAPIUsage Error: WP Error');
+            error_log('oopspam getAPIUsage Error: WP Error');
             return;
         }
 
@@ -158,7 +158,7 @@ class OOPSpamAPI {
 
         $headerResult = wp_remote_retrieve_headers($response);
         if (empty($headerResult)) {
-            error_log('OOPSpam getAPIUsage Error: Empty headers');
+            error_log('oopspam getAPIUsage Error: Empty headers');
             return;
         }
 
@@ -211,7 +211,7 @@ class OOPSpamAPI {
     }
 
     /**
-    * Sends a request to OOPSpam API
+    * Sends a request to oopspam API
     * 
     * @param string $content The content that we evaluate.
     * @param string $metadata Optional JSON metadata containing form fields and HTTP headers for fraud detection.

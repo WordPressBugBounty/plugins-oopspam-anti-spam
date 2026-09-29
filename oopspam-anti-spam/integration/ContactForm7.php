@@ -80,8 +80,8 @@ function oopspamantispam_cf7_pre_submission($spam)
             $submission = \WPCF7_Submission::get_instance();
 
             $submission->add_spam_log(array(
-                'agent' => 'OOPSpam',
-                'reason' => "OOPSpam score " . $detectionResult["Score"] . " is higher than the threshold " . oopspamantispam_get_spamscore_threshold(),
+                'agent' => 'oopspam',
+                'reason' => "oopspam score " . $detectionResult["Score"] . " is higher than the threshold " . oopspamantispam_get_spamscore_threshold(),
             ));
 
             // Show a custom message

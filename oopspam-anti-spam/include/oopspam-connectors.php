@@ -1,10 +1,10 @@
 <?php
 /**
- * OOPSpam Connectors API support (WordPress 7.0+).
+ * oopspam Connectors API support (WordPress 7.0+).
  *
- * Registers OOPSpam as a core "Connectors" service (type: spam_filtering) so
- * administrators can store the OOPSpam API key from the core screen at
- * Settings -> Connectors, alongside the existing OOPSpam settings page and the
+ * Registers oopspam as a core "Connectors" service (type: spam_filtering) so
+ * administrators can store the oopspam API key from the core screen at
+ * Settings -> Connectors, alongside the existing oopspam settings page and the
  * OOPSPAM_API_KEY constant.
  *
  * @package OOPSpam_Anti_Spam
@@ -24,7 +24,7 @@ function oopspam_connectors_supported() {
 }
 
 /**
- * Register the OOPSpam connector on the core Connectors registry.
+ * Register the oopspam connector on the core Connectors registry.
  *
  * @param object $registry The WP_Connector_Registry instance.
  * @return void
@@ -39,21 +39,21 @@ function oopspam_register_connector( $registry ) {
 		return;
 	}
 
-	// The OOPSpam mark, shipped with the plugin and rendered by the core
+	// The oopspam mark, shipped with the plugin and rendered by the core
 	// Connectors screen. plugins_url() needs a *file* inside the plugin (not the
 	// plugin directory) so the plugin folder is kept in the resulting URL.
 	$oopspam_plugin_file = dirname( __DIR__ ) . '/oopspam-antispam.php';
 
 	/**
-	 * Filter the OOPSpam connector registration args before they reach core.
+	 * Filter the oopspam connector registration args before they reach core.
 	 *
 	 * @param array $args Connector registration arguments.
 	 */
 	$args = apply_filters(
 		'oopspam_connector_registration_args',
 		array(
-			'name'           => __( 'OOPSpam', 'oopspam-anti-spam' ),
-			'description'    => __( 'Block spam in comments and forms with the OOPSpam API.', 'oopspam-anti-spam' ),
+			'name'           => __( 'oopspam', 'oopspam-anti-spam' ),
+			'description'    => __( 'Block spam in comments and forms with the oopspam API.', 'oopspam-anti-spam' ),
 			'logo_url'       => plugins_url( 'assets/oopspam-logo.svg', $oopspam_plugin_file ),
 			'type'           => 'spam_filtering',
 			'plugin'         => array(

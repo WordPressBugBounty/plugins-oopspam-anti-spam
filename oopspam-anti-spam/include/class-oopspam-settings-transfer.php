@@ -1,6 +1,6 @@
 <?php
 /**
- * OOPSpam Anti-Spam – Settings Export / Import
+ * oopspam Anti-Spam – Settings Export / Import
  *
  * Shared logic used by both the WP-CLI command (`wp oopspam ...`) and the
  * admin "Tools" tab to export, import, and manage plugin settings.
@@ -67,7 +67,7 @@ if ( ! class_exists( 'OOPSpam_Settings_Transfer' ) ) {
 			static $version = null;
 
 			if ( null === $version ) {
-				$version = '1.2.83';
+				$version = '1.2.84';
 
 				if ( function_exists( 'get_plugin_data' ) ) {
 					$data = get_plugin_data( dirname( dirname( __FILE__ ) ) . '/oopspam-antispam.php', false, false );

@@ -23,7 +23,7 @@ wp_clear_scheduled_hook( 'oopspam_cleanup_ratelimit_entries_cron' );
 
 
 /* 
- * Remove OOPSpam-related tables
+ * Remove oopspam-related tables
  */
 global $wpdb;
 $tb_spam_entries = $wpdb->prefix . 'oopspam_frm_spam_entries';

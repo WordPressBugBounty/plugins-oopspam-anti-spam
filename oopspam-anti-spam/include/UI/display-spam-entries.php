@@ -911,7 +911,7 @@ private static function process_form_fields($raw_entry) {
 			// Check if the required function exists
 			if (!function_exists('oopspamantispam_report_OOPSpam')) {
 				if (defined('WP_DEBUG') && WP_DEBUG) {
-					error_log("report_spam_entry: Function oopspamantispam_report_OOPSpam not found");
+					error_log("report_spam_entry: Function oopspamantispam_report_oopspam not found");
 				}
 				return false;
 			}
@@ -942,7 +942,7 @@ private static function process_form_fields($raw_entry) {
 				return true;
 			} else {
 				if (defined('WP_DEBUG') && WP_DEBUG) {
-					error_log("report_spam_entry: Failed to submit report to OOPSpam API. Response: " . $submitReport);
+					error_log("report_spam_entry: Failed to submit report to oopspam API. Response: " . $submitReport);
 				}
 				return false;
 			}
@@ -1548,7 +1548,7 @@ class OOPSpam_Spam {
 			<div>
 				<p><?php esc_html_e("All submissions are stored locally in your WordPress database.", "oopspam-anti-spam"); ?></p>
 				<p><?php esc_html_e("In the below table you can view, delete, and report spam entries.", "oopspam-anti-spam"); ?></p>
-				<p><?php esc_html_e("If you believe any of these should NOT be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.  ", "oopspam-anti-spam"); ?> </p>
+				<p><?php esc_html_e("If you believe any of these should NOT be flagged as spam, please follow these steps to report them to us. This will improve spam detection for your use case.", "oopspam-anti-spam"); ?> </p>
 				<ul>
 					<li><?php esc_html_e("1. Hover on an entry", "oopspam-anti-spam"); ?></li>
 					<li><?php echo wp_kses(__('2. Click the <span style="color:green;">"Not Spam"</span> link', 'oopspam-anti-spam'), array('span' => array('style' => array()))); ?></li>

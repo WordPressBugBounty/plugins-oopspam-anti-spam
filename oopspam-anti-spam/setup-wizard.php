@@ -1,9 +1,9 @@
 <?php
 /**
- * OOPSpam Anti-Spam Setup Wizard
+ * oopspam Anti-Spam Setup Wizard
  * 
  * This file contains the setup wizard functionality to help users
- * get started with the OOPSpam plugin quickly and efficiently.
+ * get started with the oopspam plugin quickly and efficiently.
  */
 
 if (!function_exists('add_action')) {
@@ -17,7 +17,7 @@ function oopspam_register_setup_wizard() {
     // Add hidden page for redirects
     add_submenu_page(
         '', // Empty string for a hidden page, not null
-        'OOPSpam Setup Wizard',
+        'oopspam Setup Wizard',
         'Setup Wizard',
         'manage_options',
         'oopspam_setup_wizard',
@@ -27,7 +27,7 @@ function oopspam_register_setup_wizard() {
     // Add visible link at the bottom of the menu
     add_submenu_page(
         'wp_oopspam_settings_page', // Parent menu slug
-        'OOPSpam Setup Wizard',
+        'oopspam Setup Wizard',
         '↺ Setup Wizard',
         'manage_options',
         'oopspam_setup_wizard',
@@ -335,8 +335,8 @@ function oopspam_setup_wizard_content() {
     ?>
     <div class="oopspam-wizard-container">
         <div class="oopspam-wizard-header">
-            <img src="<?php echo esc_url(plugin_dir_url(__FILE__) . 'include/oopspam-logo.png'); ?>" alt="OOPSpam Logo" class="oopspam-logo">
-            <h1>Welcome to OOPSpam Anti-Spam</h1>
+            <img src="<?php echo esc_url(plugin_dir_url(__FILE__) . 'include/oopspam-logo.png'); ?>" alt="oopspam Logo" class="oopspam-logo">
+            <h1>Welcome to oopspam Anti-Spam</h1>
             <p>Let's set up your spam protection in a few simple steps</p>
         </div>
         
@@ -352,7 +352,7 @@ function oopspam_setup_wizard_content() {
             <!-- Step 1: API Key -->
             <div class="oopspam-wizard-step active" id="oopspam-step-1">
                 <h2>Add Your API Key</h2>
-                <p>To get started with OOPSpam, you need an API key. This key allows your website to connect to our spam detection service.</p>
+                <p>To get started with oopspam, you need an API key. This key allows your website to connect to our spam detection service.</p>
                 
                 <?php if ($has_api_key): ?>
                     <div class="oopspam-success-message">
@@ -362,7 +362,7 @@ function oopspam_setup_wizard_content() {
                     <button class="button button-primary oopspam-next-button" data-step="1" data-action="next">Continue</button>
                 <?php else: ?>
                     <div class="oopspam-form-group">
-                        <label for="oopspam-api-key">Your OOPSpam API Key:</label>
+                        <label for="oopspam-api-key">Your oopspam API Key:</label>
                         <input type="password" id="oopspam-api-key" class="regular-text" placeholder="Enter your API key here">
                         <p class="description">Don't have an API key? <a href="https://app.oopspam.com/Identity/Account/Register" target="_blank">Create a free account</a> to get one.</p>
                     </div>
@@ -376,11 +376,11 @@ function oopspam_setup_wizard_content() {
             <!-- Step 2: Form Protection -->
             <div class="oopspam-wizard-step" id="oopspam-step-2">
                 <h2>Enable Spam Protection for Your Forms</h2>
-                <p>Select which form plugins you want to protect with OOPSpam:</p>
+                <p>Select which form plugins you want to protect with oopspam:</p>
                 
                 <?php if (empty($form_plugins)): ?>
                     <div class="oopspam-notice">
-                        <p>No supported form plugins detected. If you install a supported form plugin later, you can enable protection in the OOPSpam settings.</p>
+                        <p>No supported form plugins detected. If you install a supported form plugin later, you can enable protection in the oopspam settings.</p>
                     </div>
                     <button class="button button-primary oopspam-next-button" data-step="2" data-action="next">Continue</button>
                 <?php else: ?>
@@ -447,7 +447,7 @@ function oopspam_setup_wizard_content() {
                                         <input type="checkbox" id="oopspam-woo-extra-screening" name="oopspam-woo-enhanced-options[]" value="extra_screening">
                                         Extra Screening
                                     </label>
-                                    <p class="description">Applies additional experimental checks for stricter spam filtering on the OOPSpam API side.</p>
+                                    <p class="description">Applies additional experimental checks for stricter spam filtering on the oopspam API side.</p>
                                 </div>
                             </div>
                         </div>
@@ -570,7 +570,7 @@ function oopspam_setup_wizard_content() {
                 <div class="oopspam-completion-message">
                     <span class="dashicons dashicons-yes"></span>
                     <h2>Setup Complete!</h2>
-                    <p>You've successfully set up OOPSpam Anti-Spam. Your website is now protected against spam submissions.</p>
+                    <p>You've successfully set up oopspam Anti-Spam. Your website is now protected against spam submissions.</p>
                 </div>
                 
                 <div class="oopspam-next-steps">
@@ -578,12 +578,12 @@ function oopspam_setup_wizard_content() {
                     <ul>
                         <li><p><span class="dashicons dashicons-admin-settings"></span> <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page')); ?>">Visit the settings page</a> to fine-tune your configuration</p></li>
                         <li><p><span class="dashicons dashicons-shield"></span> Learn more about <a href="https://help.oopspam.com/wordpress/" target="_blank">advanced protection options</a></p></li>
-                        <li><p><span class="dashicons dashicons-chart-area"></span> Monitor submissions in the local <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_spam_entries')); ?>">Spam Entries</a> and <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_ham_entries')); ?>">Valid Entries</a> tables. You can also enable <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page')); ?>">Log submissions to OOPSpam</a> setting to track submissions in the OOPSpam dashboard</p></li>
+                        <li><p><span class="dashicons dashicons-chart-area"></span> Monitor submissions in the local <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_spam_entries')); ?>">Spam Entries</a> and <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_frm_ham_entries')); ?>">Valid Entries</a> tables. You can also enable <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page')); ?>">Log submissions to oopspam</a> setting to track submissions in the oopspam dashboard</p></li>
                     </ul>
                 </div>
                 
                 <div class="oopspam-wizard-buttons">
-                    <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page&from_wizard=1')); ?>" class="button button-primary">Go to OOPSpam Settings</a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=wp_oopspam_settings_page&from_wizard=1')); ?>" class="button button-primary">Go to oopspam Settings</a>
                     <a href="<?php echo esc_url(admin_url('index.php')); ?>" class="button">Return to Dashboard</a>
                 </div>
             </div>

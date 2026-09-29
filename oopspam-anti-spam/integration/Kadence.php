@@ -80,7 +80,7 @@ function oopspamantispam_kb_intercept() {
                     'success' => false,
                     'data'    => [
                         'html'    => '<div class="kadence-blocks-form-message kadence-blocks-form-warning">' . esc_html( $error_to_show ) . '</div>',
-                        'console' => __( 'Spam Detected by OOPSpam', 'oopspam-anti-spam' ),
+                        'console' => __( 'Spam Detected by oopspam', 'oopspam-anti-spam' ),
                     ],
                 ] );
                 exit;

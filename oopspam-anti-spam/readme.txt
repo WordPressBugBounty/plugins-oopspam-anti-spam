@@ -1,22 +1,22 @@
-=== OOPSpam Anti-Spam: Spam Protection for WordPress Forms & Comments (No CAPTCHA) ===
+=== oopspam Anti-Spam: Spam Protection for WordPress Forms & Comments (No CAPTCHA) ===
 Contributors: oopspam
 Link: https://www.oopspam.com/
 Tags: spam, anti-spam, antispam, spam-protection, spam blocker
 Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.83
+Stable tag: 1.2.84
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Protect your forms from spam with 99.9% accuracy - no CAPTCHA, no JavaScript, no tracking. Trusted by 3.5M+ websites.
 
 == Description ==
-[OOPSpam](https://www.oopspam.com/) is a modern anti-spam solution that uses advanced AI and machine learning to protect your WordPress forms and comments from spam. Our system has blocked over 1 billion spam attempts across 3.5M+ websites, maintaining 99.9% accuracy without compromising user privacy or accessibility.
+[oopspam](https://www.oopspam.com/) is a modern anti-spam solution that uses advanced AI and machine learning to protect your WordPress forms and comments from spam. Our system has blocked over 1 billion spam attempts across 3.5M+ websites, maintaining 99.9% accuracy without compromising user privacy or accessibility.
 
-Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpam works silently in the background, analyzing submissions against our extensive database of 500M+ malicious IPs and emails to catch both bot and human spammers. 
+Unlike traditional CAPTCHA solutions that can hurt your conversion rates, oopspam works silently in the background, analyzing submissions against our extensive database of 500M+ malicious IPs and emails to catch both bot and human spammers. 
 
 
-### Why Choose OOPSpam?
+### Why Choose oopspam?
 
 - Protect forms without CAPTCHA, JavaScript challenges, or tracking.
 - Catch bot and human spam with AI-powered analysis and contextual checks.
@@ -81,35 +81,35 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, OOPSpa
 - Newsletters by Tribulant
 
 
-OOPSpam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>OOPSpam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
+oopspam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>oopspam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
 
-**Please note**: This is a premium plugin. You need an [OOPSpam Anti-Spam API key](https://app.oopspam.com/Identity/Account/Register) to use the plugin. Each account comes with 40 free spam checks per month.
-If you already use OOPSpam on other platforms, you can use the same API key for this plugin.
+**Please note**: This is a premium plugin. You need an [oopspam Anti-Spam API key](https://app.oopspam.com/Identity/Account/Register) to use the plugin. Each account comes with 40 free spam checks per month.
+If you already use oopspam on other platforms, you can use the same API key for this plugin.
 
 == Installation ==
-You can install OOPSpam Anti-Spam plugin both from your WordPress admin dashboard and manually.
+You can install oopspam Anti-Spam plugin both from your WordPress admin dashboard and manually.
 
-### INSTALL OOPSpam Anti-Spam FROM WITHIN WORDPRESS
+### INSTALL oopspam Anti-Spam FROM WITHIN WORDPRESS
 
 1. Visit the plugins page within your dashboard and select ‘Add New’;
 2. Search for ‘oopspam’;
-3. Activate OOPSpam Anti-Spam from your Plugins page;
-4. Go to _OOPSpam Anti-Spam=>Settings_
+3. Activate oopspam Anti-Spam from your Plugins page;
+4. Go to _oopspam Anti-Spam=>Settings_
 
-### INSTALL OOPSpam Anti-Spam MANUALLY
+### INSTALL oopspam Anti-Spam MANUALLY
 
 1. Upload the ‘oopspam-anti-spam’ folder to the /wp-content/plugins/ directory;
-2. Activate the OOPSpam Anti-Spam plugin through the ‘Plugins’ menu in WordPress;
-3. Go to _OOPSpam Anti-Spam=>Settings_
+2. Activate the oopspam Anti-Spam plugin through the ‘Plugins’ menu in WordPress;
+3. Go to _oopspam Anti-Spam=>Settings_
 
 ### AFTER ACTIVATION
 
 After activating the plugin, follow these quick setup steps:
 
-1. Register on the [OOPSpam Dashboard](https://app.oopspam.com/) and copy your API key
-2. Go to _OOPSpam Anti-Spam=>Settings_ in your WordPress dashboard
+1. Register on the [oopspam Dashboard](https://app.oopspam.com/) and copy your API key
+2. Go to _oopspam Anti-Spam=>Settings_ in your WordPress dashboard
 3. Paste the key into the "My API Key" field
-4. Select "OOPSpam Dashboard" from the "I got my API Key from" setting
+4. Select "oopspam Dashboard" from the "I got my API Key from" setting
 5. If you're using a contact form plugin, make sure the "Activate Spam Protection" option is checked for that plugin
 
 That's it! Your forms are now protected from spam. The plugin works automatically in the background with no additional configuration needed.
@@ -118,6 +118,8 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.84 =
+* **IMPROVEMENT:** UI updates.
 = 1.2.83 =
 * **FIX:** Fixed CSS issues with the "Sensitivity Level" setting slider.
 * **IMPROVEMENT:** Added the plugin text domain and marked previously untranslatable strings.
@@ -293,9 +295,9 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * **IMPROVEMENT:** [Breakdance] Disabled email notifications for detected spam submissions
 = 1.2.31 =
 * **NEW:** [WooCommerce] Added "Payment methods to check origin" setting to restrict origin checks to selected payment methods.
-* **NEW:** Automatically report comments as spam or ham to OOPSpam when flagged within the WordPress comment system.
+* **NEW:** Automatically report comments as spam or ham to oopspam when flagged within the WordPress comment system.
 * **NEW:** Introduced "Disable local logging" setting to disable logging in the Form Spam and Valid Entries tables.
-* **NEW:** Added global settings for "Log submissions to OOPSpam" and "Disable local logging" using constants:
+* **NEW:** Added global settings for "Log submissions to oopspam" and "Disable local logging" using constants:
   - `define('OOPSPAM_DISABLE_LOCAL_LOGGING', true);`
   - `define('OOPSPAM_ENABLE_REMOTE_LOGGING', true);`
 * **IMPROVEMENT:** Enhanced Spam Entries table to display submissions not analyzed due to rate limiting or API errors.
@@ -366,7 +368,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * IMPROVEMENT: Added Sucuri proxy header support in IP detection
 = 1.2.15 =
 * NEW: Added support for Kadence Form (Advanced) Block
-* NEW: Automatically send flagged spam comments to OOPSpam for reporting
+* NEW: Automatically send flagged spam comments to oopspam for reporting
 = 1.2.14 =
 * NEW: Added `oopspam_woo_disable_honeypot` hook to disable honeypot in WooCommerce
 * IMPROVEMENT: Reorganized privacy settings under the Privacy tab for better clarity
@@ -374,8 +376,8 @@ For advanced configuration options and detailed usage instructions, visit our [W
 * FIX: Resolved issue where WooCommerce blockings were not logged
 = 1.2.13 =
 * NEW: View spam detection reasons in the Spam Entries table
-* NEW: Report entries flagged as spam in Gravity Forms to OOPSpam
-* NEW: Report entries flagged as not spam in Gravity Forms to OOPSpam
+* NEW: Report entries flagged as spam in Gravity Forms to oopspam
+* NEW: Report entries flagged as not spam in Gravity Forms to oopspam
 * IMPROVEMENT: Admin comments bypass spam checks
 = 1.2.12 =
 * NEW: `Block messages containing URLs` setting
@@ -450,7 +452,7 @@ For advanced configuration options and detailed usage instructions, visit our [W
 = 1.1.59 =
 * FIX: Error when reporting false positives/negatives
 = 1.1.58 =
-* NEW: `Log submissions to OOPSpam` setting. Allows you to view logs in the OOPSpam Dashboard
+* NEW: `Log submissions to oopspam` setting. Allows you to view logs in the oopspam Dashboard
 = 1.1.57 =
 * FIX: WooCommerce spam filtering applied even when spam protection was off
 = 1.1.56 =
@@ -474,9 +476,9 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 == Frequently Asked Questions ==
 
-= How does OOPSpam compare to Akismet? =
+= How does oopspam compare to Akismet? =
 
-While Akismet focuses primarily on comment spam, OOPSpam offers comprehensive protection for all forms of submissions:
+While Akismet focuses primarily on comment spam, oopspam offers comprehensive protection for all forms of submissions:
 - Protects ALL form types (comments, contact forms, registration, etc.) out of the box
 - No need to share user data with third parties
 - Includes country blocking and language filtering
@@ -484,9 +486,9 @@ While Akismet focuses primarily on comment spam, OOPSpam offers comprehensive pr
 - Works silently without impacting user experience
 - One API key works across unlimited websites
 
-= How does OOPSpam compare to CleanTalk? =
+= How does oopspam compare to CleanTalk? =
 
-OOPSpam offers several advantages over CleanTalk:
+oopspam offers several advantages over CleanTalk:
 - Higher accuracy (99.9%) with advanced machine learning
 - No JavaScript required, improving site performance
 - Better privacy with optional IP/email analysis
@@ -496,7 +498,7 @@ OOPSpam offers several advantages over CleanTalk:
 
 = Do I need to solve CAPTCHA or other challenges? =
 
-No! OOPSpam works completely in the background without any user interaction required. This means:
+No! oopspam works completely in the background without any user interaction required. This means:
 - No puzzles or challenges
 - No impact on conversion rates
 - Full accessibility compliance
@@ -513,9 +515,9 @@ When someone submits a form on your website, that counts as one API call. The fr
 
 Contact us if you need help estimating your needs.
 
-= Is OOPSpam GDPR compliant? =
+= Is oopspam GDPR compliant? =
 
-Yes! OOPSpam is fully GDPR compliant:
+Yes! oopspam is fully GDPR compliant:
 - No data stored on our servers by default
 - Optional IP and email analysis
 - All logs stored in your WordPress database
@@ -523,15 +525,16 @@ Yes! OOPSpam is fully GDPR compliant:
 
 = Does the plugin support WP-CLI? =
 
-Yes. OOPSpam Anti-Spam ships with a `wp oopspam` command. You can view the plugin status (`wp oopspam status`), read and change settings (`wp oopspam get` / `wp oopspam set`), and export/import the full configuration (`wp oopspam export` / `wp oopspam import`). Run `wp help oopspam` for the full reference or check out our [WordPress guide](https://help.oopspam.com/wordpress/).
+Yes. oopspam Anti-Spam ships with a `wp oopspam` command. You can view the plugin status (`wp oopspam status`), read and change settings (`wp oopspam get` / `wp oopspam set`), and export/import the full configuration (`wp oopspam export` / `wp oopspam import`). Run `wp help oopspam` for the full reference or check out our [WordPress guide](https://help.oopspam.com/wordpress/).
 
 == Screenshots ==
 
-1. **Easy-to-Use Dashboard** - Access all spam protection features in one organized place
-2. **Spam Management** - View and manage spam with clear explanations of why each entry was blocked
-3. **Manual Controls** - Block specific IPs, emails, and keywords when needed
-4. **Rate Limiting** - Stop spam bots by limiting how often forms can be submitted
-5. **Privacy Controls** - Choose how your data is handled and stored
-6. **One-Click Setup** - Enable protection for your forms and WooCommerce store instantly
-7. **IP Blocking** - Block VPNs and cloud providers with a single click
-8. **Contextual Spam Detection** - Use AI to identify spam based on your website's content (optional)
+1. oopspam starts protecting your website right away. Just install and enable spam protection to cut the spam noise.
+2. oopspam is a leading plugin for card testing protection in WooCommerce. We investigate attacks and deploy mitigation rules instantly.
+3. Don’t wonder why a submission was blocked. The Spam and Valid Entries tables log all submissions, and Spam Entries show you why a submission was blocked.
+4. Have your own blocked keywords, IPs, or emails? Add them under Manual Moderation.
+5. Just like the oopspam API, the plugin is built with privacy-first principles. You can turn off any PII-based spam checks and still keep your website protected.
+6. With oopspam, you don’t need to block access to your website. Just limit submissions with Block Countries, or simply allow access only from selected countries.
+7. Many more features have been built into oopspam and improved since 2017 based on customer feedback.
+8. oopspam protects over 3.5 million websites across platforms. With one of the industry's largest datasets, including 200 million+ blocked IPs and 150 million+ blocked emails, it can block all kinds of spam.
+9. Human support every time. Real help, no time wasting.
