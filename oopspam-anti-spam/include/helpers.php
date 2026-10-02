@@ -276,6 +276,11 @@ function oopspamantispam_plugin_check($plugin)
                     $result = true;
                 }
             break;
+            case 'fluentcart':
+                if (is_plugin_active('fluent-cart/fluent-cart.php')) {
+                    $result = true;
+                }
+            break;
             case 'quform':
                 if (is_plugin_active('quform/quform.php')) {
                     $result = true;
@@ -348,6 +353,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'mpress' => 'OOPSPAM_IS_MPRESS_ACTIVATED',
         'sure' => 'OOPSPAM_IS_SURE_ACTIVATED',
         'surecart' => 'OOPSPAM_IS_SURECART_ACTIVATED',
+        'fluentcart' => 'OOPSPAM_IS_FLUENTCART_ACTIVATED',
         'jform' => 'OOPSPAM_IS_JFORM_ACTIVATED',
         'quform' => 'OOPSPAM_IS_QUFORM_ACTIVATED',
         'happyforms' => 'OOPSPAM_IS_HAPPYFORMS_ACTIVATED',
@@ -393,6 +399,7 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'mpress' => 'oopspam_is_mpress_activated',
         'sure' => 'oopspam_is_sure_activated',
         'surecart' => 'oopspam_is_surecart_activated',
+        'fluentcart' => 'oopspam_is_fluentcart_activated',
         'jform' => 'oopspam_is_jform_activated',
         'quform' => 'oopspam_is_quform_activated',
         'happyforms' => 'oopspam_is_happyforms_activated',

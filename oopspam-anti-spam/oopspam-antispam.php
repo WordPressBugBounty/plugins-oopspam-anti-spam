@@ -3,7 +3,7 @@
  * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.84
+ * Version: 1.2.85
  * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -128,6 +128,7 @@ require_once dirname(__FILE__) . '/integration/MC4WP.php';
 require_once dirname(__FILE__) . '/integration/TribulantNewsletters.php';
 require_once dirname(__FILE__) . '/integration/SureForms.php';
 require_once dirname(__FILE__) . '/integration/SureCart.php';
+require_once dirname(__FILE__) . '/integration/FluentCart.php';
 require_once dirname(__FILE__) . '/integration/BreakdanceForm.php';
 require_once dirname(__FILE__) . '/integration/Quform.php';
 require_once dirname(__FILE__) . '/integration/HappyForms.php';
@@ -1097,7 +1098,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     if ($type === "give" || $type === "woo" || $type === "mc4wp"
     || $type === "mailpoet" || $type === "search" 
     || $type === "wpregister" || $type === "umember" || $type === "mpress"
-    || $type === "pmp" || $type === "surecart" || $type === "buddypress") {
+    || $type === "pmp" || $type === "surecart" || $type === "fluentcart" || $type === "buddypress") {
         $checkForLength = false;
     }
 

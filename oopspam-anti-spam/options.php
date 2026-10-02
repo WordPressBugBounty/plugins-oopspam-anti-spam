@@ -650,6 +650,7 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-pmp-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-sure-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-surecart-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-fluentcart-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-superforms-settings-group', 'oopspamantispam_settings');
 
     // Add settings section
@@ -1918,6 +1919,30 @@ function oopspam_jform_spam_message_render()
             'oopspam_surecart_spam_message_render',
             'oopspamantispam-surecart-settings-group',
             'oopspam_surecart_settings_section'
+        );
+
+    }
+
+    // fluentCart settings section
+    if (oopspamantispam_plugin_check('fluentcart') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_fluentcart_settings_section',
+            esc_html__('fluentCart',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-fluentcart-settings-group'
+        );
+        add_settings_field('oopspam_is_fluentcart_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_fluentcart_activated_render',
+            'oopspamantispam-fluentcart-settings-group',
+            'oopspam_fluentcart_settings_section'
+        );
+
+        add_settings_field('oopspam_fluentcart_spam_message',
+            esc_html__('fluentCart Spam Message',  'oopspam-anti-spam'),
+            'oopspam_fluentcart_spam_message_render',
+            'oopspamantispam-fluentcart-settings-group',
+            'oopspam_fluentcart_settings_section'
         );
 
     }
@@ -4259,6 +4284,47 @@ function oopspam_surecart_spam_message_render()
 
 /* SureCart UI settings section ends */
 
+/* fluentCart UI settings section starts */
+
+function oopspam_is_fluentcart_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_FLUENTCART_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_FLUENTCART_ACTIVATED : (isset($options['oopspam_is_fluentcart_activated']) && 1 == $options['oopspam_is_fluentcart_activated']);
+    ?>
+    <div>
+        <label for="fluentcart_support">
+            <input class="oopspam-toggle" type="checkbox" id="fluentcart_support" 
+                   name="oopspamantispam_settings[oopspam_is_fluentcart_activated]" 
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?> 
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+
+function oopspam_fluentcart_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_fluentcart_spam_message">
+                  <input id="oopspam_fluentcart_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_fluentcart_spam_message]" value="<?php if (isset($options['oopspam_fluentcart_spam_message'])) {
+        esc_html_e($options['oopspam_fluentcart_spam_message'], "oopspam-anti-spam");
+    }
+    ?>">
+                      <p class="description"><?php echo esc_html__('Enter a short message to display when a spam fluentCart order has been submitted. (e.g Our spam detection classified your order as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* fluentCart UI settings section ends */
+
 /* WPForms  settings section starts */
 
 function oopspam_is_wpf_activated_render()
@@ -5653,6 +5719,11 @@ if( isset( $_GET[ 'tab' ] ) ) {
                     <div class="surecart form-setting">
                     <?php
                     do_settings_sections('oopspamantispam-surecart-settings-group');
+                    ?>
+                    </div>
+                    <div class="fluentcart form-setting">
+                    <?php
+                    do_settings_sections('oopspamantispam-fluentcart-settings-group');
                     ?>
                     </div>
                     <div class="superforms form-setting">

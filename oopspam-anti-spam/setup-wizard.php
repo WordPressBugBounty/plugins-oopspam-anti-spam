@@ -148,6 +148,7 @@ function oopspam_get_active_form_plugins() {
         'mpoet' => 'MailPoet',
         'quform' => 'Quform',
         'surecart' => 'SureCart',
+        'fluentcart' => 'fluentCart',
         'sure' => 'SureForms',
         'superforms' => 'Super Forms',
         'avada' => 'Avada Forms',

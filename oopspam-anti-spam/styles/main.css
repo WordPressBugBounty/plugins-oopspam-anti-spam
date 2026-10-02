@@ -353,6 +353,15 @@ input[type="checkbox"].oopspam-toggle:focus-visible {
    border-bottom-color: #01824c;
 }
 
+.fluentcart {
+   background-color: white;
+}
+
+.fluentcart h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #017ef3;
+}
+
 .forminator {
    background-color: white;
 }
