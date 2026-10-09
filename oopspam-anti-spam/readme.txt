@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: spam, anti-spam, antispam, spam-protection, spam blocker
 Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.85
+Stable tag: 1.2.86
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -73,7 +73,7 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, oopspa
 - SureForms
 - Super Forms
 - SureCart
-- fluentCart
+- FluentCart 
 - QuForm
 - HappyForms Pro
 - Avada Forms
@@ -119,8 +119,11 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.86 =
+* **FIX:** Fixed a fatal error on servers without the PHP mbstring extension.
+* **FIX:** The spam report email no longer requires the mbstring extension.
 = 1.2.85 =
-* **NEW:** Added support for fluentCart
+* **NEW:** Added support for FluentCart
 = 1.2.84 =
 * **IMPROVEMENT:** UI updates.
 = 1.2.83 =

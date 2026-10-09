@@ -3,7 +3,7 @@
  * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.85
+ * Version: 1.2.86
  * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -1130,8 +1130,14 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
             }
         }
         
-        // Unicode support
-        $commentText = mb_convert_encoding($commentText, "UTF-8");
+        // Unicode support.
+        // mbstring is not installed on every host, so only convert when the
+        // function is available; otherwise fall back to WordPress' UTF-8 check.
+        if (function_exists('mb_convert_encoding')) {
+            $commentText = mb_convert_encoding($commentText, 'UTF-8');
+        } elseif (function_exists('wp_check_invalid_utf8')) {
+            $commentText = wp_check_invalid_utf8($commentText, true);
+        }
 
         $response = $OOPSpamAPI->SpamDetection($commentText, 
         $commentIP, 

@@ -1,8 +1,8 @@
 <?php
 /**
- * The fluentCart integration class.
+ * The FluentCart integration class.
  *
- * Runs an oopspam spam check against fluentCart's checkout validation flow
+ * Runs an oopspam spam check against FluentCart's checkout validation flow
  * before the order is processed.
  *
  * @package OOPSpam_Anti_Spam
@@ -60,7 +60,7 @@ function oopspamantispam_fluentcart_pre_order( $errors, $request ) {
         "IP" => $userIP,
         "Email" => $email,
         "RawEntry" => $raw_entry,
-        "FormId" => "fluentCart",
+        "FormId" => "FluentCart",
     ];
 
     if (!$detectionResult["isItHam"]) {

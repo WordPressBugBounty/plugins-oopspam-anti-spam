@@ -1923,11 +1923,11 @@ function oopspam_jform_spam_message_render()
 
     }
 
-    // fluentCart settings section
+    // FluentCart settings section
     if (oopspamantispam_plugin_check('fluentcart') && !empty(oopspamantispam_get_key())) {
 
         add_settings_section('oopspam_fluentcart_settings_section',
-            esc_html__('fluentCart',  'oopspam-anti-spam'),
+            esc_html__('FluentCart',  'oopspam-anti-spam'),
             false,
             'oopspamantispam-fluentcart-settings-group'
         );
@@ -1939,7 +1939,7 @@ function oopspam_jform_spam_message_render()
         );
 
         add_settings_field('oopspam_fluentcart_spam_message',
-            esc_html__('fluentCart Spam Message',  'oopspam-anti-spam'),
+            esc_html__('FluentCart Spam Message',  'oopspam-anti-spam'),
             'oopspam_fluentcart_spam_message_render',
             'oopspamantispam-fluentcart-settings-group',
             'oopspam_fluentcart_settings_section'
@@ -4284,7 +4284,7 @@ function oopspam_surecart_spam_message_render()
 
 /* SureCart UI settings section ends */
 
-/* fluentCart UI settings section starts */
+/* FluentCart UI settings section starts */
 
 function oopspam_is_fluentcart_activated_render()
 {
@@ -4317,13 +4317,13 @@ function oopspam_fluentcart_spam_message_render()
         esc_html_e($options['oopspam_fluentcart_spam_message'], "oopspam-anti-spam");
     }
     ?>">
-                      <p class="description"><?php echo esc_html__('Enter a short message to display when a spam fluentCart order has been submitted. (e.g Our spam detection classified your order as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+                      <p class="description"><?php echo esc_html__('Enter a short message to display when a spam FluentCart order has been submitted. (e.g Our spam detection classified your order as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
                       </label>
               </div>
           <?php
 }
 
-/* fluentCart UI settings section ends */
+/* FluentCart UI settings section ends */
 
 /* WPForms  settings section starts */
 

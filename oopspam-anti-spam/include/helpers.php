@@ -652,7 +652,14 @@ function oopspam_build_spam_report_email($is_test = false) {
                                 <tbody>
                                     <?php foreach ($entries as $entry):
                                         $msg = isset($entry->message) ? trim($entry->message) : '';
-                                        $msg_display = $msg !== '' ? (mb_strlen($msg) > 100 ? mb_substr($msg, 0, 100) . '…' : $msg) : '—';
+                                        if ($msg === '') {
+                                            $msg_display = '—';
+                                        } elseif (function_exists('mb_strlen') && function_exists('mb_substr')) {
+                                            $msg_display = mb_strlen($msg) > 100 ? mb_substr($msg, 0, 100) . '…' : $msg;
+                                        } else {
+                                            // mbstring unavailable: fall back to byte-based functions.
+                                            $msg_display = strlen($msg) > 100 ? substr($msg, 0, 100) . '…' : $msg;
+                                        }
                                         $formatted_entry_date = oopspam_format_entry_datetime($entry->date);
                                     ?>
                                     <tr>
