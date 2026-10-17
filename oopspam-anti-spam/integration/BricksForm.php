@@ -93,7 +93,7 @@ function oopspam_spam_check($errors, $form)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => \oopspam_format_form_id($formId, isset($settings['formName']) ? $settings['formName'] : ''),
+            "FormId" => \oopspam_format_form_id($formId, isset($settings['formName']) ? $settings['formName'] : '', 'bricks'),
         ];
 
         if (!$detectionResult["isItHam"]) {

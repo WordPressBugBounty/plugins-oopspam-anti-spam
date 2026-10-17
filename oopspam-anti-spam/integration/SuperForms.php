@@ -116,7 +116,7 @@ function oopspamantispam_superforms_pre_submission($atts)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_id)),
+            "FormId" => \oopspam_format_form_id($form_id, get_the_title($form_id), 'superforms'),
         ];
 
         if (!$detectionResult["isItHam"]) {

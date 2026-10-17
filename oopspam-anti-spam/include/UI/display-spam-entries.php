@@ -285,9 +285,10 @@ class Spam_Entries extends \WP_List_Table {
 
 				<select name="filter_form_id[]" multiple id="form-id-filter" class="form-id-select" placeholder="<?php esc_attr_e('Select Form IDs', 'oopspam-anti-spam'); ?>">
 					<?php foreach ($form_ids as $form_id): ?>
-						<option value="<?php echo esc_attr($form_id); ?>" 
+						<?php $parsed_form_id = \oopspam_parse_form_id($form_id); ?>
+						<option value="<?php echo esc_attr($form_id); ?>"
 							<?php echo in_array($form_id, $current_form_ids) ? 'selected' : ''; ?>>
-							<?php echo esc_html($form_id); ?>
+							<?php echo esc_html($parsed_form_id['display']); ?>
 						</option>
 					<?php endforeach; ?>
 				</select>
@@ -1094,11 +1095,10 @@ private static function process_form_fields($raw_entry) {
 
 	function column_form_id( $item ) {
 		$parsed = \oopspam_parse_form_id( $item['form_id'] );
-		return sprintf(
-			'<span title="%s">%s</span>',
-			esc_attr( $parsed['title'] ),
-			esc_html( $parsed['display'] )
-		);
+
+		// Integration name, form name and form ID are all visible now, so there
+		// is nothing left for the hover tooltip to reveal.
+		return esc_html( $parsed['display'] );
 	}
 
 	public function column_date( $item ) {

@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: spam, anti-spam, antispam, spam-protection, spam blocker
 Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.86
+Stable tag: 1.2.87
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -60,6 +60,10 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, oopspa
 - Formidable Forms
 - Contact Form 7
 - Bricks Forms
+- Bricksforge Forms
+- eForm Form Builder
+- WP Booking System
+- Spectra Forms
 - Toolset Forms
 - Piotnet Forms 
 - GiveWP Donation Forms
@@ -119,6 +123,16 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.87 =
+* **NEW:** Added support for Bricksforge Pro Forms
+* **NEW:** Added support for eForm Form Builder
+* **NEW:** Added support for WP Booking System
+* **NEW:** Added support for Spectra Forms and Spectra Pro Register blocks
+* **NEW:** Store WooCommerce order attribution data in Valid Entries.
+* **IMPROVEMENT:** The Form Id column in Spam and Valid Entries now shows the integration name, the form name and the form ID
+* **FIX:** Run WooCommerce order attribution checks before order creation.
+* **FIX:** Prevent blocked block checkout orders from being re-created.
+* **FIX:** Prevent duplicate spam entries for blocked WooCommerce orders.
 = 1.2.86 =
 * **FIX:** Fixed a fatal error on servers without the PHP mbstring extension.
 * **FIX:** The spam report email no longer requires the mbstring extension.

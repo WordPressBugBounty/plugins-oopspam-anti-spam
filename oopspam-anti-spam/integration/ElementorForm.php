@@ -125,7 +125,7 @@ function oopspamantispam_el_pre_submission($record, $ajax_handler)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => $form_id["form_name"],
+            "FormId" => \oopspam_format_form_id('', $form_id["form_name"], 'elementor'),
         ];
 
         if (!$detectionResult["isItHam"]) {

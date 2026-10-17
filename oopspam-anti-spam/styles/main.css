@@ -229,6 +229,38 @@ input[type="checkbox"].oopspam-toggle:focus-visible {
    border-bottom-color: #ffd64f;
 }
 
+.bricksforge-forms {
+   background-color: white;
+}
+.bricksforge-forms h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #f5641a;
+}
+
+.eform {
+   background-color: white;
+}
+.eform h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #0f766e;
+}
+
+.wpbs {
+   background-color: white;
+}
+.wpbs h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #2271b1;
+}
+
+.spectra {
+   background-color: white;
+}
+.spectra h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #7f54b3;
+}
+
 .umember {
    background-color: white;
 }

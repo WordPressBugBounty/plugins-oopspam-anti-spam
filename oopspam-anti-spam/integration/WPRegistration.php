@@ -81,7 +81,7 @@ function oopspamantispam_check_wp_auth_submission($email, $rawEntry, $formId, $l
         'IP' => $userIP,
         'Email' => $email,
         'RawEntry' => $rawEntry,
-        'FormId' => $formId,
+        'FormId' => \oopspam_format_form_id($formId, '', 'wpregister'),
     );
 
     if (!$detectionResult['isItHam']) {

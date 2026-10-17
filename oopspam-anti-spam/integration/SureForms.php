@@ -77,7 +77,7 @@ function oopspamantispam_sure_pre_submission($submission_data) {
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => \oopspam_format_form_id($form_id, isset($submission_data['form_name']) ? $submission_data['form_name'] : ''),
+            "FormId" => \oopspam_format_form_id($form_id, isset($submission_data['form_name']) ? $submission_data['form_name'] : '', 'sureforms'),
         ];
 
         if (!$detectionResult["isItHam"]) {

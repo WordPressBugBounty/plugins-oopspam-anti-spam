@@ -75,7 +75,7 @@ function oopspamantispam_pionetf_pre_submission($custom_message, $fields, $form,
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => \oopspam_format_form_id($form_id, isset($form['title']) ? $form['title'] : ''),
+            "FormId" => \oopspam_format_form_id($form_id, isset($form['title']) ? $form['title'] : '', 'pionet'),
         ];
 
         if (!$detectionResult["isItHam"]) {

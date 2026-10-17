@@ -628,6 +628,10 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-buddypress-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-woo-settings-group', 'oopspamantispam_settings', 'sanitize_oopspam_settings');
     register_setting('oopspamantispam-br-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-bricksforge-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-eform-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-wpbs-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-spectra-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ws-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ts-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-pionet-settings-group', 'oopspamantispam_settings');
@@ -1320,6 +1324,154 @@ function oopspamantispam_settings_init()
         'oopspamantispam-br-settings-group',
         'oopspam_br_settings_section'
     );
+    }
+
+    // Bricksforge Pro Forms settings section
+    if (oopspamantispam_plugin_check('bricksforge') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_bricksforge_settings_section',
+            esc_html__('Bricksforge Pro Forms',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-bricksforge-settings-group'
+        );
+        add_settings_field('oopspam_is_bricksforge_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_bricksforge_activated_render',
+            'oopspamantispam-bricksforge-settings-group',
+            'oopspam_bricksforge_settings_section'
+        );
+
+        add_settings_field('oopspam_bricksforge_spam_message',
+            esc_html__('Bricksforge Forms Spam Message',  'oopspam-anti-spam'),
+            'oopspam_bricksforge_spam_message_render',
+            'oopspamantispam-bricksforge-settings-group',
+            'oopspam_bricksforge_settings_section'
+        );
+
+        add_settings_field('oopspam_bricksforge_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_bricksforge_content_field_render',
+            'oopspamantispam-bricksforge-settings-group',
+            'oopspam_bricksforge_settings_section'
+        );
+
+        add_settings_field('oopspam_bricksforge_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_bricksforge_exclude_form_render',
+            'oopspamantispam-bricksforge-settings-group',
+            'oopspam_bricksforge_settings_section'
+        );
+    }
+
+    // eForm Form Builder settings section
+    if (oopspamantispam_plugin_check('eform') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_eform_settings_section',
+            esc_html__('eForm Form Builder',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-eform-settings-group'
+        );
+        add_settings_field('oopspam_is_eform_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_eform_activated_render',
+            'oopspamantispam-eform-settings-group',
+            'oopspam_eform_settings_section'
+        );
+
+        add_settings_field('oopspam_eform_spam_message',
+            esc_html__('eForm Spam Message',  'oopspam-anti-spam'),
+            'oopspam_eform_spam_message_render',
+            'oopspamantispam-eform-settings-group',
+            'oopspam_eform_settings_section'
+        );
+
+        add_settings_field('oopspam_eform_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_eform_content_field_render',
+            'oopspamantispam-eform-settings-group',
+            'oopspam_eform_settings_section'
+        );
+
+        add_settings_field('oopspam_eform_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_eform_exclude_form_render',
+            'oopspamantispam-eform-settings-group',
+            'oopspam_eform_settings_section'
+        );
+    }
+
+    // WP Booking System settings section
+    if (oopspamantispam_plugin_check('wpbs') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_wpbs_settings_section',
+            esc_html__('WP Booking System',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-wpbs-settings-group'
+        );
+        add_settings_field('oopspam_is_wpbs_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_wpbs_activated_render',
+            'oopspamantispam-wpbs-settings-group',
+            'oopspam_wpbs_settings_section'
+        );
+
+        add_settings_field('oopspam_wpbs_spam_message',
+            esc_html__('WP Booking System Spam Message',  'oopspam-anti-spam'),
+            'oopspam_wpbs_spam_message_render',
+            'oopspamantispam-wpbs-settings-group',
+            'oopspam_wpbs_settings_section'
+        );
+
+        add_settings_field('oopspam_wpbs_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_wpbs_content_field_render',
+            'oopspamantispam-wpbs-settings-group',
+            'oopspam_wpbs_settings_section'
+        );
+
+        add_settings_field('oopspam_wpbs_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_wpbs_exclude_form_render',
+            'oopspamantispam-wpbs-settings-group',
+            'oopspam_wpbs_settings_section'
+        );
+    }
+
+    // Spectra settings section
+    if (oopspamantispam_plugin_check('spectra') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_spectra_settings_section',
+            esc_html__('Spectra Forms and Spectra Pro Register',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-spectra-settings-group'
+        );
+        add_settings_field('oopspam_is_spectra_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_spectra_activated_render',
+            'oopspamantispam-spectra-settings-group',
+            'oopspam_spectra_settings_section'
+        );
+
+        add_settings_field('oopspam_spectra_spam_message',
+            esc_html__('Spectra Spam Message',  'oopspam-anti-spam'),
+            'oopspam_spectra_spam_message_render',
+            'oopspamantispam-spectra-settings-group',
+            'oopspam_spectra_settings_section'
+        );
+
+        add_settings_field('oopspam_spectra_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_spectra_content_field_render',
+            'oopspamantispam-spectra-settings-group',
+            'oopspam_spectra_settings_section'
+        );
+
+        add_settings_field('oopspam_spectra_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_spectra_exclude_form_render',
+            'oopspamantispam-spectra-settings-group',
+            'oopspam_spectra_settings_section'
+        );
     }
 
      // HappyForms settings section
@@ -3878,6 +4030,365 @@ function oopspam_br_exclude_form_render()
 
 /* Bricks Forms UI settings section ends */
 
+/* Bricksforge Pro Forms UI settings section starts */
+
+function oopspam_is_bricksforge_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_BRICKSFORGE_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_BRICKSFORGE_ACTIVATED : (isset($options['oopspam_is_bricksforge_activated']) && 1 == $options['oopspam_is_bricksforge_activated']);
+    ?>
+    <div>
+        <label for="bricksforge_support">
+            <input class="oopspam-toggle" type="checkbox" id="bricksforge_support"
+                   name="oopspamantispam_settings[oopspam_is_bricksforge_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php', 'oopspam-anti-spam'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_bricksforge_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_bricksforge_spam_message">
+                  <input id="oopspam_bricksforge_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_bricksforge_spam_message]" value="<?php echo isset($options['oopspam_bricksforge_spam_message']) ? esc_attr($options['oopspam_bricksforge_spam_message']) : ''; ?>">
+                      <p class="description"><?php echo esc_html__('Enter a short message to display when a spam Bricksforge Forms entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+function oopspam_bricksforge_content_field_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_bricksforge_content_field">
+                  <input type="text" class="regular-text" name="oopspamantispam_settings[oopspam_bricksforge_content_field]" value="<?php echo isset($options['oopspam_bricksforge_content_field']) ? esc_attr($options['oopspam_bricksforge_content_field']) : ''; ?>">
+                      <p class="description"><?php echo esc_html__('By default, oopspam looks for a textarea field in your Bricksforge forms. If you have multiple textarea fields, specify the main content/message field ID here.', 'oopspam-anti-spam'); ?></p>
+                      <p class="description"><?php echo esc_html__('Have multiple forms? Enter the message field ids separated by commas.', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+function oopspam_bricksforge_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_bricksforge_exclude_form">
+                  <input type="text" placeholder="Enter form ID (e.g abc123)" class="regular-text" name="oopspamantispam_settings[oopspam_bricksforge_exclude_form]" value="<?php echo isset($options['oopspam_bricksforge_exclude_form']) ? esc_attr($options['oopspam_bricksforge_exclude_form']) : ''; ?>">
+                      <p class="description"><?php echo esc_html__('Enter the Bricksforge form element ID(s) separated by commas to skip spam protection.', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* Bricksforge Pro Forms UI settings section ends */
+
+/* eForm Form Builder UI settings section starts */
+
+function oopspam_is_eform_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_EFORM_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_EFORM_ACTIVATED : (isset($options['oopspam_is_eform_activated']) && 1 == $options['oopspam_is_eform_activated']);
+    ?>
+    <div>
+        <label for="eform_support">
+            <input class="oopspam-toggle" type="checkbox" id="eform_support"
+                   name="oopspamantispam_settings[oopspam_is_eform_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php', 'oopspam-anti-spam'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_eform_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_eform_spam_message">
+                  <input id="oopspam_eform_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_eform_spam_message]" value="<?php echo isset($options['oopspam_eform_spam_message']) ? esc_attr($options['oopspam_eform_spam_message']) : ''; ?>">
+                      <p class="description"><?php echo esc_html__('Enter a short message to display when a spam eForm entry has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+function oopspam_eform_content_field_render()
+{
+    $options      = get_option('oopspamantispam_settings');
+    $decoded_data = isset($options['oopspam_eform_content_field']) ? $options['oopspam_eform_content_field'] : array();
+    // Settings import / WP-CLI can store the already-decoded array.
+    if (is_string($decoded_data)) {
+        $decoded_data = json_decode($decoded_data, true);
+    }
+    if (!is_array($decoded_data)) {
+        $decoded_data = array();
+    }
+    ?>
+    <div>
+        <label for="formIdInput"><?php echo esc_html__('Form ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="formIdInput" name="formIdInput" placeholder="1">
+        <label for="fieldIdInput"><?php echo esc_html__('Field ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="0,1">
+        <button type="button" onclick="addData(this)"><?php echo esc_html__('Add Pair', 'oopspam-anti-spam'); ?></button>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th><?php echo esc_html__('Form ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Field ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Action', 'oopspam-anti-spam'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($decoded_data as $entry) : ?>
+                    <?php
+                    if (!is_array($entry) || !isset($entry['formId'], $entry['fieldId'])) {
+                        continue;
+                    }
+                    ?>
+                    <tr>
+                        <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                        <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                        <td><button type="button" onclick="deleteRow(this)"><?php echo esc_html__('Delete', 'oopspam-anti-spam'); ?></button></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_eform_content_field]" id="formDataInput" value="<?php echo esc_attr(wp_json_encode($decoded_data)); ?>">
+        <p class="description"><?php echo esc_html__('By default, oopspam checks every free-text field of your eForm forms. To limit the check to a specific form, add its Form ID and the Field IDs that hold your message.', 'oopspam-anti-spam'); ?></p>
+        <p class="description"><?php echo esc_html__('A Field ID is the position of the text field in the form, starting at 0 (e.g. 0,1). If multiple Field IDs are provided for a Form ID, their values will be joined together.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
+function oopspam_eform_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+          <div>
+                  <label for="oopspam_eform_exclude_form">
+                  <input type="text" placeholder="Enter form ID(s)" class="regular-text" name="oopspamantispam_settings[oopspam_eform_exclude_form]" value="<?php echo isset($options['oopspam_eform_exclude_form']) ? esc_attr($options['oopspam_eform_exclude_form']) : ''; ?>">
+                      <p class="description"><?php echo esc_html__('Enter the eForm form ID(s) separated by commas to skip spam protection.', 'oopspam-anti-spam'); ?></p>
+                      </label>
+              </div>
+          <?php
+}
+
+/* eForm Form Builder UI settings section ends */
+
+/* WP Booking System UI settings section starts */
+
+function oopspam_is_wpbs_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_WPBS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_WPBS_ACTIVATED : (isset($options['oopspam_is_wpbs_activated']) && 1 == $options['oopspam_is_wpbs_activated']);
+    ?>
+    <div>
+        <label for="wpbs_support">
+            <input class="oopspam-toggle" type="checkbox" id="wpbs_support"
+                   name="oopspamantispam_settings[oopspam_is_wpbs_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php', 'oopspam-anti-spam'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_wpbs_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_wpbs_spam_message">
+            <input id="oopspam_wpbs_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_wpbs_spam_message]" value="<?php echo isset($options['oopspam_wpbs_spam_message']) ? esc_attr($options['oopspam_wpbs_spam_message']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter a short message to display when a spam WP Booking System booking has been submitted. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_wpbs_content_field_render()
+{
+    $options      = get_option('oopspamantispam_settings');
+    $decoded_data = isset($options['oopspam_wpbs_content_field']) ? $options['oopspam_wpbs_content_field'] : array();
+    // Settings import / WP-CLI can store the already-decoded array.
+    if (is_string($decoded_data)) {
+        $decoded_data = json_decode($decoded_data, true);
+    }
+    if (!is_array($decoded_data)) {
+        $decoded_data = array();
+    }
+    ?>
+    <div>
+        <label for="formIdInput"><?php echo esc_html__('Form ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="formIdInput" name="formIdInput" placeholder="1">
+        <label for="fieldIdInput"><?php echo esc_html__('Field ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="1,2">
+        <button type="button" onclick="addData(this)"><?php echo esc_html__('Add Pair', 'oopspam-anti-spam'); ?></button>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th><?php echo esc_html__('Form ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Field ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Action', 'oopspam-anti-spam'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($decoded_data as $entry) : ?>
+                    <?php
+                    if (!is_array($entry) || !isset($entry['formId'], $entry['fieldId'])) {
+                        continue;
+                    }
+                    ?>
+                    <tr>
+                        <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                        <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                        <td><button type="button" onclick="deleteRow(this)"><?php echo esc_html__('Delete', 'oopspam-anti-spam'); ?></button></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_wpbs_content_field]" id="formDataInput" value="<?php echo esc_attr(wp_json_encode($decoded_data)); ?>">
+        <p class="description"><?php echo esc_html__('By default, oopspam checks the textarea and text fields of your booking forms. To limit the check to a specific form, add its Form ID and the Field IDs that hold your message.', 'oopspam-anti-spam'); ?></p>
+        <p class="description"><?php echo esc_html__('The Field ID is the number shown next to the field in the form builder. If multiple Field IDs are provided for a Form ID, their values will be joined together.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
+function oopspam_wpbs_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_wpbs_exclude_form">
+            <input type="text" placeholder="Enter form ID(s)" class="regular-text" name="oopspamantispam_settings[oopspam_wpbs_exclude_form]" value="<?php echo isset($options['oopspam_wpbs_exclude_form']) ? esc_attr($options['oopspam_wpbs_exclude_form']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter the WP Booking System form ID(s) separated by commas to skip spam protection.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+/* WP Booking System UI settings section ends */
+
+/* Spectra UI settings section starts */
+
+function oopspam_is_spectra_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_SPECTRA_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_SPECTRA_ACTIVATED : (isset($options['oopspam_is_spectra_activated']) && 1 == $options['oopspam_is_spectra_activated']);
+    ?>
+    <div>
+        <label for="spectra_support">
+            <input class="oopspam-toggle" type="checkbox" id="spectra_support"
+                   name="oopspamantispam_settings[oopspam_is_spectra_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php', 'oopspam-anti-spam'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_spectra_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_spectra_spam_message">
+            <input id="oopspam_spectra_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_spectra_spam_message]" value="<?php echo isset($options['oopspam_spectra_spam_message']) ? esc_attr($options['oopspam_spectra_spam_message']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter a short message to display when a spam submission has been blocked. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+            <p class="description"><?php echo esc_html__('Note: the Spectra Forms block always displays its own "failure message" instead, which you can edit in the block settings.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_spectra_content_field_render()
+{
+    $options      = get_option('oopspamantispam_settings');
+    $decoded_data = isset($options['oopspam_spectra_content_field']) ? $options['oopspam_spectra_content_field'] : array();
+    // Settings import / WP-CLI can store the already-decoded array.
+    if (is_string($decoded_data)) {
+        $decoded_data = json_decode($decoded_data, true);
+    }
+    if (!is_array($decoded_data)) {
+        $decoded_data = array();
+    }
+    ?>
+    <div>
+        <label for="formIdInput"><?php echo esc_html__('Form ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="formIdInput" name="formIdInput" placeholder="123">
+        <label for="fieldIdInput"><?php echo esc_html__('Field ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="Message">
+        <button type="button" onclick="addData(this)"><?php echo esc_html__('Add Pair', 'oopspam-anti-spam'); ?></button>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th><?php echo esc_html__('Form ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Field ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Action', 'oopspam-anti-spam'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($decoded_data as $entry) : ?>
+                    <?php
+                    if (!is_array($entry) || !isset($entry['formId'], $entry['fieldId'])) {
+                        continue;
+                    }
+                    ?>
+                    <tr>
+                        <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                        <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                        <td><button type="button" onclick="deleteRow(this)"><?php echo esc_html__('Delete', 'oopspam-anti-spam'); ?></button></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_spectra_content_field]" id="formDataInput" value="<?php echo esc_attr(wp_json_encode($decoded_data)); ?>">
+        <p class="description"><?php echo esc_html__('Applies to the Spectra Forms block. By default, oopspam checks every field of the form. To limit the check to a specific form, add its Form ID and the Field IDs that hold your message.', 'oopspam-anti-spam'); ?></p>
+        <p class="description"><?php echo esc_html__('Form ID is the ID of the page holding the form, and the Field ID is the field label as shown in the form builder (e.g. Message). If multiple Field IDs are provided for a Form ID, their values will be joined together.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
+function oopspam_spectra_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_spectra_exclude_form">
+            <input type="text" placeholder="Enter form ID(s)" class="regular-text" name="oopspamantispam_settings[oopspam_spectra_exclude_form]" value="<?php echo isset($options['oopspam_spectra_exclude_form']) ? esc_attr($options['oopspam_spectra_exclude_form']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter the ID(s) of the page(s) holding the form, separated by commas, to skip spam protection.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+/* Spectra UI settings section ends */
+
 /* HappyForms UI settings section starts */
 
 function oopspam_is_happyforms_activated_render()
@@ -5589,6 +6100,26 @@ if( isset( $_GET[ 'tab' ] ) ) {
                             <div class="bricks-forms form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-br-settings-group');
+                    ?>
+                            </div>
+                            <div class="bricksforge-forms form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-bricksforge-settings-group');
+                    ?>
+                            </div>
+                            <div class="eform form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-eform-settings-group');
+                    ?>
+                            </div>
+                            <div class="wpbs form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-wpbs-settings-group');
+                    ?>
+                            </div>
+                            <div class="spectra form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-spectra-settings-group');
                     ?>
                             </div>
                             <div class="gravity-forms form-setting">

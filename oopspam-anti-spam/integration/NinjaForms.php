@@ -87,7 +87,7 @@ function oopspamantispam_forms_after_submission($form_data)
             "IP" => $userIP,
             "Email" => $email,
             "RawEntry" => $raw_entry,
-            "FormId" => \oopspam_format_form_id($form_data["id"], isset($form_data['settings']['title']) ? $form_data['settings']['title'] : ''),
+            "FormId" => \oopspam_format_form_id($form_data["id"], isset($form_data['settings']['title']) ? $form_data['settings']['title'] : '', 'ninja'),
         ];
 
         if (!$detectionResult["isItHam"]) {

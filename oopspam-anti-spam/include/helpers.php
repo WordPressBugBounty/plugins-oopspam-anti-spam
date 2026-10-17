@@ -161,6 +161,26 @@ function oopspamantispam_plugin_check($plugin)
                 $result = true;
             }
             break;
+        case 'bricksforge':
+            if (is_plugin_active('bricksforge/plugin.php') || class_exists('\Bricksforge\ProForms\Actions\Init')) {
+                $result = true;
+            }
+            break;
+        case 'eform':
+            if (defined('IPT_EFORM_ABSPATH') || class_exists('IPT_FSQm_Form_Elements_Data')) {
+                $result = true;
+            }
+            break;
+        case 'wpbs':
+            if (defined('WPBS_VERSION') || class_exists('WPBS_Form_Validator') || is_plugin_active('wp-booking-system-premium/index.php')) {
+                $result = true;
+            }
+            break;
+        case 'spectra':
+            if (defined('UAGB_FILE') || defined('SPECTRA_PRO_VER') || class_exists('UAGB_Forms')) {
+                $result = true;
+            }
+            break;
         case 'ff':
             if (is_plugin_active('fluentformpro/fluentformpro.php') || is_plugin_active('fluentform/fluentform.php')) {
                 $result = true;
@@ -340,6 +360,10 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'el_atomic' => 'OOPSPAM_IS_EL_ATOMIC_ACTIVATED',
         'bd' => 'OOPSPAM_IS_BD_ACTIVATED',
         'br' => 'OOPSPAM_IS_BR_ACTIVATED',
+        'bricksforge' => 'OOPSPAM_IS_BRICKSFORGE_ACTIVATED',
+        'eform' => 'OOPSPAM_IS_EFORM_ACTIVATED',
+        'wpbs' => 'OOPSPAM_IS_WPBS_ACTIVATED',
+        'spectra' => 'OOPSPAM_IS_SPECTRA_ACTIVATED',
         'ws' => 'OOPSPAM_IS_WS_ACTIVATED',
         'wpf' => 'OOPSPAM_IS_WPF_ACTIVATED',
         'ff' => 'OOPSPAM_IS_FF_ACTIVATED',
@@ -386,6 +410,10 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'el_atomic' => 'oopspam_is_el_atomic_activated',
         'bd' => 'oopspam_is_bd_activated',
         'br' => 'oopspam_is_br_activated',
+        'bricksforge' => 'oopspam_is_bricksforge_activated',
+        'eform' => 'oopspam_is_eform_activated',
+        'wpbs' => 'oopspam_is_wpbs_activated',
+        'spectra' => 'oopspam_is_spectra_activated',
         'ws' => 'oopspam_is_ws_activated',
         'wpf' => 'oopspam_is_wpf_activated',
         'ff' => 'oopspam_is_ff_activated',
@@ -947,65 +975,143 @@ function oopspam_enrich_raw_entry($raw_entry, $extra_request_metadata = array())
 }
 
 /**
- * Format form ID and title for storage in the database.
- * Uses format: {title}|{id} or just {title} if no id, or just {id} if no title.
- * Truncates to fit within varchar(50).
+ * Human-readable integration name for a $type passed to oopspamantispam_call_OOPSpam().
  *
- * @param string|int $id    The form identifier (numeric ID or slug).
- * @param string     $title The human-readable form title/name.
- * @return string Formatted string for storage in form_id column.
+ * Shown as the first part of the "Form Id" column in the Spam/Valid Entries
+ * tables. Empty string when the type is unknown, so unknown integrations simply
+ * do not show a name instead of showing a raw key.
+ *
+ * @param string $type The integration identifier.
+ * @return string
  */
-function oopspam_format_form_id($id, $title = '') {
-    $id = trim((string) $id);
-    $title = trim((string) $title);
+function oopspam_integration_name($type) {
+    $names = array(
+        'acf'                   => 'ACF Frontend Forms',
+        'avada'                 => 'Avada Forms',
+        'bb'                    => 'Beaver Builder',
+        'breakdance'            => 'Breakdance Forms',
+        'bricks'                => 'Bricks Forms',
+        'bricksforge'           => 'Bricksforge Forms',
+        'buddypress'            => 'BuddyPress',
+        'cf7'                   => 'Contact Form 7',
+        'comment'               => 'WordPress Comments',
+        'custom'                => 'Custom Form',
+        'discuz'                => 'WPDiscuz',
+        'eform'                 => 'eForm Form Builder',
+        'elementor'             => 'Elementor Forms',
+        'elementor-atomic'      => 'Elementor Atomic Forms',
+        'fluent'                => 'Fluent Forms',
+        'fluentcart'            => 'FluentCart',
+        'formidable'            => 'Formidable Forms',
+        'forminator'            => 'Forminator',
+        'give'                  => 'GiveWP',
+        'gravity'               => 'Gravity Forms',
+        'happyforms'            => 'Happy Forms',
+        'jform'                 => 'Jetpack Form',
+        'kadence'               => 'Kadence Forms',
+        'mailpoet'              => 'MailPoet',
+        'mc4wp'                 => 'Mailchimp for WordPress',
+        'metform'               => 'MetForm',
+        'mpress'                => 'MemberPress',
+        'ninja'                 => 'Ninja Forms',
+        'pionet'                => 'Piotnet Forms',
+        'pmp'                   => 'Paid Memberships Pro',
+        'quform'                => 'Quform',
+        'search'                => 'WordPress Site Search',
+        'spectra'               => 'Spectra Forms',
+        'spectra_register'      => 'Spectra Forms',
+        'superforms'            => 'Super Forms',
+        'surecart'              => 'SureCart',
+        'sureforms'             => 'SureForms',
+        'toolset'               => 'Toolset Forms',
+        'tribulant-newsletters' => 'Newsletters by Tribulant',
+        'umember'               => 'Ultimate Member',
+        'woo'                   => 'WooCommerce',
+        'wpbs'                  => 'WP Booking System',
+        'wpforms'               => 'WPForms',
+        'wpregister'            => 'WordPress Default Forms',
+        'wsform'                => 'WS Form',
+    );
 
-    if ($title !== '' && $id !== '') {
-        $combined = $title . '|' . $id;
-        // Truncate title to fit varchar(50), preserving the ID portion
-        if (strlen($combined) > 50) {
-            $max_title_len = 50 - strlen($id) - 1; // -1 for the pipe separator
-            if ($max_title_len > 0) {
-                $title = substr($title, 0, $max_title_len);
-            } else {
-                $title = '';
-            }
-            $combined = $title ? $title . '|' . $id : $id;
-        }
-        return $combined;
+    return isset($names[$type]) ? $names[$type] : '';
+}
+
+/**
+ * Format the form identifier stored in the Spam/Valid Entries tables.
+ *
+ * Stored as "Integration|Form name|Form ID". Missing parts are kept as empty
+ * placeholders so the value stays unambiguous, e.g. "|Contact us|3".
+ *
+ * @param string|int $id          The form identifier (numeric ID or slug).
+ * @param string     $title       The human-readable form title/name.
+ * @param string     $type        The integration identifier, see oopspam_integration_name().
+ * @return string Formatted string for storage in the varchar(50) form_id column.
+ */
+function oopspam_format_form_id($id, $title = '', $type = '') {
+    $id          = trim((string) $id);
+    $title       = trim((string) $title);
+    $integration = oopspam_integration_name($type);
+
+    // Last resort: keep the ID itself short enough to fit the column.
+    if (strlen($id) > 46) {
+        $id = substr($id, 0, 46);
     }
 
-    if ($title !== '') {
-        return substr($title, 0, 50);
+    /*
+     * Shorten the form name first, then the integration name. The form ID is
+     * never trimmed, so the "Form ID" filter keeps working.
+     */
+    $room = max(0, 50 - strlen($id) - 2); // Two pipe separators.
+
+    if (strlen($integration) + strlen($title) > $room) {
+        $title = substr($title, 0, max(0, $room - strlen($integration)));
     }
 
-    return substr($id, 0, 50);
+    // No room left: drop the integration name entirely rather than keeping an
+    // unrecognisable part of it.
+    if (strlen($integration) > $room) {
+        $integration = '';
+    }
+
+    return $integration . '|' . $title . '|' . $id;
 }
 
 /**
  * Parse a stored form_id value into its display components.
- * Handles the format {title}|{id} as well as legacy plain values.
+ *
+ * Handles the current "Integration|Form name|Form ID" format as well as the
+ * older "Form name|Form ID" values and plain legacy values.
  *
  * @param string $stored The value from the form_id database column.
- * @return array{id: string, title: string, display: string} Parsed components.
- *         'id' is the form identifier, 'title' is the human-readable name,
+ * @return array{integration: string, id: string, title: string, display: string}
  *         'display' is what should be shown as the visible text in the table.
  */
 function oopspam_parse_form_id($stored) {
     $stored = trim((string) $stored);
+    $parts  = explode('|', $stored);
 
-    if (strpos($stored, '|') !== false) {
-        $parts = explode('|', $stored, 2);
-        return array(
-            'id'      => $parts[1],
-            'title'   => $parts[0],
-            'display' => $parts[1],
-        );
+    if (count($parts) >= 3) {
+        // Integration|Form name|Form ID. Join the middle back together so a
+        // form name containing a pipe does not swallow the form ID.
+        $integration = array_shift($parts);
+        $id          = array_pop($parts);
+        $title       = implode('|', $parts);
+    } elseif (count($parts) === 2) {
+        // Values stored before 1.2.87: Form name|Form ID.
+        $integration = '';
+        $title       = $parts[0];
+        $id          = $parts[1];
+    } else {
+        // Legacy plain value, e.g. "WooCommerce" or "comment".
+        $integration = '';
+        $title       = '';
+        $id          = $stored;
     }
 
-    // Legacy format: no pipe separator, show as-is
     return array(
-        'id'      => $stored,
-        'title'   => $stored,
-        'display' => $stored,
+        'integration' => $integration,
+        'id'          => $id,
+        'title'       => $title,
+        'display'     => implode(' | ', array_filter(array($integration, $title, $id), 'strlen')),
     );
 }

@@ -3,7 +3,7 @@
  * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.86
+ * Version: 1.2.87
  * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -112,6 +112,10 @@ require_once dirname(__FILE__) . '/integration/GiveWP.php';
 require_once dirname(__FILE__) . '/integration/WPRegistration.php';
 require_once dirname(__FILE__) . '/integration/Buddypress.php';
 require_once dirname(__FILE__) . '/integration/BricksForm.php';
+require_once dirname(__FILE__) . '/integration/BricksforgeForms.php';
+require_once dirname(__FILE__) . '/integration/EForm.php';
+require_once dirname(__FILE__) . '/integration/WPBookingSystem.php';
+require_once dirname(__FILE__) . '/integration/Spectra.php';
 require_once dirname(__FILE__) . '/integration/WSForm.php';
 require_once dirname(__FILE__) . '/integration/Toolset.php';
 require_once dirname(__FILE__) . '/integration/PionetForms.php';
@@ -1044,7 +1048,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
                         $reason = [
                             "Score" => 0,
                             "isItHam" => true,
-                            "Reason" => "From always allowed country"
+                            "Reason" => "Allowed due to always Trusted Country setting"
                         ];
                         return $reason;
                     }
@@ -1098,7 +1102,8 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
     if ($type === "give" || $type === "woo" || $type === "mc4wp"
     || $type === "mailpoet" || $type === "search" 
     || $type === "wpregister" || $type === "umember" || $type === "mpress"
-    || $type === "pmp" || $type === "surecart" || $type === "fluentcart" || $type === "buddypress") {
+    || $type === "pmp" || $type === "surecart" || $type === "fluentcart" || $type === "buddypress"
+    || $type === "spectra_register") {
         $checkForLength = false;
     }
 
@@ -1364,7 +1369,7 @@ function oopspam_check_spam($ip, $email, $content, $args = []) {
             'IP'       => sanitize_text_field($ip),
             'Email'    => sanitize_email($email),
             'RawEntry' => $args['raw_data'],
-            'FormId'   => sanitize_text_field($args['form_id']),
+            'FormId'   => \oopspam_format_form_id(sanitize_text_field($args['form_id']), '', 'custom'),
         ];
 
         if ($isSpam) {

@@ -13,6 +13,9 @@ class WooSpamProtection
 {
     private static $instance;
 
+    /** Cached order attribution data, keyed by order ID. */
+    private static $orderAttributionData = array();
+
     public static function getInstance()
     {
         if (is_null(self::$instance)) {
@@ -398,6 +401,9 @@ class WooSpamProtection
         if (!$woo_enabled) {
             return $order;
         }
+
+        // Cache the attribution data so it can be stored with valid entries later.
+        $this->cacheOrderAttributionData($order, $data);
         
         // Check for allowed email/IP
         $email = $order->get_billing_email();
@@ -409,73 +415,11 @@ class WooSpamProtection
             return $order;
         }
 
-        $minSessionPages = isset($options['oopspam_woo_min_session_pages']) && $options['oopspam_woo_min_session_pages'] !== '' ? intval($options['oopspam_woo_min_session_pages']) : 0;
-        $requireDeviceType = isset($options['oopspam_woo_require_device_type']) && $options['oopspam_woo_require_device_type'] == 1;
-        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
-        
-        // Helper function to check if a value is valid (not empty, null, or "(none)")
-        $isValidValue = function($value) {
-            return !empty($value) && $value !== "(none)";
-        };
-        
-        // Block order if any of the independent checks fail
-        $blockOrder = false;
-        $blockReason = "";
-        
-        // 1. Device type check - block if user_agent doesn't exist, is empty, or is "(none)" and device type is required
-        if ($requireDeviceType && !$isValidValue($data['user_agent'] ?? '')) {
-            $blockOrder = true;
-            $blockReason = "Invalid Device Type";
-        }
-        
-        // 2. Origin check - block if source_type doesn't exist, is empty, or is "(none)" when required
-        if ($shouldBlockFromUnknownOrigin && get_option("woocommerce_feature_order_attribution_enabled") === "yes") {
-            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
-            $should_check_origin = false;
+        // Evaluate the attribution rules (device type, origin, session pages).
+        $blockReason = $this->getAttributionBlockReason($data, $order->get_payment_method_title());
 
-            // If no payment methods specified, always check origin
-            if (empty($payment_methods)) {
-                $should_check_origin = true;
-            } 
-            // If payment methods are specified, only check if current method matches
-            else {
-                $current_payment_method = strtolower($order->get_payment_method_title());
-                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
-                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
-                
-                foreach ($allowed_methods as $method) {
-                    if (strpos($current_payment_method, $method) !== false) {
-                        $should_check_origin = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($should_check_origin && !$isValidValue($data['source_type'] ?? '')) {
-                $blockOrder = true;
-                $blockReason = "Unknown Order Attribution";
-            }
-        }
-        
-        // 3. Session pages check - block if session_pages is less than minimum required, is "(none)", or invalid
-        if ($minSessionPages > 0) {
-            $sessionPagesValue = $data['session_pages'] ?? '';
-            
-            // Check if session_pages is valid (not "(none)" and is a valid number)
-            if (!$isValidValue($sessionPagesValue) || !is_numeric($sessionPagesValue)) {
-                $blockOrder = true;
-                $blockReason = "Invalid Session Pages: " . $sessionPagesValue;
-            } else {
-                $sessionPagesValue = intval($sessionPagesValue);
-                if ($sessionPagesValue < $minSessionPages) {
-                    $blockOrder = true;
-                    $blockReason = "Insufficient Session Pages: {$sessionPagesValue}/{$minSessionPages}";
-                }
-            }
-        }
-        
-        // Process blockOrder regardless of the origin check
-        if ($blockOrder) {
+        // Process the block reason
+        if ($blockReason !== '') {
             // Check if user has completed orders before - don't block if they do
             $email = $order->get_billing_email();
             $hasCompletedOrders = $this->hasCompletedOrders($email);
@@ -496,13 +440,21 @@ class WooSpamProtection
                 ];
                 oopspam_store_spam_submission($frmEntry, $blockReason);
 
-                // Trash the order
-                if ($order) {
-                    $order->delete(true); // 'true' deletes permanently
-                }
-
                 $error_to_show = $this->get_error_message();
-                $this->block_checkout_with_error($error_to_show);
+
+                if ($this->is_store_api_request()) {
+                    // Delete on shutdown so WooCommerce cannot re-create the order.
+                    $this->schedule_blocked_order_deletion($order);
+                    $this->block_checkout_with_error($error_to_show);
+                } else {
+                    // Classic checkout: remove the order that was just created
+                    // and abort the checkout flow with the error message.
+                    if ($order) {
+                        $order->delete(true);
+                    }
+
+                    throw new \Exception(esc_html($error_to_show));
+                }
             }
         }
         
@@ -516,6 +468,11 @@ class WooSpamProtection
         
         // If WooCommerce integration is not enabled, don't perform any checks
         if (!$woo_enabled) {
+            return $order;
+        }
+
+        // Store API orders are handled by oopspam_checkout_store_api_processed().
+        if ($this->is_store_api_request()) {
             return $order;
         }
         
@@ -565,7 +522,7 @@ class WooSpamProtection
         if (empty($message)) {
             $message = sanitize_text_field($wc_order->get_customer_note());
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order));
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order), $wc_order);
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -604,8 +561,8 @@ class WooSpamProtection
             if (!$hasCompletedOrders) {
                 // Failed payment velocity check
                 if ($this->checkFailedPaymentVelocity($email)) {
-                    $wc_order->delete(true);
                     $error_to_show = $this->get_error_message();
+                    $this->schedule_blocked_order_deletion($wc_order);
                     $this->block_checkout_with_error($error_to_show);
                     return $order;
                 }
@@ -617,32 +574,33 @@ class WooSpamProtection
         $order_total = floatval($wc_order->get_total());
 
         if ($this->checkBlockedOrderTotal($order_total, $email, $wc_order->get_id())) {
-            $wc_order->delete(true);
             $error_to_show = $this->get_error_message();
+            $this->schedule_blocked_order_deletion($wc_order);
             $this->block_checkout_with_error($error_to_show);
             return $order;
         }
 
         if ($this->checkBlockedBillingAddress($wc_order, $wc_order->get_id())) {
-            $wc_order->delete(true);
             $error_to_show = $this->get_error_message();
+            $this->schedule_blocked_order_deletion($wc_order);
             $this->block_checkout_with_error($error_to_show);
             return $order;
         }
 
         // Same-amount orders velocity check
         if (!$this->hasCompletedOrders($email) && $this->checkSameAmountOrders($order_total, $email, $wc_order->get_id())) {
-            $wc_order->delete(true);
             $error_to_show = $this->get_error_message();
+            $this->schedule_blocked_order_deletion($wc_order);
             $this->block_checkout_with_error($error_to_show);
             return $order;
         }
             
         // Now check with OOPSpam API
         $message = sanitize_text_field($wc_order->get_customer_note());
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order));
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order), $wc_order);
         if ($showError) {
             $error_to_show = $this->get_error_message();
+            $this->schedule_blocked_order_deletion($wc_order);
             $this->block_checkout_with_error($error_to_show);
         }
         
@@ -700,7 +658,7 @@ class WooSpamProtection
         if (empty($message) && isset($posted_data['order_comments'])) {
             $message = sanitize_text_field($posted_data['order_comments']);
         }
-        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order));
+        $showError = $this->checkEmailAndIPInOOPSpam(sanitize_email($email), $message, $this->buildOrderMetadata($wc_order), $wc_order);
         if ($showError) {
             $error_to_show = $this->get_error_message();
             \wc_add_notice( esc_html( $error_to_show ), 'error' );
@@ -737,6 +695,30 @@ class WooSpamProtection
             $hasCompletedOrders = !empty($email) ? $this->hasCompletedOrders($email) : false;
 
             if (!$hasCompletedOrders) {
+                // Attribution checks must run before the order is created.
+                $attribution = $this->getOrderAttributionFieldsFromPost();
+                $attributionReason = $this->getAttributionBlockReason($attribution, $this->getPostedPaymentMethodTitle());
+
+                if (!empty($attributionReason)) {
+                    $rawEntry = array_merge(
+                        $this->buildRawEntry($userIP, $email),
+                        $attribution
+                    );
+                    $frmEntry = [
+                        "Score" => 6,
+                        "Message" => "",
+                        "IP" => $userIP,
+                        "Email" => $email,
+                        "RawEntry" => json_encode($rawEntry),
+                        "FormId" => "WooCommerce",
+                    ];
+                    oopspam_store_spam_submission($frmEntry, $attributionReason);
+
+                    $error_to_show = $this->get_error_message();
+                    \wc_add_notice( esc_html( $error_to_show ), 'error' );
+                    return;
+                }
+
                 // Failed payment velocity check
                 if ($this->checkFailedPaymentVelocity($email)) {
                     $error_to_show = $this->get_error_message();
@@ -1068,21 +1050,154 @@ class WooSpamProtection
         });
     }
 
-    /**
-     * Build the raw entry array combining IP and email.
-     *
-     * @param string $userIP Client IP address.
-     * @param string $email  Customer email.
-     * @return array Raw entry data for storage.
-     */
-    private function buildRawEntry($userIP, $email) {
-        return array(
+    /** Build the raw entry array with IP, email and extra fields. */
+    private function buildRawEntry($userIP, $email, $extraFields = array()) {
+        $rawEntry = array(
             'IP'    => $userIP,
             'email' => $email,
         );
+
+        if (!empty($extraFields) && is_array($extraFields)) {
+            $rawEntry = array_merge($rawEntry, $extraFields);
+        }
+
+        return $rawEntry;
     }
 
-    public function checkEmailAndIPInOOPSpam($email, $message, $orderMetadata = array())
+    /** Cache order attribution data for the current request. */
+    private function cacheOrderAttributionData($order, $data) {
+        if (!is_a($order, 'WC_Order') || !is_array($data)) {
+            return;
+        }
+
+        $order_id = (int) $order->get_id();
+        if ($order_id > 0) {
+            self::$orderAttributionData[$order_id] = $data;
+        }
+    }
+
+    /** Get cached attribution fields, falling back to POST. */
+    private function getOrderAttributionFields($order = null) {
+        if (is_a($order, 'WC_Order')) {
+            $order_id = (int) $order->get_id();
+            if ($order_id > 0 && isset(self::$orderAttributionData[$order_id])) {
+                return self::$orderAttributionData[$order_id];
+            }
+        }
+
+        return $this->getOrderAttributionFieldsFromPost();
+    }
+
+    /** Read unprefixed attribution fields from POST. */
+    private function getOrderAttributionFieldsFromPost() {
+        $fields = array();
+
+        $prefix = (string) apply_filters('wc_order_attribution_tracking_field_prefix', 'wc_order_attribution_');
+        $prefix = trim($prefix, '_') . '_';
+
+        foreach ($_POST as $key => $value) {
+            if (strpos($key, $prefix) !== 0 || !is_string($value)) {
+                continue;
+            }
+
+            $fields[substr($key, strlen($prefix))] = sanitize_text_field(wp_unslash($value));
+        }
+
+        return $fields;
+    }
+
+    /** Return the attribution block reason, or '' when the rules pass. */
+    private function getAttributionBlockReason($attribution, $paymentMethodTitle = '') {
+        // The attribution fields only exist when WooCommerce order attribution is enabled.
+        if (get_option('woocommerce_feature_order_attribution_enabled') !== 'yes') {
+            return '';
+        }
+
+        if (!is_array($attribution)) {
+            $attribution = array();
+        }
+
+        $options = get_option('oopspamantispam_settings');
+
+        $minSessionPages = isset($options['oopspam_woo_min_session_pages']) && $options['oopspam_woo_min_session_pages'] !== '' ? intval($options['oopspam_woo_min_session_pages']) : 0;
+        $requireDeviceType = isset($options['oopspam_woo_require_device_type']) && $options['oopspam_woo_require_device_type'] == 1;
+        $shouldBlockFromUnknownOrigin = $options['oopspam_woo_check_origin'] ?? false;
+
+        // Helper function to check if a value is valid (not empty, null, or "(none)")
+        $isValidValue = function($value) {
+            return !empty($value) && $value !== "(none)";
+        };
+
+        // 1. Device type check - block if user_agent doesn't exist, is empty, or is "(none)" and device type is required
+        if ($requireDeviceType && !$isValidValue($attribution['user_agent'] ?? '')) {
+            return "Invalid Device Type";
+        }
+
+        // 2. Origin check - block if source_type doesn't exist, is empty, or is "(none)" when required
+        if ($shouldBlockFromUnknownOrigin) {
+            $payment_methods = isset($options['oopspam_woo_payment_methods']) ? $options['oopspam_woo_payment_methods'] : '';
+            $should_check_origin = false;
+
+            // If no payment methods specified, always check origin
+            if (empty($payment_methods)) {
+                $should_check_origin = true;
+            }
+            // If payment methods are specified, only check if current method matches
+            else {
+                $current_payment_method = strtolower($paymentMethodTitle);
+                $allowed_methods = array_map('trim', preg_split('/\r\n|\r|\n/', $payment_methods));
+                $allowed_methods = array_map('strtolower', array_filter($allowed_methods));
+
+                foreach ($allowed_methods as $method) {
+                    if (strpos($current_payment_method, $method) !== false) {
+                        $should_check_origin = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($should_check_origin && !$isValidValue($attribution['source_type'] ?? '')) {
+                return "Unknown Order Attribution";
+            }
+        }
+
+        // 3. Session pages check - block if session_pages is less than minimum required, is "(none)", or invalid
+        if ($minSessionPages > 0) {
+            $sessionPagesValue = $attribution['session_pages'] ?? '';
+
+            // Check if session_pages is valid (not "(none)" and is a valid number)
+            if (!$isValidValue($sessionPagesValue) || !is_numeric($sessionPagesValue)) {
+                return "Invalid Session Pages: " . $sessionPagesValue;
+            }
+
+            $sessionPagesValue = intval($sessionPagesValue);
+            if ($sessionPagesValue < $minSessionPages) {
+                return "Insufficient Session Pages: {$sessionPagesValue}/{$minSessionPages}";
+            }
+        }
+
+        return '';
+    }
+
+    /** Get the posted payment method title. */
+    private function getPostedPaymentMethodTitle() {
+        $method = isset($_POST['payment_method']) ? sanitize_text_field(wp_unslash($_POST['payment_method'])) : '';
+
+        if (empty($method)) {
+            return '';
+        }
+
+        if (function_exists('WC') && WC()->payment_gateways()) {
+            $gateways = WC()->payment_gateways()->payment_gateways();
+            if (isset($gateways[$method])) {
+                return $gateways[$method]->get_title();
+            }
+        }
+
+        return $method;
+    }
+
+    public function checkEmailAndIPInOOPSpam($email, $message, $orderMetadata = array(), $order = null)
     {
 
         $options = get_option('oopspamantispam_settings');
@@ -1101,12 +1216,15 @@ class WooSpamProtection
             $userIP = oopspamantispam_get_ip();
         }
 
+        // Include attribution fields in the raw entry.
+        $attributionFields = $this->getOrderAttributionFields($order);
+
         // First check if user has previous completed orders
         if (!empty($email)) {
             // If they have completed orders, consider them not spam
             if ($this->hasCompletedOrders($email)) {
                 // Log this as ham automatically
-                $rawEntry = $this->buildRawEntry($userIP, $email);
+                $rawEntry = $this->buildRawEntry($userIP, $email, $attributionFields);
                 $frmEntry = [
                     "Score" => 0, // Low score since we trust returning customers
                     "Message" => $message,
@@ -1130,7 +1248,7 @@ class WooSpamProtection
             if (!isset($detectionResult["isItHam"])) {
                 return false;
             }
-            $rawEntry = $this->buildRawEntry($userIP, $email);
+            $rawEntry = $this->buildRawEntry($userIP, $email, $attributionFields);
             $frmEntry = [
                 "Score" => $detectionResult["Score"],
                 "Message" => $message,
@@ -1153,6 +1271,25 @@ class WooSpamProtection
         }
     }
     return false;
+}
+
+/** Delete a blocked Store API order on shutdown, after WC's exception handler. */
+private function schedule_blocked_order_deletion($order) {
+    if (!is_a($order, 'WC_Order')) {
+        return;
+    }
+
+    $order_id = (int) $order->get_id();
+    if ($order_id <= 0) {
+        return;
+    }
+
+    add_action('shutdown', function () use ($order_id) {
+        $blocked_order = wc_get_order($order_id);
+        if ($blocked_order) {
+            $blocked_order->delete(true);
+        }
+    }, 1);
 }
 
 /**
