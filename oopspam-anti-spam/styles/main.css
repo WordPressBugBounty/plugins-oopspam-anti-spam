@@ -261,6 +261,22 @@ input[type="checkbox"].oopspam-toggle:focus-visible {
    border-bottom-color: #7f54b3;
 }
 
+.jfb {
+   background-color: white;
+}
+.jfb h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #e63946;
+}
+
+.mbfs {
+   background-color: white;
+}
+.mbfs h2 {
+   border-bottom-style: solid;
+   border-bottom-color: #f15a29;
+}
+
 .umember {
    background-color: white;
 }

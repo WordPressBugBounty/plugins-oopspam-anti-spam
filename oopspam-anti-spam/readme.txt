@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: spam, anti-spam, antispam, spam-protection, spam blocker
 Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.87
+Stable tag: 1.2.88
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -83,7 +83,9 @@ Unlike traditional CAPTCHA solutions that can hurt your conversion rates, oopspa
 - Avada Forms
 - MetForm
 - ACF Frontend Forms
+- Meta Box Frontend Submission
 - Newsletters by Tribulant
+- JetFormBuilder
 
 
 oopspam Anti-Spam WordPress plugin requires minimal configuration. Check out our [comprehensive WordPress guide](https://help.oopspam.com/wordpress/) for detailed setup instructions. To get started quickly, [get a key](https://app.oopspam.com/Identity/Account/Register) and paste it into the appropriate setting field under _Settings=>oopspam Anti-Spam_. If you have a contact form plugin, make sure you enable spam protection on the settings page.
@@ -123,16 +125,16 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.88 =
+* **NEW:** Added support for JetFormBuilder
+* **NEW:** Added support for Meta Box Frontend Submission
+* **FIX:** Spam Entries now show the correct reason when a submission is blocked because the country is not in Allowed Countries.
 = 1.2.87 =
 * **NEW:** Added support for Bricksforge Pro Forms
 * **NEW:** Added support for eForm Form Builder
 * **NEW:** Added support for WP Booking System
 * **NEW:** Added support for Spectra Forms and Spectra Pro Register blocks
-* **NEW:** Store WooCommerce order attribution data in Valid Entries.
 * **IMPROVEMENT:** The Form Id column in Spam and Valid Entries now shows the integration name, the form name and the form ID
-* **FIX:** Run WooCommerce order attribution checks before order creation.
-* **FIX:** Prevent blocked block checkout orders from being re-created.
-* **FIX:** Prevent duplicate spam entries for blocked WooCommerce orders.
 = 1.2.86 =
 * **FIX:** Fixed a fatal error on servers without the PHP mbstring extension.
 * **FIX:** The spam report email no longer requires the mbstring extension.

@@ -3,7 +3,7 @@
  * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.87
+ * Version: 1.2.88
  * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -116,6 +116,8 @@ require_once dirname(__FILE__) . '/integration/BricksforgeForms.php';
 require_once dirname(__FILE__) . '/integration/EForm.php';
 require_once dirname(__FILE__) . '/integration/WPBookingSystem.php';
 require_once dirname(__FILE__) . '/integration/Spectra.php';
+require_once dirname(__FILE__) . '/integration/JetFormBuilder.php';
+require_once dirname(__FILE__) . '/integration/MetaBoxFrontendSubmission.php';
 require_once dirname(__FILE__) . '/integration/WSForm.php';
 require_once dirname(__FILE__) . '/integration/Toolset.php';
 require_once dirname(__FILE__) . '/integration/PionetForms.php';
@@ -1157,7 +1159,7 @@ function oopspamantispam_call_OOPSpam($commentText, $commentIP, $email, $returnR
             update_option('over_rate_limit', false);
 
             $response = json_decode($response['body'], true);
-            $api_reason = extractReasonFromAPIResponse($response);
+            $api_reason = extractReasonFromAPIResponse($response, $countryallowlistSetting, $countryblocklistSetting);
 
             $contextDetectionOptions = get_option('oopspamantispam_contextai_settings');
             $contextualEnabled = isset($contextDetectionOptions['oopspam_is_contextai_enabled']) ? true : false;
@@ -1392,7 +1394,7 @@ function oopspam_check_spam($ip, $email, $content, $args = []) {
     return $response;
 }
 
-function extractReasonFromAPIResponse($response) {
+function extractReasonFromAPIResponse($response, $countryallowlistSetting = array(), $countryblocklistSetting = array()) {
 
     if (isset($response['Details'])) {
         $details = $response['Details'];
@@ -1418,8 +1420,18 @@ function extractReasonFromAPIResponse($response) {
             return 'Language not allowed';
         }
 
-        if (isset($details['countryMatch']) && $details['countryMatch'] === true && $response['Score'] >= 6) {
-            return 'Country blocked';
+       
+        if (isset($details['countryMatch'])) {
+            if ($details['countryMatch'] === false) {
+                return 'Country not in Allowed Countries';
+            }
+
+            if ($details['countryMatch'] === true
+                && !empty($countryblocklistSetting)
+                && isset($response['Score'])
+                && $response['Score'] >= 6) {
+                return 'Country blocked';
+            }
         }
     }
     

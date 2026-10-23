@@ -632,6 +632,8 @@ function oopspamantispam_settings_init()
     register_setting('oopspamantispam-eform-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-wpbs-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-spectra-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-jfb-settings-group', 'oopspamantispam_settings');
+    register_setting('oopspamantispam-mbfs-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ws-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-ts-settings-group', 'oopspamantispam_settings');
     register_setting('oopspamantispam-pionet-settings-group', 'oopspamantispam_settings');
@@ -1471,6 +1473,80 @@ function oopspamantispam_settings_init()
             'oopspam_spectra_exclude_form_render',
             'oopspamantispam-spectra-settings-group',
             'oopspam_spectra_settings_section'
+        );
+    }
+
+    // JetFormBuilder settings section
+    if (oopspamantispam_plugin_check('jfb') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_jfb_settings_section',
+            esc_html__('JetFormBuilder',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-jfb-settings-group'
+        );
+        add_settings_field('oopspam_is_jfb_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_jfb_activated_render',
+            'oopspamantispam-jfb-settings-group',
+            'oopspam_jfb_settings_section'
+        );
+
+        add_settings_field('oopspam_jfb_spam_message',
+            esc_html__('JetFormBuilder Spam Message',  'oopspam-anti-spam'),
+            'oopspam_jfb_spam_message_render',
+            'oopspamantispam-jfb-settings-group',
+            'oopspam_jfb_settings_section'
+        );
+
+        add_settings_field('oopspam_jfb_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_jfb_content_field_render',
+            'oopspamantispam-jfb-settings-group',
+            'oopspam_jfb_settings_section'
+        );
+
+        add_settings_field('oopspam_jfb_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_jfb_exclude_form_render',
+            'oopspamantispam-jfb-settings-group',
+            'oopspam_jfb_settings_section'
+        );
+    }
+
+    // Meta Box Frontend Submission settings section
+    if (oopspamantispam_plugin_check('mbfs') && !empty(oopspamantispam_get_key())) {
+
+        add_settings_section('oopspam_mbfs_settings_section',
+            esc_html__('Meta Box Frontend Submission',  'oopspam-anti-spam'),
+            false,
+            'oopspamantispam-mbfs-settings-group'
+        );
+        add_settings_field('oopspam_is_mbfs_activated',
+            esc_html__('Activate Spam Protection',  'oopspam-anti-spam'),
+            'oopspam_is_mbfs_activated_render',
+            'oopspamantispam-mbfs-settings-group',
+            'oopspam_mbfs_settings_section'
+        );
+
+        add_settings_field('oopspam_mbfs_spam_message',
+            esc_html__('Meta Box Frontend Submission Spam Message',  'oopspam-anti-spam'),
+            'oopspam_mbfs_spam_message_render',
+            'oopspamantispam-mbfs-settings-group',
+            'oopspam_mbfs_settings_section'
+        );
+
+        add_settings_field('oopspam_mbfs_content_field',
+            esc_html__('Content field mapping (optional)',  'oopspam-anti-spam'),
+            'oopspam_mbfs_content_field_render',
+            'oopspamantispam-mbfs-settings-group',
+            'oopspam_mbfs_settings_section'
+        );
+
+        add_settings_field('oopspam_mbfs_exclude_form',
+            esc_html__("Don't protect these forms",  'oopspam-anti-spam'),
+            'oopspam_mbfs_exclude_form_render',
+            'oopspamantispam-mbfs-settings-group',
+            'oopspam_mbfs_settings_section'
         );
     }
 
@@ -2900,6 +2976,439 @@ function oopspam_dismiss_rate_limit_notice() {
     }
     update_option('oopspam_rate_limit_notice_dismissed', true);
     wp_send_json_success();
+}
+
+/*
+ * Admin notices that point out settings likely to cause false positives:
+ * Trusted Countries, Rate Limiting on shops and settings that keep blocking
+ * entries which are later marked as "not spam". Shown on the oopspam pages only,
+ * dismissed per user, with a one click toggle where it is safe.
+ */
+
+add_action('admin_notices', 'oopspam_render_health_notices');
+
+function oopspam_render_health_notices()
+{
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    // Match the page slug: the screen IDs are toplevel_page_wp_oopspam_settings_page
+    // and admin_page_wp_oopspam_*.
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+
+    if (!in_array($page, array('wp_oopspam_settings_page', 'wp_oopspam_frm_spam_entries', 'wp_oopspam_frm_ham_entries'), true)) {
+        return;
+    }
+
+    $shown  = false;
+    $shown  = oopspam_health_notice_trusted_countries() || $shown;
+    $shown  = oopspam_health_notice_rate_limiting() || $shown;
+    $shown  = oopspam_health_notice_reported_reason() || $shown;
+
+    if ($shown) {
+        add_action('admin_footer', 'oopspam_health_notices_script');
+    }
+}
+
+// Settings a notice is allowed to switch on and off: setting key => option + label.
+function oopspam_health_notice_settings()
+{
+    return array(
+        'oopspam_is_rt_enabled' => array(
+            'option' => 'oopspamantispam_ratelimit_settings',
+            'label'  => __('Rate Limiting', 'oopspam-anti-spam'),
+        ),
+        'oopspam_is_check_for_length' => array(
+            'option' => 'oopspamantispam_settings',
+            'label'  => __('Consider short messages as spam', 'oopspam-anti-spam'),
+        ),
+        'oopspam_is_urls_allowed' => array(
+            'option' => 'oopspamantispam_settings',
+            'label'  => __('Block messages containing URLs', 'oopspam-anti-spam'),
+        ),
+        'oopspam_is_contextai_enabled' => array(
+            'option' => 'oopspamantispam_contextai_settings',
+            'label'  => __('Contextual Detection', 'oopspam-anti-spam'),
+        ),
+    );
+}
+
+function oopspam_health_notice_is_dismissed($key)
+{
+    return (bool) get_user_meta(get_current_user_id(), 'oopspam_notice_dismissed_' . $key, true);
+}
+
+// Whether a plugin where visitors place orders is active.
+function oopspam_health_notice_has_shop()
+{
+    foreach (array('woo', 'surecart', 'fluentcart', 'give') as $plugin) {
+        if (oopspamantispam_plugin_check($plugin)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Country codes as names, e.g. "🇺🇸 United States, 🇨🇦 Canada and 2 more".
+function oopspam_health_notice_country_names($codes)
+{
+    $all   = oopspam_get_isocountries();
+    $names = array();
+
+    foreach ((array) $codes as $code) {
+        $code = strtolower(trim((string) $code));
+
+        if ('' !== $code) {
+            $names[] = isset($all[$code]) ? $all[$code] : strtoupper($code);
+        }
+    }
+
+    if (empty($names)) {
+        return '';
+    }
+
+    $text  = implode(', ', array_slice($names, 0, 4));
+    $extra = count($names) - 4;
+
+    if ($extra > 0) {
+        $text .= ' ' . sprintf(__('and %d more', 'oopspam-anti-spam'), $extra);
+    }
+
+    return $text;
+}
+
+function oopspam_health_notice_url($tab = 'general', $anchor = '')
+{
+    $url = admin_url('admin.php?page=wp_oopspam_settings_page&tab=' . $tab);
+
+    return '' === $anchor ? $url : $url . '#' . $anchor;
+}
+
+// Trusted Countries always bypass the spam check.
+function oopspam_health_notice_trusted_countries()
+{
+    $countries = array_filter((array) get_option('oopspam_country_always_allow', array()));
+
+    if (empty($countries) || oopspam_health_notice_is_dismissed('trusted_countries')) {
+        return false;
+    }
+
+    $names    = oopspam_health_notice_country_names($countries);
+    $sentence = count($countries) > 1
+        ? __('Submissions from %s are always allowed and never checked, so spam from those countries will get through.', 'oopspam-anti-spam')
+        : __('Submissions from %s are always allowed and never checked, so spam from that country will get through.', 'oopspam-anti-spam');
+    ?>
+    <div class="notice notice-warning oopspam-health-notice" data-notice="trusted_countries">
+        <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+        <h4><?php esc_html_e('Trusted Countries skip spam protection', 'oopspam-anti-spam'); ?></h4>
+        <p><?php printf(esc_html($sentence), '<strong>' . esc_html($names) . '</strong>'); ?></p>
+        <p><?php esc_html_e('If you start seeing spam from there, remove them from Trusted Countries and add them to the Country Allowlist instead. Only the countries you actually sell to will then be accepted.', 'oopspam-anti-spam'); ?></p>
+        <p class="oopspam-health-notice-actions">
+            <a class="button button-primary" href="<?php echo esc_url(oopspam_health_notice_url('general', 'allowcountry')); ?>"><?php esc_html_e('Use Country Allowlist', 'oopspam-anti-spam'); ?></a>
+        </p>
+    </div>
+    <?php
+
+    return true;
+}
+
+// Rate Limiting on a shop blocks customers who click "place order" twice.
+function oopspam_health_notice_rate_limiting()
+{
+    if (!oopspam_isRateLimitingEnabled() || !oopspam_health_notice_has_shop() || oopspam_health_notice_is_dismissed('rate_limiting_shop')) {
+        return false;
+    }
+
+    $label = __('Rate Limiting', 'oopspam-anti-spam');
+    ?>
+    <div class="notice notice-warning oopspam-health-notice" data-notice="rate_limiting_shop">
+        <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+        <h4><?php esc_html_e('Rate Limiting can block real customers', 'oopspam-anti-spam'); ?></h4>
+        <p><?php esc_html_e('Rate Limiting blocks repeat submissions from the same IP address or email. Shoppers often click "Place order" more than once (slow checkout, retries, several tabs) and the second click gets blocked and logged as spam.', 'oopspam-anti-spam'); ?></p>
+        <p><?php esc_html_e('We recommend turning Rate Limiting off while your shop takes orders.', 'oopspam-anti-spam'); ?></p>
+        <p class="oopspam-health-notice-actions">
+            <button type="button" class="button button-primary oopspam-health-notice-toggle"
+                    data-setting="oopspam_is_rt_enabled" data-enable="0"
+                    data-label-off="<?php echo esc_attr(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?>"
+                    data-label-on="<?php echo esc_attr(sprintf(__('Turn on %s', 'oopspam-anti-spam'), $label)); ?>"><?php echo esc_html(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?></button>
+            <span class="oopspam-health-notice-status" aria-live="polite"></span>
+        </p>
+    </div>
+    <?php
+
+    return true;
+}
+
+// Recommend turning off the setting behind entries marked as "not spam".
+function oopspam_health_notice_reported_reason()
+{
+    global $wpdb;
+
+    $table = $wpdb->prefix . 'oopspam_frm_spam_entries';
+
+    $reasons = $wpdb->get_results(
+        "SELECT reason, COUNT(*) AS total
+        FROM {$table}
+        WHERE reported = 1 AND reason <> ''
+            AND date > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)
+        GROUP BY reason
+        ORDER BY total DESC
+        LIMIT 10"
+    );
+
+    foreach ((array) $reasons as $row) {
+        $count = (int) $row->total;
+
+        if ($count < 2) {
+            return false;
+        }
+
+        $advice = oopspam_health_notice_reason_advice($row->reason);
+        $key    = 'reason_' . md5($row->reason);
+
+        if (empty($advice) || oopspam_health_notice_is_dismissed($key)) {
+            continue;
+        }
+
+        $settings = oopspam_health_notice_settings();
+        $setting  = isset($advice['setting'], $settings[$advice['setting']]) ? $settings[$advice['setting']] : array();
+        $label    = empty($setting) ? '' : $setting['label'];
+        ?>
+        <div class="notice notice-warning oopspam-health-notice" data-notice="<?php echo esc_attr($key); ?>">
+            <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+            <h4>
+                <?php
+                printf(
+                    /* translators: %d: number of entries. */
+                    esc_html__('%d entries you marked "not spam" were blocked for the same reason', 'oopspam-anti-spam'),
+                    $count
+                );
+                ?>
+            </h4>
+            <p>
+                <?php esc_html_e('Reason:', 'oopspam-anti-spam'); ?>
+                <strong><?php echo esc_html($row->reason); ?></strong>.
+                <?php echo esc_html($advice['why']); ?>
+            </p>
+            <p class="oopspam-health-notice-actions">
+                <?php if ('' !== $label) : ?>
+                    <button type="button" class="button button-primary oopspam-health-notice-toggle"
+                            data-setting="<?php echo esc_attr($advice['setting']); ?>" data-enable="0"
+                            data-label-off="<?php echo esc_attr(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?>"
+                            data-label-on="<?php echo esc_attr(sprintf(__('Turn on %s', 'oopspam-anti-spam'), $label)); ?>"><?php echo esc_html(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?></button>
+                <?php endif; ?>
+                <?php if (!empty($advice['link'])) : ?>
+                    <a class="button" href="<?php echo esc_url(oopspam_health_notice_url($advice['link']['tab'], isset($advice['link']['anchor']) ? $advice['link']['anchor'] : '')); ?>"><?php echo esc_html($advice['link']['label']); ?></a>
+                <?php endif; ?>
+                <span class="oopspam-health-notice-status" aria-live="polite"></span>
+            </p>
+        </div>
+        <?php
+
+        return true;
+    }
+
+    return false;
+}
+
+// Setting to recommend for a stored block reason. Empty when nothing can be done.
+function oopspam_health_notice_reason_advice($reason)
+{
+    $reason = trim((string) $reason);
+
+    if (
+        in_array($reason, array('Too many submissions from the IP address', 'Too many submissions from the email'), true)
+        || 0 === strpos($reason, 'Submission too fast')
+        || 0 === strpos($reason, 'Submission with this Google Ads lead')
+    ) {
+        return array(
+            'setting' => 'oopspam_is_rt_enabled',
+            'why'     => __('Rate Limiting blocks repeat submissions from the same IP address or email, which real visitors often send by accident.', 'oopspam-anti-spam'),
+        );
+    }
+
+    if ('Consider short messages as spam setting' === $reason) {
+        return array(
+            'setting' => 'oopspam_is_check_for_length',
+            'why'     => __('Messages shorter than 20 characters were blocked by this setting, and short messages are often genuine.', 'oopspam-anti-spam'),
+        );
+    }
+
+    if ('A URL in the message' === $reason) {
+        return array(
+            'setting' => 'oopspam_is_urls_allowed',
+            'why'     => __('Every message with a link was blocked, but real visitors often share links.', 'oopspam-anti-spam'),
+        );
+    }
+
+    if (0 === strpos($reason, 'Contextual Content detection')) {
+        return array(
+            'setting' => 'oopspam_is_contextai_enabled',
+            'why'     => __('Contextual Detection flagged these messages as spam, and it can be too strict for some topics.', 'oopspam-anti-spam'),
+        );
+    }
+
+    $links = array(
+        array(
+            array('Blocked keyword', 'Blocked Email', 'Blocked IP'),
+            'manual_moderation',
+            '',
+            __('These entries matched a blocked email, IP or keyword in your Manual Moderation lists.', 'oopspam-anti-spam'),
+            __('Review Manual Moderation', 'oopspam-anti-spam'),
+        ),
+        array(array('Country not in Allowed Countries'), 'general', 'allowcountry', __('These visitors came from a country that is not in your Country Allowlist.', 'oopspam-anti-spam'), __('Review Country Allowlist', 'oopspam-anti-spam')),
+        array(array('Country blocked'), 'general', 'blockcountry', __('These visitors came from a country that is in your Country Blocklist.', 'oopspam-anti-spam'), __('Review Country Blocklist', 'oopspam-anti-spam')),
+        array(array('Language not allowed'), 'general', '', __('These messages were written in a language that is not in your Language Allowlist.', 'oopspam-anti-spam'), __('Review Language Allowlist', 'oopspam-anti-spam')),
+        array(array('IP blocked'), 'ip_filtering', '', __('The IP address was blocked by oopspam. Blocking VPNs and cloud providers is a common cause, because real visitors use them too.', 'oopspam-anti-spam'), __('Review IP Filtering', 'oopspam-anti-spam')),
+        array(array('Email blocked'), 'general', '', __('The email address was blocked by oopspam. Blocking disposable emails is a common cause, because some real visitors use them.', 'oopspam-anti-spam'), __('Review email settings', 'oopspam-anti-spam')),
+    );
+
+    foreach ($links as $link) {
+        foreach ($link[0] as $prefix) {
+            if (0 !== strpos($reason, $prefix)) {
+                continue;
+            }
+
+            return array(
+                'why'  => $link[3],
+                'link' => array('tab' => $link[1], 'anchor' => $link[2], 'label' => $link[4]),
+            );
+        }
+    }
+
+    // Everything else ("High spam score", "Content identified as spam", ...)
+    // comes from the API only, so there is no setting to recommend.
+    return array();
+}
+
+function oopspam_health_notices_script()
+{
+    ?>
+    <script>
+    (function () {
+        var ajaxUrl = <?php echo wp_json_encode(admin_url('admin-ajax.php')); ?>;
+        var nonce = <?php echo wp_json_encode(wp_create_nonce('oopspam_notice_action')); ?>;
+
+        function post(data) {
+            var body = new URLSearchParams(data);
+            body.set('nonce', nonce);
+
+            return fetch(ajaxUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            }).then(function (response) {
+                return response.json();
+            });
+        }
+
+        document.addEventListener('click', function (event) {
+            var notice = event.target.closest('.oopspam-health-notice');
+
+            if (!notice) {
+                return;
+            }
+
+            if (event.target.closest('.notice-dismiss')) {
+                post({ action: 'oopspam_notice_dismiss', notice: notice.getAttribute('data-notice') });
+                notice.remove();
+                return;
+            }
+
+            var button = event.target.closest('.oopspam-health-notice-toggle');
+
+            if (!button) {
+                return;
+            }
+
+            button.disabled = true;
+
+            post({
+                action: 'oopspam_notice_toggle_setting',
+                setting: button.getAttribute('data-setting'),
+                enable: button.getAttribute('data-enable')
+            }).then(function (response) {
+                button.disabled = false;
+
+                if (!response || !response.success) {
+                    return;
+                }
+
+                button.setAttribute('data-enable', response.data.enabled ? '0' : '1');
+                button.textContent = response.data.enabled
+                    ? button.getAttribute('data-label-off')
+                    : button.getAttribute('data-label-on');
+
+                var status = notice.querySelector('.oopspam-health-notice-status');
+
+                if (status) {
+                    status.textContent = ' ' + response.data.message;
+                }
+            });
+        });
+    })();
+    </script>
+    <?php
+}
+
+add_action('wp_ajax_oopspam_notice_dismiss', 'oopspam_notice_dismiss');
+function oopspam_notice_dismiss()
+{
+    if (!check_ajax_referer('oopspam_notice_action', 'nonce', false) || !current_user_can('manage_options')) {
+        wp_send_json_error('Invalid request', 403);
+    }
+
+    $notice = isset($_POST['notice']) ? sanitize_key(wp_unslash($_POST['notice'])) : '';
+
+    if ('' === $notice) {
+        wp_send_json_error('Invalid notice');
+    }
+
+    update_user_meta(get_current_user_id(), 'oopspam_notice_dismissed_' . $notice, 1);
+    wp_send_json_success();
+}
+
+add_action('wp_ajax_oopspam_notice_toggle_setting', 'oopspam_notice_toggle_setting');
+function oopspam_notice_toggle_setting()
+{
+    if (!check_ajax_referer('oopspam_notice_action', 'nonce', false) || !current_user_can('manage_options')) {
+        wp_send_json_error('Invalid request', 403);
+    }
+
+    $setting  = isset($_POST['setting']) ? sanitize_key(wp_unslash($_POST['setting'])) : '';
+    $settings = oopspam_health_notice_settings();
+
+    if (!isset($settings[$setting])) {
+        wp_send_json_error('Invalid setting');
+    }
+
+    // A setting is on when its key exists and off when the key is removed.
+    $enable = !empty($_POST['enable']);
+    $option = $settings[$setting]['option'];
+    $values = get_option($option, array());
+
+    if (!is_array($values)) {
+        $values = array();
+    }
+
+    if ($enable) {
+        $values[$setting] = '1';
+    } else {
+        unset($values[$setting]);
+    }
+
+    update_option($option, $values);
+
+    wp_send_json_success(array(
+        'enabled' => $enable,
+        'message' => sprintf(
+            $enable ? __('%s is now on.', 'oopspam-anti-spam') : __('%s is now off.', 'oopspam-anti-spam'),
+            $settings[$setting]['label']
+        ),
+    ));
 }
 
 function oopspam_api_key_usage_render() {
@@ -4388,6 +4897,202 @@ function oopspam_spectra_exclude_form_render()
 }
 
 /* Spectra UI settings section ends */
+
+/* JetFormBuilder UI settings section starts */
+
+function oopspam_is_jfb_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_JFB_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_JFB_ACTIVATED : (isset($options['oopspam_is_jfb_activated']) && 1 == $options['oopspam_is_jfb_activated']);
+    ?>
+    <div>
+        <label for="jfb_support">
+            <input class="oopspam-toggle" type="checkbox" id="jfb_support"
+                   name="oopspamantispam_settings[oopspam_is_jfb_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php', 'oopspam-anti-spam'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_jfb_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_jfb_spam_message">
+            <input id="oopspam_jfb_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_jfb_spam_message]" value="<?php echo isset($options['oopspam_jfb_spam_message']) ? esc_attr($options['oopspam_jfb_spam_message']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter a short message to display when a spam JetFormBuilder submission has been blocked. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_jfb_content_field_render()
+{
+    $options      = get_option('oopspamantispam_settings');
+    $decoded_data = isset($options['oopspam_jfb_content_field']) ? $options['oopspam_jfb_content_field'] : array();
+    // Settings import / WP-CLI can store the already-decoded array.
+    if (is_string($decoded_data)) {
+        $decoded_data = json_decode($decoded_data, true);
+    }
+    if (!is_array($decoded_data)) {
+        $decoded_data = array();
+    }
+    ?>
+    <div>
+        <label for="formIdInput"><?php echo esc_html__('Form ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="formIdInput" name="formIdInput" placeholder="123">
+        <label for="fieldIdInput"><?php echo esc_html__('Field ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="message">
+        <button type="button" onclick="addData(this)"><?php echo esc_html__('Add Pair', 'oopspam-anti-spam'); ?></button>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th><?php echo esc_html__('Form ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Field ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Action', 'oopspam-anti-spam'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($decoded_data as $entry) : ?>
+                    <?php
+                    if (!is_array($entry) || !isset($entry['formId'], $entry['fieldId'])) {
+                        continue;
+                    }
+                    ?>
+                    <tr>
+                        <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                        <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                        <td><button type="button" onclick="deleteRow(this)"><?php echo esc_html__('Delete', 'oopspam-anti-spam'); ?></button></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_jfb_content_field]" id="formDataInput" value="<?php echo esc_attr(wp_json_encode($decoded_data)); ?>">
+        <p class="description"><?php echo esc_html__('By default, oopspam checks every field of the form. To limit the check to a specific form, add its Form ID and the Field IDs that hold your message.', 'oopspam-anti-spam'); ?></p>
+        <p class="description"><?php echo esc_html__('A Field ID is the field name as set in the JetFormBuilder form, e.g. message. If multiple Field IDs are provided for a Form ID, their values will be joined together.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
+function oopspam_jfb_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_jfb_exclude_form">
+            <input type="text" placeholder="Enter form ID(s)" class="regular-text" name="oopspamantispam_settings[oopspam_jfb_exclude_form]" value="<?php echo isset($options['oopspam_jfb_exclude_form']) ? esc_attr($options['oopspam_jfb_exclude_form']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter the JetFormBuilder form ID(s) separated by commas to skip spam protection.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+/* JetFormBuilder UI settings section ends */
+
+/* Meta Box Frontend Submission UI settings section starts */
+
+function oopspam_is_mbfs_activated_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    $is_constant = defined('OOPSPAM_IS_MBFS_ACTIVATED');
+    $is_activated = $is_constant ? OOPSPAM_IS_MBFS_ACTIVATED : (isset($options['oopspam_is_mbfs_activated']) && 1 == $options['oopspam_is_mbfs_activated']);
+    ?>
+    <div>
+        <label for="mbfs_support">
+            <input class="oopspam-toggle" type="checkbox" id="mbfs_support"
+                   name="oopspamantispam_settings[oopspam_is_mbfs_activated]"
+                   value="1" <?php echo $is_activated ? esc_attr('checked="checked"') : ''; ?>
+                   <?php echo $is_constant ? esc_attr('disabled') : ''; ?>/>
+            <?php if ($is_constant): ?>
+                <p class="description"><?php echo esc_html__('This setting is defined in wp-config.php', 'oopspam-anti-spam'); ?></p>
+            <?php endif; ?>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_mbfs_spam_message_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_mbfs_spam_message">
+            <input id="oopspam_mbfs_spam_message" type="text" class="regular-text" name="oopspamantispam_settings[oopspam_mbfs_spam_message]" value="<?php echo isset($options['oopspam_mbfs_spam_message']) ? esc_attr($options['oopspam_mbfs_spam_message']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Message shown in place of the form when a spam Meta Box Frontend Submission entry is blocked. (e.g Our spam detection classified your submission as spam. Please contact via name@example.com)', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+function oopspam_mbfs_content_field_render()
+{
+    $options      = get_option('oopspamantispam_settings');
+    $decoded_data = isset($options['oopspam_mbfs_content_field']) ? $options['oopspam_mbfs_content_field'] : array();
+    // Settings import / WP-CLI can store the already-decoded array.
+    if (is_string($decoded_data)) {
+        $decoded_data = json_decode($decoded_data, true);
+    }
+    if (!is_array($decoded_data)) {
+        $decoded_data = array();
+    }
+    ?>
+    <div>
+        <label for="formIdInput"><?php echo esc_html__('Form ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="formIdInput" name="formIdInput" placeholder="metabox-form">
+        <label for="fieldIdInput"><?php echo esc_html__('Field ID:', 'oopspam-anti-spam'); ?></label>
+        <input type="text" id="fieldIdInput" name="fieldIdInput" placeholder="message">
+        <button type="button" onclick="addData(this)"><?php echo esc_html__('Add Pair', 'oopspam-anti-spam'); ?></button>
+        <table id="savedFormData">
+            <thead>
+                <tr>
+                    <th><?php echo esc_html__('Form ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Field ID', 'oopspam-anti-spam'); ?></th>
+                    <th><?php echo esc_html__('Action', 'oopspam-anti-spam'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($decoded_data as $entry) : ?>
+                    <?php
+                    if (!is_array($entry) || !isset($entry['formId'], $entry['fieldId'])) {
+                        continue;
+                    }
+                    ?>
+                    <tr>
+                        <td contenteditable="true"><?php echo esc_html($entry['formId']); ?></td>
+                        <td contenteditable="true"><?php echo esc_html($entry['fieldId']); ?></td>
+                        <td><button type="button" onclick="deleteRow(this)"><?php echo esc_html__('Delete', 'oopspam-anti-spam'); ?></button></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <input type="hidden" name="oopspamantispam_settings[oopspam_mbfs_content_field]" id="formDataInput" value="<?php echo esc_attr(wp_json_encode($decoded_data)); ?>">
+        <p class="description"><?php echo esc_html__('By default, oopspam checks every text field of the form. To limit the check to a specific form, add its Form ID and the Field IDs that hold your message.', 'oopspam-anti-spam'); ?></p>
+        <p class="description"><?php echo esc_html__('A Form ID is the meta box ID used in the shortcode, e.g. metabox-form. A Field ID is the field ID in Meta Box Builder, e.g. message. If multiple Field IDs are provided for a Form ID, their values will be joined together.', 'oopspam-anti-spam'); ?></p>
+    </div>
+    <?php
+}
+
+function oopspam_mbfs_exclude_form_render()
+{
+    $options = get_option('oopspamantispam_settings');
+    ?>
+    <div>
+        <label for="oopspam_mbfs_exclude_form">
+            <input type="text" placeholder="Enter form ID(s)" class="regular-text" name="oopspamantispam_settings[oopspam_mbfs_exclude_form]" value="<?php echo isset($options['oopspam_mbfs_exclude_form']) ? esc_attr($options['oopspam_mbfs_exclude_form']) : ''; ?>">
+            <p class="description"><?php echo esc_html__('Enter the Meta Box meta box ID(s) separated by commas to skip spam protection.', 'oopspam-anti-spam'); ?></p>
+        </label>
+    </div>
+    <?php
+}
+
+/* Meta Box Frontend Submission UI settings section ends */
 
 /* HappyForms UI settings section starts */
 
@@ -6122,6 +6827,16 @@ if( isset( $_GET[ 'tab' ] ) ) {
                 do_settings_sections('oopspamantispam-spectra-settings-group');
                     ?>
                             </div>
+                            <div class="jfb form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-jfb-settings-group');
+                    ?>
+                            </div>
+                            <div class="mbfs form-setting">
+                            <?php
+                do_settings_sections('oopspamantispam-mbfs-settings-group');
+                    ?>
+                            </div>
                             <div class="gravity-forms form-setting">
                             <?php
                 do_settings_sections('oopspamantispam-gf-settings-group');
@@ -6359,7 +7074,7 @@ function oopspam_block_cloud_providers_render()
         <label for="block_cloud_providers">
             <input class="oopspam-toggle" type="checkbox" id="block_cloud_providers" 
                    name="oopspamantispam_ipfiltering_settings[oopspam_block_cloud_providers]"  <?php checked(!isset($options['oopspam_block_cloud_providers']), false, true); ?>/>
-            <p class="description"><?php echo esc_html__('Block submissions from over 1500+ known cloud provider IPs (AWS, Google Cloud, Azure, etc).', 'oopspam-anti-spam'); ?></p>
+            <p class="description"><?php echo esc_html__('Block submissions from over 2000+ known cloud provider IPs (AWS, Google Cloud, Azure, etc).', 'oopspam-anti-spam'); ?></p>
         </label>
     </div>
     <?php

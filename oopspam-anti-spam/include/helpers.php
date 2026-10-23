@@ -181,6 +181,16 @@ function oopspamantispam_plugin_check($plugin)
                 $result = true;
             }
             break;
+        case 'jfb':
+            if (defined('JET_FORM_BUILDER_PATH') || function_exists('jet_fb_handler')) {
+                $result = true;
+            }
+            break;
+        case 'mbfs':
+            if (defined('MBFS_VER') || class_exists('MBFS\Form')) {
+                $result = true;
+            }
+            break;
         case 'ff':
             if (is_plugin_active('fluentformpro/fluentformpro.php') || is_plugin_active('fluentform/fluentform.php')) {
                 $result = true;
@@ -364,6 +374,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'eform' => 'OOPSPAM_IS_EFORM_ACTIVATED',
         'wpbs' => 'OOPSPAM_IS_WPBS_ACTIVATED',
         'spectra' => 'OOPSPAM_IS_SPECTRA_ACTIVATED',
+        'jfb' => 'OOPSPAM_IS_JFB_ACTIVATED',
+        'mbfs' => 'OOPSPAM_IS_MBFS_ACTIVATED',
         'ws' => 'OOPSPAM_IS_WS_ACTIVATED',
         'wpf' => 'OOPSPAM_IS_WPF_ACTIVATED',
         'ff' => 'OOPSPAM_IS_FF_ACTIVATED',
@@ -414,6 +426,8 @@ function oopspam_is_spamprotection_enabled($form_builder) {
         'eform' => 'oopspam_is_eform_activated',
         'wpbs' => 'oopspam_is_wpbs_activated',
         'spectra' => 'oopspam_is_spectra_activated',
+        'jfb' => 'oopspam_is_jfb_activated',
+        'mbfs' => 'oopspam_is_mbfs_activated',
         'ws' => 'oopspam_is_ws_activated',
         'wpf' => 'oopspam_is_wpf_activated',
         'ff' => 'oopspam_is_ff_activated',
@@ -1008,8 +1022,10 @@ function oopspam_integration_name($type) {
         'gravity'               => 'Gravity Forms',
         'happyforms'            => 'Happy Forms',
         'jform'                 => 'Jetpack Form',
+        'jfb'                   => 'JetFormBuilder',
         'kadence'               => 'Kadence Forms',
         'mailpoet'              => 'MailPoet',
+        'mbfs'                  => 'Meta Box Frontend',
         'mc4wp'                 => 'Mailchimp for WordPress',
         'metform'               => 'MetForm',
         'mpress'                => 'MemberPress',

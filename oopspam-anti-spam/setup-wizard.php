@@ -131,6 +131,8 @@ function oopspam_get_active_form_plugins() {
         'eform' => 'eForm Form Builder',
         'wpbs' => 'WP Booking System',
         'spectra' => 'Spectra Forms',
+        'jfb' => 'JetFormBuilder',
+        'mbfs' => 'Meta Box Frontend Submission',
         'bd' => 'Breakdance Forms',
         'ws' => 'WS Form',
         'wpdis' => 'WPDiscuz',
