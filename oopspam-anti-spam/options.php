@@ -3005,6 +3005,7 @@ function oopspam_render_health_notices()
     $shown  = oopspam_health_notice_trusted_countries() || $shown;
     $shown  = oopspam_health_notice_rate_limiting() || $shown;
     $shown  = oopspam_health_notice_reported_reason() || $shown;
+    $shown  = oopspam_health_notice_smart_accuracy_reported_spam() || $shown;
 
     if ($shown) {
         add_action('admin_footer', 'oopspam_health_notices_script');
@@ -3030,6 +3031,10 @@ function oopspam_health_notice_settings()
         'oopspam_is_contextai_enabled' => array(
             'option' => 'oopspamantispam_contextai_settings',
             'label'  => __('Contextual Detection', 'oopspam-anti-spam'),
+        ),
+        'oopspam_smart_accuracy' => array(
+            'option' => 'oopspamantispam_settings',
+            'label'  => __('Reduce False Positives', 'oopspam-anti-spam'),
         ),
     );
 }
@@ -3211,6 +3216,69 @@ function oopspam_health_notice_reported_reason()
     }
 
     return false;
+}
+
+// "Reduce False Positives" is on and spam is still getting through.
+function oopspam_health_notice_smart_accuracy_reported_spam()
+{
+    global $wpdb;
+
+    $options = get_option('oopspamantispam_settings', array());
+
+    if (empty($options['oopspam_smart_accuracy'])) {
+        return false;
+    }
+
+    $key = 'smart_accuracy_reported_spam';
+
+    if (oopspam_health_notice_is_dismissed($key)) {
+        return false;
+    }
+
+    // Entries the admin reported as spam from the Valid Entries table: they
+    // passed the check and were then flagged as spam (a false negative).
+    $table = $wpdb->prefix . 'oopspam_frm_ham_entries';
+    $count = (int) $wpdb->get_var(
+        "SELECT COUNT(*) FROM {$table}
+        WHERE reported = 1
+            AND date > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)"
+    );
+
+    if ($count < 1) {
+        return false;
+    }
+
+    $settings = oopspam_health_notice_settings();
+    $label    = isset($settings['oopspam_smart_accuracy'])
+        ? $settings['oopspam_smart_accuracy']['label']
+        : __('Reduce False Positives', 'oopspam-anti-spam');
+    ?>
+    <div class="notice notice-warning oopspam-health-notice" data-notice="<?php echo esc_attr($key); ?>">
+        <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+        <h4>
+            <?php
+            printf(
+                /* translators: %d: number of entries. */
+                esc_html__('%d entries you marked as spam were let through while "Reduce False Positives" is on', 'oopspam-anti-spam'),
+                $count
+            );
+            ?>
+        </h4>
+        <p>
+            <?php esc_html_e('This setting makes detection more lenient so genuine visitors are not blocked, which means some spam can get through. If these entries were real spam, turning it off restores the standard scoring.', 'oopspam-anti-spam'); ?>
+        </p>
+        <p class="oopspam-health-notice-actions">
+            <button type="button" class="button button-primary oopspam-health-notice-toggle"
+                    data-setting="oopspam_smart_accuracy" data-enable="0"
+                    data-label-off="<?php echo esc_attr(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?>"
+                    data-label-on="<?php echo esc_attr(sprintf(__('Turn on %s', 'oopspam-anti-spam'), $label)); ?>"><?php echo esc_html(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?></button>
+            <a class="button" href="<?php echo esc_url(oopspam_health_notice_url('general', 'oopspam_smart_accuracy')); ?>"><?php esc_html_e('Review settings', 'oopspam-anti-spam'); ?></a>
+            <span class="oopspam-health-notice-status" aria-live="polite"></span>
+        </p>
+    </div>
+    <?php
+
+    return true;
 }
 
 // Setting to recommend for a stored block reason. Empty when nothing can be done.
@@ -7330,116 +7398,13 @@ function oopspam_handle_send_test_spam_report() {
 }
 add_action('wp_ajax_oopspam_send_test_spam_report', 'oopspam_handle_send_test_spam_report');
 
-// Send the scheduled Spam Summary Report
-function oopspam_send_scheduled_spam_report() {
-    $options = get_option('oopspamantispam_misc_settings', array());
-    $frequency = isset($options['oopspam_spam_report_frequency']) ? $options['oopspam_spam_report_frequency'] : 'disabled';
-
-    if ($frequency === 'disabled' || $frequency === 'threshold') {
-        // Threshold-based reports are sent immediately via oopspam_maybe_send_threshold_spam_report()
-        return;
-    }
-
-    $raw_emails = isset($options['oopspam_spam_report_email']) ? $options['oopspam_spam_report_email'] : '';
-    $emails = array_filter(array_map(function($e) {
-        return sanitize_email(trim($e));
-    }, explode(',', $raw_emails)));
-
-    if (empty($emails)) {
-        return;
-    }
-
-    // Check if there are new spam entries since last report
-    global $wpdb;
-    
-    // Ensure MySQL returns TIMESTAMP values in UTC
-    \oopspam_ensure_mysql_utc_timezone();
-    
-    $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
-    $last_sent = get_option('oopspam_spam_report_last_sent', '1970-01-01 00:00:00');
-
-    $spam_count = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM " . esc_sql($table_name) . " WHERE date > %s",
-        $last_sent
-    ));
-
-    if ($spam_count === 0) {
-        return;
-    }
-
-    $subject_template = isset($options['oopspam_spam_report_subject']) && !empty($options['oopspam_spam_report_subject'])
-        ? $options['oopspam_spam_report_subject']
-        : 'Your spam report for {{site_name}}';
-
-    $result  = oopspam_build_spam_report_email(false);
-    $html    = $result['html'];
-    $subject = str_replace(
-        array('{{site_name}}', '{{total_spam_count}}'),
-        array(get_bloginfo('name'), $result['total_spam']),
-        $subject_template
-    );
-    $headers = array('Content-Type: text/html; charset=UTF-8');
-
-    wp_mail($emails, $subject, $html, $headers);
-
-    // Update last sent timestamp
-    update_option('oopspam_spam_report_last_sent', current_time('mysql'));
-}
-add_action('oopspam_spam_report_cron', 'oopspam_send_scheduled_spam_report');
-
-// Schedule/unschedule the spam report cron when misc settings are saved
-add_action('updated_option', 'oopspam_spam_report_schedule_cron', 10, 3);
-function oopspam_spam_report_schedule_cron($option, $old_value, $new_value) {
-    if ($option !== 'oopspamantispam_misc_settings') {
-        return;
-    }
-
-    $old_frequency = isset($old_value['oopspam_spam_report_frequency']) ? $old_value['oopspam_spam_report_frequency'] : 'disabled';
-    $new_frequency = isset($new_value['oopspam_spam_report_frequency']) ? $new_value['oopspam_spam_report_frequency'] : 'disabled';
-
-    // Only reschedule if frequency changed
-    if ($old_frequency === $new_frequency) {
-        return;
-    }
-
-    // Clear existing scheduled event
-    $timestamp = wp_next_scheduled('oopspam_spam_report_cron');
-    if ($timestamp) {
-        wp_unschedule_event($timestamp, 'oopspam_spam_report_cron');
-    }
-
-    if ($new_frequency === 'disabled') {
-        delete_option('oopspam_spam_report_threshold_counter');
-        return;
-    }
-
-    // Threshold mode doesn't use cron. It sends immediately via oopspam_maybe_send_threshold_spam_report()
-    if ($new_frequency === 'threshold') {
-        update_option('oopspam_spam_report_threshold_counter', 0, false);
-        return;
-    }
-
-    // For time-based schedules, threshold counter is not used.
-    delete_option('oopspam_spam_report_threshold_counter');
-
-    $schedule_map = array(
-        'twicedaily' => 'twicedaily',
-        'daily'      => 'daily',
-        'weekly'     => 'weekly',
-        'monthly'    => 'oopspam-monthly',
-    );
-    $next_run_map = array(
-        'twicedaily' => '+12 hours',
-        'daily'      => '+1 day',
-        'weekly'     => '+1 week',
-        'monthly'    => '+1 month',
-    );
-
-    $schedule = isset($schedule_map[$new_frequency]) ? $schedule_map[$new_frequency] : 'daily';
-    $next_run = isset($next_run_map[$new_frequency]) ? $next_run_map[$new_frequency] : '+1 day';
-
-    wp_schedule_event(strtotime($next_run), $schedule, 'oopspam_spam_report_cron');
-}
+/*
+ * The Spam Summary Report sender and its cron scheduling now live in
+ * include/helpers.php. This file is only loaded inside admin requests
+ * (see the is_admin() guard in oopspam-antispam.php), but WordPress runs cron
+ * events from wp-cron.php, where is_admin() is false - which is why the
+ * scheduled report fired with no registered callback and never sent anything.
+ */
 
 /**
  * Handle the settings export download (Tools tab).

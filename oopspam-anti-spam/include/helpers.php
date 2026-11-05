@@ -635,7 +635,7 @@ function oopspam_build_spam_report_email($is_test = false) {
             (object) array('email' => 'fake@domain.net', 'ip' => '172.16.0.5', 'message' => '', 'reason' => 'Rate limited', 'date' => date('Y-m-d H:i:s', strtotime('-3 hours'))),
         );
     } else {
-        $last_sent = get_option('oopspam_spam_report_last_sent', '1970-01-01 00:00:00');
+        $last_sent = oopspam_spam_report_last_sent();
         $total_spam = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM " . esc_sql($table_name) . " WHERE date > %s",
             $last_sent
@@ -799,7 +799,7 @@ function oopspam_maybe_send_threshold_spam_report() {
     $sent = wp_mail($emails, $subject, $html, $headers);
 
     if ($sent) {
-        update_option('oopspam_spam_report_last_sent', current_time('mysql'));
+        oopspam_spam_report_mark_sent();
         update_option('oopspam_spam_report_threshold_counter', 0, false);
     } else {
         // Preserve current count to retry sending on the next submission.
@@ -1131,3 +1131,554 @@ function oopspam_parse_form_id($stored) {
         'display'     => implode(' | ', array_filter(array($integration, $title, $id), 'strlen')),
     );
 }
+
+/**
+ * Turn a raw field name into something readable.
+ *
+ * @param string $field_name Raw field name/key.
+ * @return string Prettified field name.
+ */
+function oopspam_prettify_entry_field_name($field_name) {
+    $field_name = (string) $field_name;
+
+    // Remove common prefixes.
+    $field_name = preg_replace('/^(your[-_]|field[-_]|input[-_]|txt[-_]|frm[-_])/i', '', $field_name);
+
+    // Convert snake_case and kebab-case to spaces.
+    $field_name = str_replace(array('_', '-'), ' ', $field_name);
+
+    // Handle special cases for common form fields.
+    $special_cases = array(
+        'wpcf7' => 'Contact Form',
+        'fname' => 'First Name',
+        'lname' => 'Last Name',
+        'email' => 'Email Address',
+        'tel'   => 'Phone Number',
+        'msg'   => 'Message',
+        'addr'  => 'Address',
+        'dob'   => 'Date of Birth',
+    );
+
+    foreach ($special_cases as $case => $replacement) {
+        if (0 === strcasecmp($field_name, $case)) {
+            return $replacement;
+        }
+    }
+
+    return trim(ucwords($field_name));
+}
+
+/**
+ * Normalise the raw_entry blob stored with an entry into human-readable fields.
+ *
+ * The integrations store submissions in a few different shapes (an object of
+ * key => value pairs, a list of name/value pairs, or objects carrying
+ * value/label/key properties). Internal/technical keys are skipped so the
+ * result can be shown to a site admin as-is.
+ *
+ * @param string|array|null $raw_entry Raw (JSON) submission data.
+ * @return array<int, array{name: string, value: mixed}> Field list.
+ */
+function oopspam_parse_entry_fields($raw_entry) {
+    $processed_fields = array();
+
+    if (is_string($raw_entry)) {
+        $raw_entry = json_decode($raw_entry, true);
+    }
+
+    if (!is_array($raw_entry)) {
+        return $processed_fields;
+    }
+
+    // Helper to extract field data in the different formats.
+    $extract_field = function ($key, $value) {
+        $key = (string) $key;
+
+        // Skip internal/technical fields.
+        $skip_prefixes = array('_', 'form_', 'post_', 'date_', 'is_', 'payment_', 'transaction_');
+        foreach ($skip_prefixes as $prefix) {
+            if (0 === strpos($key, $prefix)) {
+                return null;
+            }
+        }
+
+        if (is_array($value)) {
+            // Object with a value property.
+            if (isset($value['value'])) {
+                if (isset($value['label'])) {
+                    $name = $value['label'];
+                } elseif (isset($value['key'])) {
+                    $name = oopspam_prettify_entry_field_name($value['key']);
+                } else {
+                    $name = oopspam_prettify_entry_field_name($key);
+                }
+
+                return array(
+                    'name'  => $name,
+                    'value' => $value['value'],
+                );
+            }
+
+            // Array format with name and value.
+            if (isset($value['name']) && isset($value['value'])) {
+                return array(
+                    'name'  => $value['name'],
+                    'value' => $value['value'],
+                );
+            }
+        }
+
+        // Simple key => value pairs.
+        return array(
+            'name'  => oopspam_prettify_entry_field_name($key),
+            'value' => $value,
+        );
+    };
+
+    $is_sequential = (array_keys($raw_entry) === range(0, count($raw_entry) - 1));
+
+    if ($is_sequential) {
+        foreach ($raw_entry as $field) {
+            if (is_array($field) && isset($field['name']) && isset($field['value'])) {
+                $processed_fields[] = $extract_field($field['name'], $field['value']);
+            }
+        }
+    } else {
+        foreach ($raw_entry as $key => $value) {
+            $field_data = $extract_field($key, $value);
+            if (null !== $field_data) {
+                $processed_fields[] = $field_data;
+            }
+        }
+    }
+
+    return array_filter($processed_fields);
+}
+
+/**
+ * Convert a stored field value into a plain, unescaped string.
+ *
+ * @param mixed $value Stored value.
+ * @return string
+ */
+function oopspam_stringify_entry_value($value) {
+    if (is_object($value)) {
+        $value = (array) $value;
+    }
+
+    if (is_array($value)) {
+        $parts = array();
+
+        foreach ($value as $item) {
+            $string = oopspam_stringify_entry_value($item);
+            if ('' !== $string) {
+                $parts[] = $string;
+            }
+        }
+
+        return implode(', ', $parts);
+    }
+
+    if (is_bool($value)) {
+        return $value ? __('Yes', 'oopspam-anti-spam') : __('No', 'oopspam-anti-spam');
+    }
+
+    if (null === $value) {
+        return '';
+    }
+
+    return (string) $value;
+}
+
+/**
+ * Human-readable label for the numeric score stored with an entry.
+ *
+ * Negative scores are placeholders used when the API was not reached.
+ *
+ * @param int|string $score Stored score.
+ * @return string
+ */
+function oopspam_get_entry_score_label($score) {
+    $score = (int) $score;
+
+    if ($score >= 0) {
+        return (string) $score;
+    }
+
+    $labels = array(
+        -1  => __('Rate limited', 'oopspam-anti-spam'),
+        -2  => __('Connection error', 'oopspam-anti-spam'),
+        -3  => __('API key disabled', 'oopspam-anti-spam'),
+        -4  => __('Invalid API key', 'oopspam-anti-spam'),
+        -5  => __('API key missing', 'oopspam-anti-spam'),
+        -6  => __('Connection timeout', 'oopspam-anti-spam'),
+        -7  => __('Server error', 'oopspam-anti-spam'),
+        -8  => __('Bad request', 'oopspam-anti-spam'),
+        -9  => __('Unauthorized', 'oopspam-anti-spam'),
+        -10 => __('API endpoint not found', 'oopspam-anti-spam'),
+    );
+
+    return isset($labels[$score]) ? $labels[$score] : __('Unknown error', 'oopspam-anti-spam');
+}
+
+/**
+ * Render the details shown in the "View" modal of the Spam/Valid Entries tables.
+ *
+ * Every value coming from the submission is escaped, so URLs, HTML tags or
+ * scripts stored in it are rendered as plain text instead of being interpreted
+ * by the browser.
+ *
+ * @param array  $item Entry row as prepared by the list table.
+ * @param string $type 'spam' or 'ham'.
+ * @return string Escaped HTML.
+ */
+function oopspam_render_entry_details($item, $type = 'spam') {
+    $item     = (array) $item;
+    $is_spam  = ('ham' !== $type);
+    $reported = isset($item['reported']) && '1' === (string) $item['reported'];
+
+    if ($is_spam) {
+        $status = $reported
+            ? __('Reported as not spam', 'oopspam-anti-spam')
+            : __('Blocked as spam', 'oopspam-anti-spam');
+    } else {
+        $status = $reported
+            ? __('Reported as spam', 'oopspam-anti-spam')
+            : __('Allowed (not spam)', 'oopspam-anti-spam');
+    }
+
+    $form      = oopspam_parse_form_id(isset($item['form_id']) ? $item['form_id'] : '');
+    $form_name = implode(' — ', array_filter(array($form['integration'], $form['title']), 'strlen'));
+    if ('' === $form_name) {
+        $form_name = $form['display'];
+    }
+
+    $date = isset($item['date']) ? oopspam_format_entry_datetime($item['date']) : '';
+    if ('' !== $date) {
+        $timezone = oopspam_get_entries_display_timezone_label();
+        if ('' !== $timezone) {
+            $date .= ' (' . $timezone . ')';
+        }
+    }
+
+    $score = '';
+    if (isset($item['score']) && '' !== $item['score'] && null !== $item['score']) {
+        $score = oopspam_get_entry_score_label($item['score']);
+    }
+
+    $ip    = isset($item['ip']) ? trim((string) $item['ip']) : '';
+    $email = isset($item['email']) ? trim((string) $item['email']) : '';
+
+    $rows   = array();
+    $rows[] = array(
+        __('Status', 'oopspam-anti-spam'),
+        '<span class="oopspam-details-badge' . ($reported ? ' is-reported' : '') . '">'
+            . esc_html($status) . '</span>',
+    );
+    $rows[] = array(__('Date', 'oopspam-anti-spam'), esc_html('' !== $date ? $date : '—'));
+    $rows[] = array(__('Form', 'oopspam-anti-spam'), esc_html('' !== $form_name ? $form_name : '—'));
+
+    if ('' !== $form['id']) {
+        $rows[] = array(__('Form ID', 'oopspam-anti-spam'), esc_html($form['id']));
+    }
+
+    $rows[] = array(__('Score', 'oopspam-anti-spam'), esc_html('' !== $score ? $score : '—'));
+
+    if ($is_spam) {
+        $reason = isset($item['reason']) ? trim((string) $item['reason']) : '';
+        $rows[] = array(__('Reason', 'oopspam-anti-spam'), esc_html('' !== $reason ? $reason : '—'));
+    }
+
+    $rows[] = array(__('IP address', 'oopspam-anti-spam'), esc_html('' !== $ip ? $ip : '—'));
+    $rows[] = array(__('Email', 'oopspam-anti-spam'), esc_html('' !== $email ? $email : '—'));
+
+    if (!$is_spam) {
+        $gclid = isset($item['gclid']) ? trim((string) $item['gclid']) : '';
+        if ('' !== $gclid) {
+            $rows[] = array(__('Google Ads click ID', 'oopspam-anti-spam'), esc_html($gclid));
+        }
+    }
+
+    $html = '<table class="oopspam-details-table"><tbody>';
+    foreach ($rows as $row) {
+        $html .= '<tr><th scope="row">' . esc_html($row[0]) . '</th><td>' . $row[1] . '</td></tr>';
+    }
+    $html .= '</tbody></table>';
+
+    // Message.
+    $message = isset($item['message']) ? trim((string) $item['message']) : '';
+
+    $html .= '<h4 class="oopspam-details-heading">' . esc_html__('Message', 'oopspam-anti-spam') . '</h4>';
+    if ('' === $message) {
+        $html .= '<p class="oopspam-details-empty">'
+            . esc_html__('No message was captured for this entry.', 'oopspam-anti-spam') . '</p>';
+    } else {
+        $html .= '<div class="oopspam-details-message">' . esc_html($message) . '</div>';
+    }
+
+    // Submitted fields.
+    $fields = oopspam_parse_entry_fields(isset($item['raw_entry']) ? $item['raw_entry'] : '');
+
+    $html .= '<h4 class="oopspam-details-heading">' . esc_html__('Submitted fields', 'oopspam-anti-spam') . '</h4>';
+    if (empty($fields)) {
+        $html .= '<p class="oopspam-details-empty">'
+            . esc_html__('No submitted fields were stored for this entry.', 'oopspam-anti-spam') . '</p>';
+    } else {
+        $html .= '<table class="oopspam-details-table oopspam-details-fields"><tbody>';
+        foreach ($fields as $field) {
+            $value = oopspam_stringify_entry_value($field['value']);
+
+            $html .= '<tr><th scope="row">' . esc_html($field['name']) . '</th><td>'
+                . ('' !== $value ? esc_html($value) : '—') . '</td></tr>';
+        }
+        $html .= '</tbody></table>';
+    }
+
+    return $html;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Spam Summary Report: scheduling and delivery.
+ * ---------------------------------------------------------------------------
+ */
+
+/**
+ * Frequency values that use WP-Cron, with the recurrence and the delay before
+ * the first run.
+ *
+ * @return array<string, array{recurrence: string, first_run: string}>
+ */
+function oopspam_spam_report_schedules() {
+    return array(
+        'twicedaily' => array('recurrence' => 'twicedaily', 'first_run' => '+12 hours'),
+        'daily'      => array('recurrence' => 'daily', 'first_run' => '+1 day'),
+        'weekly'     => array('recurrence' => 'weekly', 'first_run' => '+1 week'),
+        'monthly'    => array('recurrence' => 'oopspam-monthly', 'first_run' => '+1 month'),
+    );
+}
+
+/**
+ * The configured report frequency.
+ *
+ * @return string One of disabled, threshold, twicedaily, daily, weekly, monthly.
+ */
+function oopspam_spam_report_frequency() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+
+    return isset($options['oopspam_spam_report_frequency']) ? $options['oopspam_spam_report_frequency'] : 'disabled';
+}
+
+/**
+ * The report recipients as a list of valid email addresses.
+ *
+ * @return string[]
+ */
+function oopspam_spam_report_recipients() {
+    $options = get_option('oopspamantispam_misc_settings', array());
+    $raw     = isset($options['oopspam_spam_report_email']) ? (string) $options['oopspam_spam_report_email'] : '';
+
+    $emails = array_filter(array_map('sanitize_email', array_map('trim', explode(',', $raw))));
+
+    return array_values(array_unique($emails));
+}
+
+/**
+ * The "last report sent" marker, normalised to UTC.
+ *
+ * Values written before 1.2.89 used site-local time while the `date` column
+ * holds UTC, so entries around the boundary were skipped (or counted twice).
+ * Legacy values are converted once; everything after that is stored in UTC.
+ *
+ * @return string UTC datetime, "Y-m-d H:i:s".
+ */
+function oopspam_spam_report_last_sent() {
+    $default = '1970-01-01 00:00:00';
+    $stored  = get_option('oopspam_spam_report_last_sent', $default);
+
+    if (empty($stored) || !is_string($stored)) {
+        return $default;
+    }
+
+    if (!get_option('oopspam_spam_report_last_sent_is_utc')) {
+        $converted = get_gmt_from_date($stored);
+        if (!empty($converted)) {
+            update_option('oopspam_spam_report_last_sent', $converted);
+            $stored = $converted;
+        }
+        update_option('oopspam_spam_report_last_sent_is_utc', 1, false);
+    }
+
+    return $stored;
+}
+
+/**
+ * Record that a report was just sent (in UTC, matching the `date` column).
+ *
+ * @return void
+ */
+function oopspam_spam_report_mark_sent() {
+    update_option('oopspam_spam_report_last_sent', current_time('mysql', true));
+    update_option('oopspam_spam_report_last_sent_is_utc', 1, false);
+}
+
+/**
+ * Schedule the cron event for a frequency, unless it is already scheduled.
+ *
+ * @param string $frequency Report frequency.
+ * @return bool True when an event is scheduled.
+ */
+function oopspam_spam_report_schedule_event($frequency) {
+    $schedules = oopspam_spam_report_schedules();
+
+    if (!isset($schedules[$frequency])) {
+        return false;
+    }
+
+    if (wp_next_scheduled('oopspam_spam_report_cron')) {
+        return true;
+    }
+
+    return (bool) wp_schedule_event(
+        strtotime($schedules[$frequency]['first_run']),
+        $schedules[$frequency]['recurrence'],
+        'oopspam_spam_report_cron'
+    );
+}
+
+/**
+ * Send the Spam Summary Report that is due.
+ *
+ * @return void
+ */
+function oopspam_send_scheduled_spam_report() {
+    $frequency = oopspam_spam_report_frequency();
+
+    // Disabled, threshold mode (sent on submission) or an unknown value.
+    if (!isset(oopspam_spam_report_schedules()[$frequency])) {
+        return;
+    }
+
+    $emails = oopspam_spam_report_recipients();
+    if (empty($emails)) {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('oopspam: Spam Summary Report skipped, no valid recipient email address is configured.');
+        }
+        return;
+    }
+
+    global $wpdb;
+
+    // Ensure MySQL returns TIMESTAMP values in UTC.
+    oopspam_ensure_mysql_utc_timezone();
+
+    $table_name = $wpdb->prefix . 'oopspam_frm_spam_entries';
+    $last_sent  = oopspam_spam_report_last_sent();
+
+    $spam_count = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM " . esc_sql($table_name) . " WHERE date > %s",
+        $last_sent
+    ));
+
+    if (0 === $spam_count) {
+        return;
+    }
+
+    $options          = get_option('oopspamantispam_misc_settings', array());
+    $subject_template = isset($options['oopspam_spam_report_subject']) && !empty($options['oopspam_spam_report_subject'])
+        ? $options['oopspam_spam_report_subject']
+        : 'Your spam report for {{site_name}}';
+
+    $result  = oopspam_build_spam_report_email(false);
+    $subject = str_replace(
+        array('{{site_name}}', '{{total_spam_count}}'),
+        array(get_bloginfo('name'), $result['total_spam']),
+        $subject_template
+    );
+
+    $sent = wp_mail($emails, $subject, $result['html'], array('Content-Type: text/html; charset=UTF-8'));
+
+    if ($sent) {
+        oopspam_spam_report_mark_sent();
+        return;
+    }
+
+    // Keep "last sent" untouched so the next run retries the same window.
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        error_log('oopspam: Spam Summary Report could not be sent to ' . implode(', ', $emails));
+    }
+}
+add_action('oopspam_spam_report_cron', 'oopspam_send_scheduled_spam_report');
+
+/**
+ * Recreate the cron event when it is missing.
+ *
+ * The event is dropped on deactivation (oopspam_plugin_deactivation()) and is
+ * never created when the option is first saved (WordPress fires added_option,
+ * not updated_option, in that case). Without this the report stops silently
+ * and only a frequency change brings it back.
+ *
+ * @return void
+ */
+function oopspam_spam_report_maybe_schedule() {
+    $frequency = oopspam_spam_report_frequency();
+
+    if (!isset(oopspam_spam_report_schedules()[$frequency])) {
+        return;
+    }
+
+    oopspam_spam_report_schedule_event($frequency);
+}
+add_action('init', 'oopspam_spam_report_maybe_schedule');
+
+/**
+ * Re-schedule when the report settings are saved.
+ *
+ * Handles both added_option (first save of the option) and updated_option.
+ *
+ * @param string     $option    Option name.
+ * @param mixed      $old_value Old value, or the new value for added_option.
+ * @param mixed|null $new_value New value (updated_option only).
+ * @return void
+ */
+function oopspam_spam_report_schedule_cron($option, $old_value, $new_value = null) {
+    if ('oopspamantispam_misc_settings' !== $option) {
+        return;
+    }
+
+    // added_option passes ($option, $value).
+    if (null === $new_value) {
+        $new_value = $old_value;
+        $old_value = array();
+    }
+
+    $old_frequency = isset($old_value['oopspam_spam_report_frequency']) ? $old_value['oopspam_spam_report_frequency'] : 'disabled';
+    $new_frequency = isset($new_value['oopspam_spam_report_frequency']) ? $new_value['oopspam_spam_report_frequency'] : 'disabled';
+
+    if ($old_frequency === $new_frequency) {
+        return;
+    }
+
+    $timestamp = wp_next_scheduled('oopspam_spam_report_cron');
+    if ($timestamp) {
+        wp_unschedule_event($timestamp, 'oopspam_spam_report_cron');
+    }
+
+    if ('disabled' === $new_frequency) {
+        delete_option('oopspam_spam_report_threshold_counter');
+        return;
+    }
+
+    // Threshold mode does not use cron; it sends on submission.
+    if ('threshold' === $new_frequency) {
+        update_option('oopspam_spam_report_threshold_counter', 0, false);
+        return;
+    }
+
+    // Time-based schedules do not use the threshold counter.
+    delete_option('oopspam_spam_report_threshold_counter');
+
+    oopspam_spam_report_schedule_event($new_frequency);
+}
+add_action('added_option', 'oopspam_spam_report_schedule_cron', 10, 3);
+add_action('updated_option', 'oopspam_spam_report_schedule_cron', 10, 3);

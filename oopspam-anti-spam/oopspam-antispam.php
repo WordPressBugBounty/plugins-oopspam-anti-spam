@@ -3,7 +3,7 @@
  * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.88
+ * Version: 1.2.89
  * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/

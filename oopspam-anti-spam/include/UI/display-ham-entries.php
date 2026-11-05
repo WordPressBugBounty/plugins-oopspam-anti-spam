@@ -555,6 +555,7 @@ class Ham_Entries extends \WP_List_Table {
 		$title = '<span title="' . esc_attr($message) . '">' . esc_html($truncated_message) . '</span>';
 
 		$actions = [
+			'view' => $this->get_view_row_action( $item ),
 			'delete' => sprintf( '<a href="%s">Delete</a>', esc_url( $delete_url ) ),
 		];
 
@@ -565,21 +566,48 @@ class Ham_Entries extends \WP_List_Table {
 		return $title . $this->row_actions( $actions );
 	}
 
+	/**
+	 * "View" row action: opens all the data of one entry in a modal.
+	 *
+	 * The details are rendered into a hidden container next to the link and
+	 * cloned into the modal by helper.js, so a submission containing URLs or
+	 * HTML can never break the table layout.
+	 *
+	 * @param array $item Entry row.
+	 * @return string HTML for the row action.
+	 */
+	private function get_view_row_action( $item ) {
+		$entry_id  = absint( $item['id'] );
+		$dialog_id = 'oopspam-entry-details-' . $entry_id;
+		$label     = sprintf( __( 'Entry #%d', 'oopspam-anti-spam' ), $entry_id );
+
+		return sprintf(
+			'<div id="%1$s" class="oopspam-entry-details-data" style="display:none;">%2$s</div><a href="#" class="oopspam-view-entry" data-oopspam-target="%1$s" data-oopspam-title="%3$s">%4$s</a>',
+			esc_attr( $dialog_id ),
+			\oopspam_render_entry_details( $item, 'ham' ),
+			esc_attr( $label ),
+			esc_html__( 'View', 'oopspam-anti-spam' )
+		);
+	}
+
 	function column_raw_entry( $item ) {
 		add_thickbox();
 		// Check if raw_entry is null and provide default value
-		$raw_entry = isset($item['raw_entry']) ? $item['raw_entry'] : '';
-		$short_raw_entry = substr($raw_entry, 0, 50);
-		$json_string = $this->json_print($raw_entry);
-		$dialog_id = 'my-raw-entry-' . $item['id'];
-		$actions = [
+		$raw_entry = isset( $item['raw_entry'] ) ? (string) $item['raw_entry'] : '';
+
+		$short_raw_entry = function_exists( 'mb_substr' ) ? mb_substr( $raw_entry, 0, 50 ) : substr( $raw_entry, 0, 50 );
+		if ( $short_raw_entry !== $raw_entry ) {
+			$short_raw_entry .= '...';
+		}
+
+		$json_string = $this->json_print( $raw_entry );
+		$dialog_id   = 'my-raw-entry-' . absint( $item['id'] );
+		$actions     = [
 			'seemore' => sprintf(
-				'<div id=%s style="display:none;">
-					<p>%s</p>
-				</div><a href="#TB_inline?&width=600&height=550&inlineId=%s" class="thickbox">see more</a>',
-				$dialog_id,
-				wp_kses_post( $json_string ), // Perform HTML encoding
-				$dialog_id
+				'<div id="%s" style="display:none;">%s</div><a href="%s" class="thickbox">see more</a>',
+				esc_attr( $dialog_id ),
+				$json_string, // Already HTML-escaped in json_print().
+				esc_url( '#TB_inline?&width=600&height=550&inlineId=' . $dialog_id )
 			)
 		];
 		return esc_html( $short_raw_entry ) . $this->row_actions( $actions ); // Perform HTML encoding
@@ -656,18 +684,32 @@ class Ham_Entries extends \WP_List_Table {
     /**
 	 *  Prettify JSON
 	 *
-	 * @return array
+	 *  The output is always HTML-escaped so that anything coming from the
+	 *  submission itself (URLs, <a> tags, scripts, JSON fragments, etc.) is
+	 *  rendered as plain text instead of being interpreted by the browser.
+	 *
+	 * @param string|null $json Raw JSON string.
+	 * @return string Escaped HTML markup.
 	 */
-    function json_print($json) { 
+    function json_print( $json ) { 
 		// Check if json is null or empty
-		if ($json === null || $json === '') {
-			return '<pre style="white-space: pre-wrap;">No data</pre>';
+		if ( null === $json || '' === $json ) {
+			return '<pre class="oopspam-raw-entry-pre" style="white-space: pre-wrap; word-wrap: break-word; word-break: break-word;">' . esc_html__( 'No data', 'oopspam-anti-spam' ) . '</pre>';
 		}
-		return '<pre style="white-space: pre-wrap;       /* Since CSS 2.1 */
-        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-        white-space: -pre-wrap;      /* Opera 4-6 */
-        white-space: -o-pre-wrap;    /* Opera 7 */
-        word-wrap: break-word;       /* Internet Explorer 5.5+ */">' . json_encode(json_decode($json), JSON_PRETTY_PRINT) . '</pre>'; 
+
+		$decoded = json_decode( $json, true );
+		$pretty  = null;
+
+		if ( JSON_ERROR_NONE === json_last_error() ) {
+			$pretty = wp_json_encode( $decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		}
+
+		// Fall back to the raw string when it is not valid JSON or encoding failed.
+		if ( ! is_string( $pretty ) || '' === $pretty ) {
+			$pretty = (string) $json;
+		}
+
+		return '<pre class="oopspam-raw-entry-pre" style="white-space: pre-wrap; word-wrap: break-word; word-break: break-word;">' . esc_html( $pretty ) . '</pre>'; 
 	}
  
 	

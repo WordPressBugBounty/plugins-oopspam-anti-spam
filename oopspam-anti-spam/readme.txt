@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: spam, anti-spam, antispam, spam-protection, spam blocker
 Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.88
+Stable tag: 1.2.89
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -125,6 +125,11 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.89 =
+* **NEW:** Added a "View" action to Spam and Valid Entries to display submmissions details better.
+* **IMPROVEMENT:** When "Reduce False Positives" (Beta) is enabled, a notice now appears after you mark entries as spam.
+* **FIX:** Links and HTML inside a submission no longer break the layout of the "Raw fields" popup in Spam and Valid Entries.
+* **FIX:** The scheduled Spam Summary Report is now sent when WP-Cron runs from the server (`wp-cron.php`).
 = 1.2.88 =
 * **NEW:** Added support for JetFormBuilder
 * **NEW:** Added support for Meta Box Frontend Submission

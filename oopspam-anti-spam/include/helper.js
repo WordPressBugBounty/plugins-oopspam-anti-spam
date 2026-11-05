@@ -548,3 +548,84 @@ function updateHiddenInputValue(formContainer) {
     var hiddenInput = formContainer.querySelector('#formDataInput');
     hiddenInput.value = JSON.stringify(formData);
 }
+
+/**
+ * "View" row action of the Spam and Valid Entries tables.
+ *
+ * The modal shell is created once and the details are cloned out of the hidden
+ * per-row container, so the content survives closing and reopening the modal.
+ */
+jQuery(function ($) {
+    let $modal = null;
+    let $modalBody = null;
+    let $modalTitle = null;
+    let opener = null;
+
+    function buildModal() {
+        $modal = $(
+            '<div class="oopspam-modal" aria-hidden="true">' +
+                '<div class="oopspam-modal__backdrop" data-oopspam-modal-close="1"></div>' +
+                '<div class="oopspam-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="oopspam-modal-title">' +
+                    '<div class="oopspam-modal__header">' +
+                        '<h3 class="oopspam-modal__title" id="oopspam-modal-title"></h3>' +
+                        '<button type="button" class="oopspam-modal__close" data-oopspam-modal-close="1" aria-label="Close">&times;</button>' +
+                    '</div>' +
+                    '<div class="oopspam-modal__body"></div>' +
+                '</div>' +
+            '</div>'
+        ).appendTo('body');
+
+        $modalBody = $modal.find('.oopspam-modal__body');
+        $modalTitle = $modal.find('.oopspam-modal__title');
+
+        $modal.on('click', '[data-oopspam-modal-close]', function (event) {
+            event.preventDefault();
+            closeModal();
+        });
+    }
+
+    function openModal() {
+        $modal.addClass('is-open').attr('aria-hidden', 'false');
+        $('body').addClass('oopspam-modal-open');
+        $modal.find('.oopspam-modal__close').trigger('focus');
+    }
+
+    function closeModal() {
+        if (!$modal) {
+            return;
+        }
+
+        $modal.removeClass('is-open').attr('aria-hidden', 'true');
+        $('body').removeClass('oopspam-modal-open');
+
+        if (opener && document.body.contains(opener)) {
+            opener.focus();
+        }
+    }
+
+    $(document).on('click', 'a.oopspam-view-entry', function (event) {
+        event.preventDefault();
+
+        const target = $(this).attr('data-oopspam-target');
+        const $source = target ? $('#' + target) : $();
+
+        if (!$source.length) {
+            return;
+        }
+
+        if (!$modal) {
+            buildModal();
+        }
+
+        opener = this;
+        $modalBody.html($source.html());
+        $modalTitle.text($(this).attr('data-oopspam-title') || '');
+        openModal();
+    });
+
+    $(document).on('keydown', function (event) {
+        if ($modal && $modal.hasClass('is-open') && (event.key === 'Escape' || event.keyCode === 27)) {
+            closeModal();
+        }
+    });
+});
