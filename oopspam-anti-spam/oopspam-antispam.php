@@ -3,7 +3,7 @@
  * Plugin Name: oopspam Anti-Spam
  * Plugin URI: https://www.oopspam.com/
  * Description: Stop bots and manual spam from reaching you in comments & contact forms. All with high accuracy, accessibility, and privacy.
- * Version: 1.2.89
+ * Version: 1.2.90
  * Author: oopspam
  * Author URI: https://www.oopspam.com/
  * URI: https://www.oopspam.com/
@@ -639,6 +639,172 @@ function oopspam_is_email_blocked($email) {
     return false;
 }
 
+/**
+ * Convert an IP address to its packed (binary) form for comparison.
+ *
+ * IPv4 and IPv6 are both supported. Comparing the packed bytes means different
+ * spellings of the same IPv6 address (e.g. ::1 and 0:0:0:0:0:0:0:1) match.
+ *
+ * @param string $ip IP address.
+ * @return string|false Packed address, or false when the value is not a valid IP.
+ */
+function oopspam_ip_to_binary($ip)
+{
+    $ip = trim((string) $ip);
+
+    if ('' === $ip) {
+        return false;
+    }
+
+    // Drop an IPv6 zone index (fe80::1%eth0); it is not part of the address.
+    $zone_separator = strpos($ip, '%');
+    if ($zone_separator !== false) {
+        $ip = substr($ip, 0, $zone_separator);
+    }
+
+    if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+        return false;
+    }
+
+    $binary = @inet_pton($ip);
+
+    return is_string($binary) ? $binary : false;
+}
+
+/**
+ * Check whether an IP address falls inside a CIDR block.
+ *
+ * Works for IPv4 (/0 - /32) and IPv6 (/0 - /128) blocks.
+ *
+ * @param string $ip   IP address to test.
+ * @param string $cidr CIDR notation, e.g. 192.168.1.0/24 or 2001:db8::/32.
+ * @return bool
+ */
+function oopspam_ip_in_cidr($ip, $cidr)
+{
+    $parts = explode('/', trim((string) $cidr), 2);
+
+    if (count($parts) !== 2 || !is_numeric($parts[1])) {
+        return false;
+    }
+
+    $ip_binary = oopspam_ip_to_binary($ip);
+    $subnet_binary = oopspam_ip_to_binary($parts[0]);
+
+    if ($ip_binary === false || $subnet_binary === false) {
+        return false;
+    }
+
+    // An IPv4 address can never be inside an IPv6 block and vice versa.
+    if (strlen($ip_binary) !== strlen($subnet_binary)) {
+        return false;
+    }
+
+    $prefix = (int) $parts[1];
+    $address_bits = strlen($ip_binary) * 8;
+
+    if ($prefix < 0 || $prefix > $address_bits) {
+        return false;
+    }
+
+    $whole_bytes = (int) ($prefix / 8);
+    $remaining_bits = $prefix % 8;
+
+    if ($whole_bytes > 0 && substr($ip_binary, 0, $whole_bytes) !== substr($subnet_binary, 0, $whole_bytes)) {
+        return false;
+    }
+
+    if ($remaining_bits > 0) {
+        $mask = (0xFF << (8 - $remaining_bits)) & 0xFF;
+
+        if ((ord($ip_binary[$whole_bytes]) & $mask) !== (ord($subnet_binary[$whole_bytes]) & $mask)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Check whether an IP address falls inside a "start-end" range.
+ *
+ * Both ends must belong to the same address family as the tested IP.
+ *
+ * @param string $ip    IP address to test.
+ * @param string $range Range notation, e.g. 192.168.1.1-192.168.1.10.
+ * @return bool
+ */
+function oopspam_ip_in_range($ip, $range)
+{
+    $parts = explode('-', trim((string) $range), 2);
+
+    if (count($parts) !== 2) {
+        return false;
+    }
+
+    $ip_binary = oopspam_ip_to_binary($ip);
+    $start_binary = oopspam_ip_to_binary($parts[0]);
+    $end_binary = oopspam_ip_to_binary($parts[1]);
+
+    if ($ip_binary === false || $start_binary === false || $end_binary === false) {
+        return false;
+    }
+
+    if (strlen($ip_binary) !== strlen($start_binary) || strlen($ip_binary) !== strlen($end_binary)) {
+        return false;
+    }
+
+    return strcmp($ip_binary, $start_binary) >= 0 && strcmp($ip_binary, $end_binary) <= 0;
+}
+
+/**
+ * Check an IP address against a newline-separated Manual Moderation list.
+ *
+ * Each entry may be a plain IP (IPv4 or IPv6), a CIDR block, or a start-end
+ * range. Comparing packed bytes keeps IPv6 support intact - the previous
+ * ip2long()-based implementation silently ignored every IPv6 entry.
+ *
+ * @param string $ip   IP address to test.
+ * @param string $list Newline-separated list of entries.
+ * @return bool True when the IP matches any entry in the list.
+ */
+function oopspam_ip_matches_list($ip, $list)
+{
+    $ip_binary = oopspam_ip_to_binary($ip);
+
+    if ($ip_binary === false || !is_string($list) || '' === trim($list)) {
+        return false;
+    }
+
+    $entries = preg_split('/\r\n|\r|\n/', $list);
+
+    foreach ((array) $entries as $entry) {
+        $entry = trim((string) $entry);
+
+        // Skip empty lines
+        if ('' === $entry) {
+            continue;
+        }
+
+        // Check for exact match
+        if (oopspam_ip_to_binary($entry) === $ip_binary) {
+            return true;
+        }
+
+        // Check for IP range in CIDR notation (e.g., 192.168.1.0/24, 2001:db8::/32)
+        if (strpos($entry, '/') !== false && oopspam_ip_in_cidr($ip, $entry)) {
+            return true;
+        }
+
+        // Check for IP range with hyphen (e.g., 192.168.1.1-192.168.1.10)
+        if (strpos($entry, '-') !== false && oopspam_ip_in_range($ip, $entry)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Check if an IP is blocked locally
 function oopspam_is_ip_blocked($ip) {
  
@@ -649,71 +815,8 @@ function oopspam_is_ip_blocked($ip) {
     if ('' == $blocked_ips || empty($ip)) {
        return false;
     }
-   
-    // Convert IP to long format for range comparison
-    $ip_long = ip2long($ip);
-    
-    // If IP can't be converted, return false
-    if ($ip_long === false) {
-        return false;
-    }
 
-    $ips = explode("\n", $blocked_ips);
-
-    foreach ((array)$ips as $b_ip) {
-        $b_ip = trim($b_ip);
-       
-        // Skip empty lines
-        if (empty($b_ip)) {
-            continue;
-        }
-        
-        // Check for exact match
-        if ($b_ip === $ip) {
-            return true;
-        }
-        
-        // Check for IP range in CIDR notation (e.g., 192.168.1.0/24)
-        if (strpos($b_ip, '/') !== false) {
-            list($range, $netmask) = explode('/', $b_ip, 2);
-            
-            // If netmask is invalid or range is invalid, skip
-            if (!is_numeric($netmask) || $netmask < 0 || $netmask > 32 || ip2long($range) === false) {
-                continue;
-            }
-            
-            // Convert range to long format
-            $range_long = ip2long($range);
-            
-            // Calculate the mask
-            $mask = ~((1 << (32 - $netmask)) - 1);
-            
-            // Check if IP is in range
-            if (($ip_long & $mask) == ($range_long & $mask)) {
-                return true;
-            }
-        }
-        
-        // Check for IP range with hyphen (e.g., 192.168.1.1-192.168.1.10)
-        if (strpos($b_ip, '-') !== false) {
-            list($start, $end) = explode('-', $b_ip, 2);
-            
-            // Validate start and end IPs
-            $start_long = ip2long(trim($start));
-            $end_long = ip2long(trim($end));
-            
-            // If either IP is invalid, skip
-            if ($start_long === false || $end_long === false) {
-                continue;
-            }
-            
-            // Check if IP is in range
-            if ($ip_long >= $start_long && $ip_long <= $end_long) {
-                return true;
-            }
-        }
-    }
-    return false;
+    return oopspam_ip_matches_list($ip, $blocked_ips);
 }
 
 // Check if an email is allowed locally
@@ -756,71 +859,8 @@ function oopspam_is_ip_allowed($ip) {
     if ('' == $allowed_ips || empty($ip)) {
        return false;
     }
-   
-    // Convert IP to long format for range comparison
-    $ip_long = ip2long($ip);
-    
-    // If IP can't be converted, return false
-    if ($ip_long === false) {
-        return false;
-    }
 
-    $ips = explode("\n", $allowed_ips);
-
-    foreach ((array)$ips as $b_ip) {
-       $b_ip = trim($b_ip);
-       
-       // Skip empty lines.
-       if (empty($b_ip)) {
-           continue;
-       }
-       
-       // Check for exact match
-       if ($b_ip === $ip) {
-           return true;
-       }
-       
-       // Check for IP range in CIDR notation (e.g., 192.168.1.0/24)
-       if (strpos($b_ip, '/') !== false) {
-           list($range, $netmask) = explode('/', $b_ip, 2);
-           
-           // If netmask is invalid or range is invalid, skip
-           if (!is_numeric($netmask) || $netmask < 0 || $netmask > 32 || ip2long($range) === false) {
-               continue;
-           }
-           
-           // Convert range to long format
-           $range_long = ip2long($range);
-           
-           // Calculate the mask
-           $mask = ~((1 << (32 - $netmask)) - 1);
-           
-           // Check if IP is in range
-           if (($ip_long & $mask) == ($range_long & $mask)) {
-               return true;
-           }
-       }
-       
-       // Check for IP range with hyphen (e.g., 192.168.1.1-192.168.1.10)
-       if (strpos($b_ip, '-') !== false) {
-           list($start, $end) = explode('-', $b_ip, 2);
-           
-           // Validate start and end IPs
-           $start_long = ip2long(trim($start));
-           $end_long = ip2long(trim($end));
-           
-           // If either IP is invalid, skip
-           if ($start_long === false || $end_long === false) {
-               continue;
-           }
-           
-           // Check if IP is in range
-           if ($ip_long >= $start_long && $ip_long <= $end_long) {
-               return true;
-           }
-       }
-   }
-   return false;
+    return oopspam_ip_matches_list($ip, $allowed_ips);
 }
 
 
@@ -1399,8 +1439,22 @@ function extractReasonFromAPIResponse($response, $countryallowlistSetting = arra
     if (isset($response['Details'])) {
         $details = $response['Details'];
 
+        // An IP can be blocked for different reasons. The API includes
+        // isItVPN / isItDataCenter only when it knows why, and omits both for
+        // other causes (ASN, DNSBL, manual block, and so on).
+        if (isset($details['isIPBlocked']) && $details['isIPBlocked'] === true) {
+            if (isset($details['isItVPN']) && $details['isItVPN'] === true) {
+                return 'IP blocked: VPN';
+            }
+
+            if (isset($details['isItDataCenter']) && $details['isItDataCenter'] === true) {
+                return 'IP blocked: data center';
+            }
+
+            return 'IP blocked';
+        }
+
         $booleanChecks = [
-            'isIPBlocked' => 'IP blocked',
             'isEmailBlocked' => 'Email blocked',
             'isContentTooShort' => 'Content too short'
         ];

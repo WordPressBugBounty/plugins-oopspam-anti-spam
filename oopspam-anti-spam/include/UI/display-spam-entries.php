@@ -939,7 +939,7 @@ private static function process_form_fields($raw_entry) {
 
 				// Send admin email notification if enabled
 				self::maybe_notify_not_spam($id);
-				
+
 				return true;
 			} else {
 				if (defined('WP_DEBUG') && WP_DEBUG) {

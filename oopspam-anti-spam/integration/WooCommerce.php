@@ -392,8 +392,6 @@ class WooSpamProtection
 
     function oopspam_check_order_attributes($order, $data ) {
 
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -461,8 +459,6 @@ class WooSpamProtection
         return $order;
     }
     function oopspam_legacy_checkout_classic_processed($order_id, $order) {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -531,8 +527,6 @@ class WooSpamProtection
     }
 
     function oopspam_checkout_store_api_processed($order) {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -607,8 +601,6 @@ class WooSpamProtection
     }    
 
     function oopspam_checkout_classic_processed($order_id, $posted_data, $order) {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -666,8 +658,6 @@ class WooSpamProtection
     }    
 
     function oopspam_checkout_process() {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -815,8 +805,6 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_register_errors($validation_error, $username, $password, $email)
     {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -863,8 +851,6 @@ class WooSpamProtection
      */
     public function oopspam_process_registration($username, $email, $errors)
     {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -926,8 +912,6 @@ class WooSpamProtection
      */
     public function oopspam_woocommerce_login_errors($errors)
     {
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -1200,8 +1184,6 @@ class WooSpamProtection
     public function checkEmailAndIPInOOPSpam($email, $message, $orderMetadata = array(), $order = null)
     {
 
-        $options = get_option('oopspamantispam_settings');
-        
         // Check if WooCommerce integration is enabled
         $woo_enabled = oopspam_is_spamprotection_enabled('woo');
         
@@ -1373,8 +1355,6 @@ private function should_check_honeypot() {
  * Can be enabled/disabled via the WooCommerce settings in the oopspam options
  */
 public function oopspam_disable_wc_rest_checkout() {
-    $options = get_option('oopspamantispam_settings');
-    
     // Check if WooCommerce integration is enabled
     $woo_enabled = oopspam_is_spamprotection_enabled('woo');
     

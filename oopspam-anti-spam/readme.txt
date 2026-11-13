@@ -4,7 +4,7 @@ Link: https://www.oopspam.com/
 Tags: spam, anti-spam, antispam, spam-protection, spam blocker
 Requires at least: 4.6
 Tested up to: 7.1
-Stable tag: 1.2.89
+Stable tag: 1.2.90
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -125,6 +125,11 @@ For advanced configuration options and detailed usage instructions, visit our [W
 
 
 == Changelog ==
+= 1.2.90 =
+* **NEW:** Spam Entries now show whether an IP was blocked as a VPN or a data center, and a notice explains the block when such an entry is marked as not spam.
+* **FIX:** IPv6 addresses now work in the Blocked and Allowed IPs lists.
+* **FIX:** The database upgrade check no longer runs on every page load on multisite networks.
+* **IMPROVEMENT:** Removed duplicated and unused code from the database installers and the WooCommerce integration.
 = 1.2.89 =
 * **NEW:** Added a "View" action to Spam and Valid Entries to display submmissions details better.
 * **IMPROVEMENT:** When "Reduce False Positives" (Beta) is enabled, a notice now appears after you mark entries as spam.

@@ -507,7 +507,6 @@ function oopspamantispam_checkIfValidKey()
 }
 
 function oopspamantispam_get_ip() {
-    $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
     
     $ipaddress = '';

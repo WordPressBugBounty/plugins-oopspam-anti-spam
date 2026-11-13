@@ -178,6 +178,14 @@ class OOPSpamAPI {
             $limit = isset($headerResult['x-ratelimit-requests-limit']) ? $headerResult['x-ratelimit-requests-limit'] : '0';
         }
 
+        // A response without usable rate limit headers (proxy, gateway, or an API
+        // change) must not reset the panel to "0 / 0": keep the last known values
+        // instead, so a bad response never makes the usage numbers disappear.
+        if (!is_numeric($remaining) || !is_numeric($limit) || (int) $limit <= 0) {
+            error_log('oopspam getAPIUsage Error: rate limit headers missing or invalid');
+            return;
+        }
+
         // Direct database update for better performance
         global $wpdb;
         $usage_value = $remaining . '/' . $limit;
@@ -200,6 +208,13 @@ class OOPSpamAPI {
                 array('option_value' => maybe_serialize($options)),
                 array('option_name' => $option_name)
             );
+
+            // The direct query above bypasses the options API, so the cached copy
+            // would still hold the old usage - and with a persistent object cache
+            // it would keep holding it after the page reload, making Refresh look
+            // like it did nothing. Drop both cache keys so the new value is read.
+            wp_cache_delete($option_name, 'options');
+            wp_cache_delete('alloptions', 'options');
             
         } else {
             // If option doesn't exist yet, create it using standard WordPress function

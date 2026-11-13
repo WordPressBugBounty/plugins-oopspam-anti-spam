@@ -908,8 +908,6 @@ function oopspamantispam_settings_init()
         'oopspam_vpn_cloud_section'
     );
 
-    $options = get_option('oopspamantispam_settings');
-
     // Forminator settings section
     if (oopspamantispam_plugin_check('forminator') && !empty(oopspamantispam_get_key())) {
 
@@ -2930,7 +2928,7 @@ function oopspam_custom_admin_notice()
 
     $dismiss_nonce = wp_create_nonce('oopspam_dismiss_rate_limit');
     ?>
-        <div class="notice notice-error" id="oopspam-rate-limit-notice" style="position: relative;">
+        <div class="notice notice-error" id="oopspam-rate-limit-notice" style="position: relative; clear: both;">
             <button type="button" id="oopspam-dismiss-rate-limit" class="notice-dismiss" title="<?php esc_attr_e('Dismiss this notice', 'oopspam-anti-spam'); ?>"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
             <h4>oopspam Anti-Spam</h4>
             <p><?php esc_html_e('Your API key exceeded your current plan\'s limit. The spam filtering functionality is disabled. Please upgrade to enable spam protection.', 'oopspam-anti-spam');?> </p>
@@ -3036,6 +3034,14 @@ function oopspam_health_notice_settings()
             'option' => 'oopspamantispam_settings',
             'label'  => __('Reduce False Positives', 'oopspam-anti-spam'),
         ),
+        'oopspam_block_vpns' => array(
+            'option' => 'oopspamantispam_ipfiltering_settings',
+            'label'  => __('Block VPNs', 'oopspam-anti-spam'),
+        ),
+        'oopspam_block_cloud_providers' => array(
+            'option' => 'oopspamantispam_ipfiltering_settings',
+            'label'  => __('Block Cloud Providers', 'oopspam-anti-spam'),
+        ),
     );
 }
 
@@ -3105,13 +3111,13 @@ function oopspam_health_notice_trusted_countries()
         ? __('Submissions from %s are always allowed and never checked, so spam from those countries will get through.', 'oopspam-anti-spam')
         : __('Submissions from %s are always allowed and never checked, so spam from that country will get through.', 'oopspam-anti-spam');
     ?>
-    <div class="notice notice-warning oopspam-health-notice" data-notice="trusted_countries">
-        <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+    <div class="notice notice-warning oopspam-health-notice" style="clear: both;" data-notice="trusted_countries">
         <h4><?php esc_html_e('Trusted Countries skip spam protection', 'oopspam-anti-spam'); ?></h4>
         <p><?php printf(esc_html($sentence), '<strong>' . esc_html($names) . '</strong>'); ?></p>
         <p><?php esc_html_e('If you start seeing spam from there, remove them from Trusted Countries and add them to the Country Allowlist instead. Only the countries you actually sell to will then be accepted.', 'oopspam-anti-spam'); ?></p>
         <p class="oopspam-health-notice-actions">
             <a class="button button-primary" href="<?php echo esc_url(oopspam_health_notice_url('general', 'allowcountry')); ?>"><?php esc_html_e('Use Country Allowlist', 'oopspam-anti-spam'); ?></a>
+            <button type="button" class="button-link oopspam-health-notice-dismiss" style="margin-left: 8px;"><?php esc_html_e('Dismiss', 'oopspam-anti-spam'); ?></button>
         </p>
     </div>
     <?php
@@ -3128,8 +3134,7 @@ function oopspam_health_notice_rate_limiting()
 
     $label = __('Rate Limiting', 'oopspam-anti-spam');
     ?>
-    <div class="notice notice-warning oopspam-health-notice" data-notice="rate_limiting_shop">
-        <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+    <div class="notice notice-warning oopspam-health-notice" style="clear: both;" data-notice="rate_limiting_shop">
         <h4><?php esc_html_e('Rate Limiting can block real customers', 'oopspam-anti-spam'); ?></h4>
         <p><?php esc_html_e('Rate Limiting blocks repeat submissions from the same IP address or email. Shoppers often click "Place order" more than once (slow checkout, retries, several tabs) and the second click gets blocked and logged as spam.', 'oopspam-anti-spam'); ?></p>
         <p><?php esc_html_e('We recommend turning Rate Limiting off while your shop takes orders.', 'oopspam-anti-spam'); ?></p>
@@ -3138,6 +3143,7 @@ function oopspam_health_notice_rate_limiting()
                     data-setting="oopspam_is_rt_enabled" data-enable="0"
                     data-label-off="<?php echo esc_attr(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?>"
                     data-label-on="<?php echo esc_attr(sprintf(__('Turn on %s', 'oopspam-anti-spam'), $label)); ?>"><?php echo esc_html(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?></button>
+            <button type="button" class="button-link oopspam-health-notice-dismiss" style="margin-left: 8px;"><?php esc_html_e('Dismiss', 'oopspam-anti-spam'); ?></button>
             <span class="oopspam-health-notice-status" aria-live="polite"></span>
         </p>
     </div>
@@ -3164,12 +3170,7 @@ function oopspam_health_notice_reported_reason()
     );
 
     foreach ((array) $reasons as $row) {
-        $count = (int) $row->total;
-
-        if ($count < 2) {
-            return false;
-        }
-
+        $count  = (int) $row->total;
         $advice = oopspam_health_notice_reason_advice($row->reason);
         $key    = 'reason_' . md5($row->reason);
 
@@ -3177,28 +3178,43 @@ function oopspam_health_notice_reported_reason()
             continue;
         }
 
+        // VPN and data center blocks are worth flagging on the first entry;
+        // for anything else a repeated pattern is more convincing.
+        $minimum = empty($advice['single']) ? 2 : 1;
+
+        if ($count < $minimum) {
+            continue;
+        }
+
         $settings = oopspam_health_notice_settings();
         $setting  = isset($advice['setting'], $settings[$advice['setting']]) ? $settings[$advice['setting']] : array();
         $label    = empty($setting) ? '' : $setting['label'];
+
+        // Only offer the toggle while the setting is still on: suggesting to
+        // turn off something that is already off is just noise.
+        $setting_key = isset($advice['setting']) ? $advice['setting'] : '';
+        $values      = empty($setting) ? array() : get_option($setting['option'], array());
+        $setting_on  = '' !== $setting_key && !empty($values[$setting_key]);
+
+        // Nothing left to advise when that setting is already turned off.
+        if ('' !== $setting_key && !$setting_on) {
+            continue;
+        }
         ?>
-        <div class="notice notice-warning oopspam-health-notice" data-notice="<?php echo esc_attr($key); ?>">
-            <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+        <div class="notice notice-warning oopspam-health-notice" style="clear: both;" data-notice="<?php echo esc_attr($key); ?>">
             <h4>
                 <?php
                 printf(
-                    /* translators: %d: number of entries. */
-                    esc_html__('%d entries you marked "not spam" were blocked for the same reason', 'oopspam-anti-spam'),
-                    $count
+                    /* translators: 1: number of entries, 2: block reason. */
+                    esc_html(_n('%1$d entry you marked as not spam blocked due to: %2$s', '%1$d entries you marked as not spam blocked due to: %2$s', $count, 'oopspam-anti-spam')),
+                    $count,
+                    $row->reason
                 );
                 ?>
             </h4>
-            <p>
-                <?php esc_html_e('Reason:', 'oopspam-anti-spam'); ?>
-                <strong><?php echo esc_html($row->reason); ?></strong>.
-                <?php echo esc_html($advice['why']); ?>
-            </p>
+            <p><?php echo esc_html($advice['why']); ?></p>
             <p class="oopspam-health-notice-actions">
-                <?php if ('' !== $label) : ?>
+                <?php if ($setting_on) : ?>
                     <button type="button" class="button button-primary oopspam-health-notice-toggle"
                             data-setting="<?php echo esc_attr($advice['setting']); ?>" data-enable="0"
                             data-label-off="<?php echo esc_attr(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?>"
@@ -3207,6 +3223,7 @@ function oopspam_health_notice_reported_reason()
                 <?php if (!empty($advice['link'])) : ?>
                     <a class="button" href="<?php echo esc_url(oopspam_health_notice_url($advice['link']['tab'], isset($advice['link']['anchor']) ? $advice['link']['anchor'] : '')); ?>"><?php echo esc_html($advice['link']['label']); ?></a>
                 <?php endif; ?>
+                <button type="button" class="button-link oopspam-health-notice-dismiss" style="margin-left: 8px;"><?php esc_html_e('Dismiss', 'oopspam-anti-spam'); ?></button>
                 <span class="oopspam-health-notice-status" aria-live="polite"></span>
             </p>
         </div>
@@ -3253,8 +3270,8 @@ function oopspam_health_notice_smart_accuracy_reported_spam()
         ? $settings['oopspam_smart_accuracy']['label']
         : __('Reduce False Positives', 'oopspam-anti-spam');
     ?>
-    <div class="notice notice-warning oopspam-health-notice" data-notice="<?php echo esc_attr($key); ?>">
-        <button type="button" class="notice-dismiss"><span class="screen-reader-text"><?php esc_html_e('Dismiss this notice.', 'oopspam-anti-spam'); ?></span></button>
+    <div class="notice notice-warning oopspam-health-notice" style="clear: both;" data-notice="<?php echo esc_attr($key); ?>">
+
         <h4>
             <?php
             printf(
@@ -3273,6 +3290,7 @@ function oopspam_health_notice_smart_accuracy_reported_spam()
                     data-label-off="<?php echo esc_attr(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?>"
                     data-label-on="<?php echo esc_attr(sprintf(__('Turn on %s', 'oopspam-anti-spam'), $label)); ?>"><?php echo esc_html(sprintf(__('Turn off %s', 'oopspam-anti-spam'), $label)); ?></button>
             <a class="button" href="<?php echo esc_url(oopspam_health_notice_url('general', 'oopspam_smart_accuracy')); ?>"><?php esc_html_e('Review settings', 'oopspam-anti-spam'); ?></a>
+            <button type="button" class="button-link oopspam-health-notice-dismiss" style="margin-left: 8px;"><?php esc_html_e('Dismiss', 'oopspam-anti-spam'); ?></button>
             <span class="oopspam-health-notice-status" aria-live="polite"></span>
         </p>
     </div>
@@ -3318,6 +3336,24 @@ function oopspam_health_notice_reason_advice($reason)
         );
     }
 
+    if ('IP blocked: VPN' === $reason) {
+        return array(
+            'setting' => 'oopspam_block_vpns',
+            'single'  => true,
+            'why'     => __('Consider disabling IP Filtering → Block VPNs.', 'oopspam-anti-spam'),
+            'link'    => array('tab' => 'ip_filtering', 'anchor' => 'block_vpns', 'label' => __('Review IP Filtering', 'oopspam-anti-spam')),
+        );
+    }
+
+    if ('IP blocked: data center' === $reason) {
+        return array(
+            'setting' => 'oopspam_block_cloud_providers',
+            'single'  => true,
+            'why'     => __('Consider disabling IP Filtering → Block Cloud Providers.', 'oopspam-anti-spam'),
+            'link'    => array('tab' => 'ip_filtering', 'anchor' => 'block_cloud_providers', 'label' => __('Review IP Filtering', 'oopspam-anti-spam')),
+        );
+    }
+
     $links = array(
         array(
             array('Blocked keyword', 'Blocked Email', 'Blocked IP'),
@@ -3329,7 +3365,7 @@ function oopspam_health_notice_reason_advice($reason)
         array(array('Country not in Allowed Countries'), 'general', 'allowcountry', __('These visitors came from a country that is not in your Country Allowlist.', 'oopspam-anti-spam'), __('Review Country Allowlist', 'oopspam-anti-spam')),
         array(array('Country blocked'), 'general', 'blockcountry', __('These visitors came from a country that is in your Country Blocklist.', 'oopspam-anti-spam'), __('Review Country Blocklist', 'oopspam-anti-spam')),
         array(array('Language not allowed'), 'general', '', __('These messages were written in a language that is not in your Language Allowlist.', 'oopspam-anti-spam'), __('Review Language Allowlist', 'oopspam-anti-spam')),
-        array(array('IP blocked'), 'ip_filtering', '', __('The IP address was blocked by oopspam. Blocking VPNs and cloud providers is a common cause, because real visitors use them too.', 'oopspam-anti-spam'), __('Review IP Filtering', 'oopspam-anti-spam')),
+        array(array('IP blocked'), 'ip_filtering', '', __('Blocking VPNs and cloud providers is a common cause, and real visitors use them too.', 'oopspam-anti-spam'), __('Review IP Filtering', 'oopspam-anti-spam')),
         array(array('Email blocked'), 'general', '', __('The email address was blocked by oopspam. Blocking disposable emails is a common cause, because some real visitors use them.', 'oopspam-anti-spam'), __('Review email settings', 'oopspam-anti-spam')),
     );
 
@@ -3380,7 +3416,7 @@ function oopspam_health_notices_script()
                 return;
             }
 
-            if (event.target.closest('.notice-dismiss')) {
+            if (event.target.closest('.oopspam-health-notice-dismiss')) {
                 post({ action: 'oopspam_notice_dismiss', notice: notice.getAttribute('data-notice') });
                 notice.remove();
                 return;

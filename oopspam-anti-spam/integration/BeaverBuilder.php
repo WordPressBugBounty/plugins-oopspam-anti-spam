@@ -6,7 +6,6 @@ add_action('fl_module_contact_form_before_send', 'OOPSPAM\Integrations\oopspaman
 
 function oopspamantispam_bb_pre_submission($mailto, $subject, $template, $headers, $settings)
 {
-    $options = get_option('oopspamantispam_settings');
     $privacyOptions = get_option('oopspamantispam_privacy_settings');
 
     if (!empty(oopspamantispam_get_key()) && oopspam_is_spamprotection_enabled('bb')) {
